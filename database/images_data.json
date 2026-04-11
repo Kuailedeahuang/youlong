@@ -1,0 +1,45 @@
+{
+  "collection": "images",
+  "description": "图片资源数据，可直接导入到云开发数据库",
+  "data": [
+    {
+      "name": "baozhi",
+      "type": "background",
+      "category": "newspaper",
+      "fileID": "cloud://cloud1-1glyk3ivc2fc740d.636c-cloud1-1glyk3ivc2fc740d-1312345678901/images/background/baozhi_1704067200000.png",
+      "url": "https://636c-cloud1-1glyk3ivc2fc740d-1312345678901.tcb.qcloud.la/images/background/baozhi_1704067200000.png",
+      "width": 750,
+      "height": 1334,
+      "size": 0,
+      "description": "每日报纸背景图",
+      "version": "1.0.0",
+      "isActive": true
+    },
+    {
+      "name": "chuzuwu",
+      "type": "background",
+      "category": "home",
+      "fileID": "cloud://cloud1-1glyk3ivc2fc740d.636c-cloud1-1glyk3ivc2fc740d-1312345678901/images/background/chuzuwu_1704067200001.png",
+      "url": "https://636c-cloud1-1glyk3ivc2fc740d-1312345678901.tcb.qcloud.la/images/background/chuzuwu_1704067200001.png",
+      "width": 750,
+      "height": 1334,
+      "size": 0,
+      "description": "出租屋背景图",
+      "version": "1.0.0",
+      "isActive": true
+    },
+    {
+      "name": "shichang",
+      "type": "background",
+      "category": "market",
+      "fileID": "cloud://cloud1-1glyk3ivc2fc740d.636c-cloud1-1glyk3ivc2fc740d-1312345678901/images/background/shichang_1704067200002.png",
+      "url": "https://636c-cloud1-1glyk3ivc2fc740d-1312345678901.tcb.qcloud.la/images/background/shichang_1704067200002.png",
+      "width": 750,
+      "height": 1334,
+      "size": 0,
+      "description": "市场背景图",
+      "version": "1.0.0",
+      "isActive": true
+    }
+  ]
+}

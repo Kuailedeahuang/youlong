@@ -1,7 +1,10 @@
 const STORAGE_KEY = 'bigcitylife_save'
+const CLOUD_ENV_ID = 'cloud1-1glyk3ivc2fc740d'
 
 export default class GameState {
     constructor() {
+        this.data = this.getDefaultState()
+        this.isCloudReady = false
         this.load()
     }
     
@@ -42,34 +45,94 @@ export default class GameState {
             currentScene: 'home',
             
             todayEvents: [],
-            newspaperShown: false
+            newspaperShown: false,
+            yesterdayExpense: 0,
+            hasEnteredMarketToday: false,
+            _id: null
         }
     }
     
-    load() {
+    async load() {
+        try {
+            if (wx.cloud) {
+                const db = wx.cloud.database({
+                    env: CLOUD_ENV_ID
+                })
+                const res = await db.collection('gameProgress').limit(1).get()
+                
+                if (res.data && res.data.length > 0) {
+                    const cloudData = res.data[0]
+                    this.data = { ...this.getDefaultState(), ...cloudData }
+                    this.isCloudReady = true
+                    console.log('从云数据库加载成功')
+                    return
+                }
+            }
+        } catch (e) {
+            console.warn('云数据库加载失败，尝试本地存储:', e)
+        }
+        
         try {
             const saved = wx.getStorageSync(STORAGE_KEY)
             if (saved) {
-                this.data = saved
-            } else {
-                this.data = this.getDefaultState()
+                this.data = { ...this.getDefaultState(), ...saved }
+                console.log('从本地存储加载成功')
             }
         } catch (e) {
+            console.warn('本地存储加载失败:', e)
             this.data = this.getDefaultState()
         }
     }
     
-    save() {
+    async save() {
         try {
-            wx.setStorageSync(STORAGE_KEY, this.data)
+            if (wx.cloud && this.isCloudReady) {
+                const db = wx.cloud.database({
+                    env: CLOUD_ENV_ID
+                })
+                
+                const saveData = { ...this.data }
+                delete saveData._id
+                delete saveData._openid
+                
+                if (this.data._id) {
+                    await db.collection('gameProgress').doc(this.data._id).update({
+                        data: {
+                            ...saveData,
+                            updateTime: db.serverDate()
+                        }
+                    })
+                    console.log('云数据库更新成功')
+                } else {
+                    const res = await db.collection('gameProgress').add({
+                        data: {
+                            ...saveData,
+                            createTime: db.serverDate(),
+                            updateTime: db.serverDate()
+                        }
+                    })
+                    this.data._id = res._id
+                    this.isCloudReady = true
+                    console.log('云数据库创建成功')
+                }
+            }
         } catch (e) {
-            console.error('Save failed:', e)
+            console.warn('云数据库保存失败，尝试本地存储:', e)
+        }
+        
+        try {
+            const saveData = { ...this.data }
+            delete saveData._id
+            delete saveData._openid
+            wx.setStorageSync(STORAGE_KEY, saveData)
+        } catch (e) {
+            console.error('本地存储保存失败:', e)
         }
     }
     
-    reset() {
+    async reset() {
         this.data = this.getDefaultState()
-        this.save()
+        await this.save()
     }
     
     get(key) {
@@ -157,16 +220,14 @@ export default class GameState {
         this.data.day++
         this.data.energy = this.data.maxEnergy
         this.data.newspaperShown = false
+        this.data.hasEnteredMarketToday = false
         this.data.todayEvents = []
         
-        let dailyExpense = 30
-        if (this.data.housingType === 'suburban') {
-            dailyExpense += 50
-        } else if (this.data.housingType === 'urban') {
-            dailyExpense += 100
-        } else {
-            dailyExpense += 20
-        }
+        let baseExpense = 80
+        const fluctuation = Math.floor(Math.random() * 11) - 5
+        let dailyExpense = baseExpense + fluctuation
+        
+        this.data.yesterdayExpense = dailyExpense
         
         if (this.data.money >= dailyExpense) {
             this.data.money -= dailyExpense

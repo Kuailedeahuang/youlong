@@ -1,0 +1,31 @@
+{
+  "collection": "images",
+  "description": "图片资源数据（简化版，导入后需要通过代码上传实际图片文件）",
+  "note": "此JSON仅包含图片元数据，实际图片文件需要通过 imageManager.uploadImage() 方法上传到云存储",
+  "data": [
+    {
+      "name": "baozhi",
+      "type": "background",
+      "category": "newspaper",
+      "description": "每日报纸背景图",
+      "version": "1.0.0",
+      "isActive": true
+    },
+    {
+      "name": "chuzuwu",
+      "type": "background",
+      "category": "home",
+      "description": "出租屋背景图",
+      "version": "1.0.0",
+      "isActive": true
+    },
+    {
+      "name": "shichang",
+      "type": "background",
+      "category": "market",
+      "description": "市场背景图",
+      "version": "1.0.0",
+      "isActive": true
+    }
+  ]
+}

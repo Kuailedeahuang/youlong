@@ -1,0 +1,91 @@
+{
+  "description": "图片资源集合",
+  "fields": [
+    {
+      "name": "_id",
+      "type": "string",
+      "description": "图片唯一标识"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "description": "图片名称"
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "description": "图片类型（background/icon/item）"
+    },
+    {
+      "name": "category",
+      "type": "string",
+      "description": "图片分类"
+    },
+    {
+      "name": "fileID",
+      "type": "string",
+      "description": "云存储文件ID"
+    },
+    {
+      "name": "url",
+      "type": "string",
+      "description": "图片访问URL"
+    },
+    {
+      "name": "width",
+      "type": "number",
+      "description": "图片宽度"
+    },
+    {
+      "name": "height",
+      "type": "number",
+      "description": "图片高度"
+    },
+    {
+      "name": "size",
+      "type": "number",
+      "description": "文件大小（字节）"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "description": "图片描述"
+    },
+    {
+      "name": "version",
+      "type": "string",
+      "description": "版本号"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean",
+      "description": "是否启用",
+      "defaultValue": true
+    },
+    {
+      "name": "createTime",
+      "type": "date",
+      "description": "创建时间"
+    },
+    {
+      "name": "updateTime",
+      "type": "date",
+      "description": "更新时间"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "type_index",
+      "fields": ["type"]
+    },
+    {
+      "name": "category_index",
+      "fields": ["category"]
+    },
+    {
+      "name": "name_index",
+      "fields": ["name"],
+      "unique": true
+    }
+  ]
+}

@@ -42,6 +42,8 @@
   "libVersion": "2.19.4",
   "appid": "wx5db80083f821eb43",
   "projectname": "bigcitylife",
+  "cloudfunctionTemplateRoot": "",
+  "cloudbaseRoot": "cloudbaserc.json",
   "condition": {},
   "editorSetting": {
     "tabIndent": "insertSpaces",

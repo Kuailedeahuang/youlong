@@ -1,4 +1,6 @@
 import ItemData, { categories } from '../data/items.js'
+import imageManager from '../utils/imageManager.js'
+import { restartGame } from '../utils/resetGame.js'
 
 export default class HomeScene {
     constructor(game) {
@@ -6,11 +8,25 @@ export default class HomeScene {
         this.itemPrices = {}
         this.bgImage = null
         this.imageLoaded = false
+        this.useCloudImage = false
         this.loadBackground()
         this.initPrices()
     }
     
-    loadBackground() {
+    async loadBackground() {
+        try {
+            const cloudImage = await imageManager.loadImageFromCloud('chuzuwu')
+            if (cloudImage && cloudImage.image) {
+                this.bgImage = cloudImage.image
+                this.imageLoaded = true
+                this.useCloudImage = true
+                console.log('使用云存储背景图: chuzuwu')
+                return
+            }
+        } catch (e) {
+            console.warn('从云端加载背景图失败，使用本地图片:', e)
+        }
+        
         this.bgImage = wx.createImage()
         this.bgImage.onload = () => {
             this.imageLoaded = true
@@ -49,7 +65,7 @@ export default class HomeScene {
         
         this.renderTopBar(renderer, state)
         
-        const topBarH = 50
+        const topBarH = 60
         const tabBarH = 50
         
         this.renderStats(renderer, topBarH, state)
@@ -59,41 +75,54 @@ export default class HomeScene {
     }
     
     renderTopBar(renderer, state) {
-        renderer.drawRect(0, 0, renderer.width, 50, '#1a1a2e')
+        renderer.drawRect(0, 0, renderer.width, 60, '#1a1a2e')
         
         renderer.drawText(`第${state.day}天/${state.totalDays}天`, 15, 25, '#f39c12', 14, 'left')
         
         renderer.drawText(`金币: ${state.money}`, renderer.width - 15, 15, '#f39c12', 12, 'right')
         
-        const deposit = state.bankDeposit - (state.bankLoan + state.privateLoan)
-        const depositColor = deposit >= 0 ? '#27ae60' : '#e74c3c'
-        const depositText = deposit >= 0 ? `存款: +${deposit}` : `欠款: ${deposit}`
-        renderer.drawText(depositText, renderer.width - 15, 35, depositColor, 11, 'right')
+        // 显示银行存款/欠款
+        const bankNet = state.bankDeposit - state.bankLoan
+        const bankColor = bankNet >= 0 ? '#27ae60' : '#e74c3c'
+        const bankText = bankNet >= 0 ? `银行存款: +${bankNet}` : `银行欠款: ${bankNet}`
+        renderer.drawText(bankText, renderer.width - 15, 30, bankColor, 10, 'right')
+        
+        // 显示个人借贷欠款
+        if (state.privateLoan > 0) {
+            renderer.drawText(`个人欠款: ${state.privateLoan}`, renderer.width - 15, 45, '#e74c3c', 10, 'right')
+        }
+        
+        if (state.day > 1 && state.yesterdayExpense > 0) {
+            renderer.drawText(`昨日开销: ${state.yesterdayExpense}金币`, renderer.width / 2, 25, '#e74c3c', 11, 'center')
+        }
     }
     
     renderStats(renderer, topBarH, state) {
         const w = renderer.width
         const h = renderer.height
-        const roadY = h * 0.35
-        const roadH = h * 0.1
+        const roadY = h * 0.40
+        const roadH = h * 0.15
         
         const padding = 15
-        const fontSize = 14
+        const fontSize = 12
         const ctx = renderer.ctx
         
         ctx.font = `bold ${fontSize}px sans-serif`
+        
+        // 第一行：名誉和精力（靠上）
         ctx.textAlign = 'left'
         ctx.fillStyle = '#ffffff'
-        ctx.fillText(`名誉 ${state.reputation}/100`, padding, roadY + padding + 5)
+        ctx.fillText(`名誉 ${state.reputation}/100`, padding + 5, roadY + padding + 10)
         
         ctx.textAlign = 'right'
-        ctx.fillText(`精力 ${state.energy}/${state.maxEnergy}`, w - padding, roadY + padding + 5)
+        ctx.fillText(`精力 ${state.energy}/${state.maxEnergy}`, w - padding - 5, roadY + padding + 10)
         
+        // 第二行：心情和健康（靠下，到达马路底角）
         ctx.textAlign = 'left'
-        ctx.fillText(`心情 ${state.mood}/100`, padding, roadY + roadH - padding)
+        ctx.fillText(`心情 ${state.mood}/100`, padding + 5, roadY + roadH - padding - 5)
         
         ctx.textAlign = 'right'
-        ctx.fillText(`健康 ${state.health}/100`, w - padding, roadY + roadH - padding)
+        ctx.fillText(`健康 ${state.health}/100`, w - padding - 5, roadY + roadH - padding - 5)
     }
     
     renderStatBox(renderer, x, y, w, h, label, value, color) {
@@ -108,10 +137,11 @@ export default class HomeScene {
         const padding = 8
         const innerX = padding
         const innerW = w - padding * 2
-        const btnH = 40
+        const btnH = 36
         const btnGap = 6
-        const endBtnH = 45
-        const totalBtnH = btnH * 2 + btnGap + endBtnH + 15
+        const endBtnH = 40
+        const restartBtnH = 32
+        const totalBtnH = btnH * 2 + btnGap * 2 + endBtnH + restartBtnH + 20
         const startY = bottomY - totalBtnH
         const btnW = (innerW - btnGap * 2) / 3
         
@@ -131,16 +161,42 @@ export default class HomeScene {
         ]
         
         row1.forEach((btn, i) => {
-            ui.addButton(innerX + i * (btnW + btnGap), startY, btnW, btnH, btn.text, btn.action, { fontSize: 13 })
+            ui.addButton(innerX + i * (btnW + btnGap), startY, btnW, btnH, btn.text, btn.action, { fontSize: 12 })
         })
         
         const btnW2 = (innerW - btnGap * 3) / 4
         row2.forEach((btn, i) => {
-            ui.addButton(innerX + i * (btnW2 + btnGap), startY + btnH + btnGap, btnW2, btnH, btn.text, btn.action, { fontSize: 13 })
+            ui.addButton(innerX + i * (btnW2 + btnGap), startY + btnH + btnGap, btnW2, btnH, btn.text, btn.action, { fontSize: 12 })
         })
         
-        const endBtnY = startY + btnH * 2 + btnGap * 2 + 5
+        // 第三行：售楼部和广告
+        const row3Y = startY + btnH * 2 + btnGap * 2
+        const btnW3 = (innerW - btnGap) / 2
+        ui.addButton(innerX, row3Y, btnW3, btnH, '售楼部', () => this.enterHouseScene(), { fontSize: 12 })
+        
+        // 广告按钮
+        const adText = this.game.adSystem.getAdButtonText()
+        ui.addButton(innerX + btnW3 + btnGap, row3Y, btnW3, btnH, adText, () => this.game.adSystem.showAd(), { fontSize: 11 })
+        
+        const endBtnY = row3Y + btnH + btnGap + 5
         ui.addButton(innerX + (innerW - 120) / 2, endBtnY, 120, endBtnH, '结束今日', () => this.endDay(), { bgColor: '#f39c12', fontSize: 14 })
+        
+        // 添加重新开始按钮
+        const restartBtnY = endBtnY + endBtnH + btnGap
+        ui.addButton(innerX + (innerW - 100) / 2, restartBtnY, 100, restartBtnH, '重新开始', () => this.showRestartConfirm(), { bgColor: '#e74c3c', fontSize: 11 })
+    }
+    
+    showRestartConfirm() {
+        this.game.uiManager.addModal({
+            type: 'confirm',
+            title: '重新开始游戏',
+            content: '确定要重新开始游戏吗？\n当前游戏进度将被清除！',
+            confirmText: '确定',
+            cancelText: '取消',
+            onConfirm: () => {
+                restartGame()
+            }
+        })
     }
     
     renderTabBar(renderer) {
@@ -157,47 +213,176 @@ export default class HomeScene {
         
         const ui = this.game.uiManager
         ui.addButton(0, y, tabW, h, '', () => {}, { bgColor: 'transparent' })
-        ui.addButton(tabW, y, tabW, h, '', () => this.game.sceneManager.switchTo('market'), { bgColor: 'transparent' })
+        ui.addButton(tabW, y, tabW, h, '', () => this.enterMarket(), { bgColor: 'transparent' })
+    }
+    
+    enterMarket() {
+        const state = this.game.gameState.data
+        
+        // 检查今日是否已进过市场
+        if (!state.hasEnteredMarketToday) {
+            // 首次进入市场消耗2点精力
+            if (state.energy < 2) {
+                this.game.uiManager.addModal({
+                    type: 'confirm',
+                    title: '精力不足',
+                    content: '今日首次进入市场需要消耗2点精力\n当前精力不足，无法进入市场',
+                    confirmText: '知道了',
+                    onConfirm: () => {}
+                })
+                return
+            }
+            
+            // 扣除精力并标记今日已进入市场
+            state.energy -= 2
+            state.hasEnteredMarketToday = true
+            this.game.gameState.save()
+        }
+        
+        this.game.sceneManager.switchTo('market')
+    }
+    
+    enterHouseScene() {
+        const state = this.game.gameState.data
+        
+        // 进入售楼部消耗1点精力
+        if (state.energy < 1) {
+            this.game.uiManager.addModal({
+                type: 'confirm',
+                title: '精力不足',
+                content: '进入售楼部需要消耗1点精力\n当前精力不足',
+                confirmText: '知道了',
+                onConfirm: () => {}
+            })
+            return
+        }
+        
+        // 扣除精力并进入售楼部场景
+        state.energy -= 1
+        this.game.gameState.save()
+        this.game.sceneManager.switchTo('house')
     }
     
     showLoanModal() {
+        const state = this.game.gameState.data
+        
+        // 首先显示选择界面：借贷/还款/取消
+        const actions = []
+        
+        // 借贷选项
+        actions.push({
+            text: '借贷',
+            callback: () => this.doPrivateLoan(),
+            color: '#e74c3c'
+        })
+        
+        // 还款选项（有欠款时才显示）
+        if (state.privateLoan > 0) {
+            actions.push({
+                text: '还款',
+                callback: () => this.doPrivateRepay(),
+                color: '#27ae60'
+            })
+        }
+        
         this.game.uiManager.addModal({
-            type: 'confirm',
+            type: 'action',
             title: '个人借贷',
-            content: '日利率: 2.5%\n逾期惩罚严厉\n是否借贷?',
-            confirmText: '借贷',
-            onConfirm: () => {
-                this.game.uiManager.addModal({
-                    type: 'trade',
-                    title: '借贷金额',
-                    content: '',
-                    itemName: '私人借贷',
-                    price: 1,
-                    quantity: 1000,
-                    maxQuantity: 120000,
-                    total: 1000,
-                    tradeType: 'loan',
-                    onConfirm: (qty) => {
-                        this.game.gameState.data.privateLoan += qty
-                        this.game.gameState.data.money += qty
-                        this.game.gameState.save()
-                    }
-                })
+            content: `日利率: 2.5%\n逾期惩罚严厉\n\n当前欠款: ${state.privateLoan} 金币`,
+            actions: actions,
+            height: 180
+        })
+    }
+    
+    doPrivateLoan() {
+        const state = this.game.gameState.data
+        this.game.uiManager.addModal({
+            type: 'trade',
+            title: '个人借贷',
+            content: '日利率: 2.5%\n逾期惩罚严厉',
+            itemName: '借贷金额',
+            price: 1,
+            quantity: 1000,
+            maxQuantity: 120000,
+            total: 1000,
+            tradeType: 'loan',
+            height: 240,
+            onConfirm: (qty) => {
+                state.privateLoan += qty
+                state.money += qty
+                this.game.gameState.save()
+            }
+        })
+    }
+    
+    doPrivateRepay() {
+        const state = this.game.gameState.data
+        if (state.privateLoan <= 0) {
+            this.game.uiManager.addModal({
+                type: 'confirm',
+                title: '无需还款',
+                content: '当前没有私人借贷欠款',
+                confirmText: '知道了',
+                singleButton: true,
+                onConfirm: () => {}
+            })
+            return
+        }
+        
+        const maxRepay = Math.min(state.money, state.privateLoan)
+        if (maxRepay <= 0) {
+            this.game.uiManager.addModal({
+                type: 'confirm',
+                title: '金币不足',
+                content: '没有足够的金币还款',
+                confirmText: '知道了',
+                singleButton: true,
+                onConfirm: () => {}
+            })
+            return
+        }
+        
+        this.game.uiManager.addModal({
+            type: 'trade',
+            title: '还款',
+            content: `当前欠款: ${state.privateLoan} 金币`,
+            itemName: '还款金额',
+            price: 1,
+            quantity: maxRepay,
+            maxQuantity: maxRepay,
+            total: maxRepay,
+            tradeType: 'repay',
+            height: 240,
+            onConfirm: (qty) => {
+                if (state.money >= qty) {
+                    state.money -= qty
+                    state.privateLoan -= qty
+                    this.game.gameState.save()
+                }
             }
         })
     }
     
     showBankModal() {
+        const state = this.game.gameState.data
+        
+        // 构建银行操作按钮
+        const actions = [
+            { text: '存款', callback: () => this.doDeposit() },
+            { text: '贷款', callback: () => this.doLoan() }
+        ]
+        
+        // 有银行欠款时才显示还款按钮
+        if (state.bankLoan > 0) {
+            actions.push({ text: '还款', callback: () => this.doRepay() })
+        }
+        
         this.game.uiManager.addModal({
             type: 'action',
             title: '银行',
-            content: '存款利率: 每6天2%\n贷款利率: 每6天6%',
-            actions: [
-                { text: '存款', callback: () => this.doDeposit() },
-                { text: '贷款', callback: () => this.doLoan() },
-                { text: '还款', callback: () => this.doRepay() }
-            ],
-            height: 160
+            content: `存款利率: 每6天2%\n贷款利率: 每6天6%\n当前欠款: ${state.bankLoan} 金币`,
+            actions: actions,
+            height: 180
         })
     }
     
@@ -213,6 +398,7 @@ export default class HomeScene {
             maxQuantity: state.money,
             total: 100,
             tradeType: 'deposit',
+            height: 220,
             onConfirm: (qty) => {
                 if (state.money >= qty) {
                     state.money -= qty
@@ -236,6 +422,7 @@ export default class HomeScene {
             maxQuantity: maxLoan - state.bankLoan,
             total: 1000,
             tradeType: 'loan',
+            height: 220,
             onConfirm: (qty) => {
                 state.bankLoan += qty
                 state.money += qty
@@ -259,6 +446,7 @@ export default class HomeScene {
             maxQuantity: Math.min(state.money, state.bankLoan),
             total: Math.min(state.money, state.bankLoan),
             tradeType: 'repay',
+            height: 220,
             onConfirm: (qty) => {
                 if (state.money >= qty) {
                     state.money -= qty
@@ -350,11 +538,34 @@ export default class HomeScene {
     doCharity() {
         const state = this.game.gameState.data
         
-        if (state.energy < 1) {
+        this.game.uiManager.addModal({
+            type: 'action',
+            title: '公益活动',
+            content: '选择参与方式',
+            actions: [
+                { 
+                    text: '捐款', 
+                    callback: () => this.doDonation(),
+                    color: '#f39c12'
+                },
+                { 
+                    text: '体力劳动', 
+                    callback: () => this.doVolunteerWork(),
+                    color: '#27ae60'
+                }
+            ],
+            height: 160
+        })
+    }
+    
+    doDonation() {
+        const state = this.game.gameState.data
+        
+        if (state.money < 50) {
             this.game.uiManager.addModal({
                 type: 'confirm',
-                title: '精力不足',
-                content: '无法参与公益',
+                title: '金币不足',
+                content: '需要至少50金币才能捐款',
                 confirmText: '知道了',
                 onConfirm: () => {}
             })
@@ -362,16 +573,58 @@ export default class HomeScene {
         }
         
         this.game.uiManager.addModal({
-            type: 'confirm',
-            title: '公益活动',
-            content: '消耗1精力\n名誉+5~+10\n心情+5~+10',
-            confirmText: '参与',
-            onConfirm: () => {
-                state.energy -= 1
-                state.reputation = Math.min(100, state.reputation + 5 + Math.floor(Math.random() * 6))
-                state.mood = Math.min(100, state.mood + 5 + Math.floor(Math.random() * 6))
-                this.game.gameState.save()
+            type: 'trade',
+            title: '捐款',
+            content: '消耗金币\n名誉+5~+10\n心情+5~+10',
+            itemName: '捐款金额',
+            price: 1,
+            quantity: 50,
+            maxQuantity: state.money,
+            total: 50,
+            tradeType: 'donation',
+            height: 220,
+            onConfirm: (qty) => {
+                if (state.money >= qty) {
+                    state.money -= qty
+                    state.reputation = Math.min(100, state.reputation + 5 + Math.floor(Math.random() * 6))
+                    state.mood = Math.min(100, state.mood + 5 + Math.floor(Math.random() * 6))
+                    this.game.gameState.save()
+                }
             }
+        })
+    }
+    
+    doVolunteerWork() {
+        const state = this.game.gameState.data
+        
+        if (state.energy < 1) {
+            this.game.uiManager.addModal({
+                type: 'confirm',
+                title: '精力不足',
+                content: '需要1点精力才能参与体力劳动',
+                confirmText: '知道了',
+                singleButton: true,
+                onConfirm: () => {}
+            })
+            return
+        }
+        
+        // 直接执行，不显示确认弹窗
+        state.energy -= 1
+        const reputationGain = 5 + Math.floor(Math.random() * 6)
+        const moodGain = 5 + Math.floor(Math.random() * 6)
+        state.reputation = Math.min(100, state.reputation + reputationGain)
+        state.mood = Math.min(100, state.mood + moodGain)
+        this.game.gameState.save()
+        
+        // 显示结果
+        this.game.uiManager.addModal({
+            type: 'confirm',
+            title: '公益活动完成',
+            content: `你参与了体力劳动！\n\n消耗: 1精力\n获得: 名誉+${reputationGain}, 心情+${moodGain}`,
+            confirmText: '知道了',
+            singleButton: true,
+            onConfirm: () => {}
         })
     }
     
@@ -480,19 +733,14 @@ export default class HomeScene {
                 
                 this.game.gameState.nextDay()
                 
+                // 注意：广告次数不再每天重置，整局游戏只能看3次
+                
+                // 执行每日检查（破产、结局等）
+                this.game.dailyCheck()
+                
                 const events = this.game.gameState.getEvents()
                 if (events.length > 0) {
                     this.showEventsModal(events)
-                } else if (this.game.gameState.data.day > 180) {
-                    this.game.uiManager.addModal({
-                        type: 'confirm',
-                        title: '游戏结束',
-                        content: '180天已结束!',
-                        confirmText: '重新开始',
-                        onConfirm: () => {
-                            this.game.gameState.reset()
-                        }
-                    })
                 }
             }
         })

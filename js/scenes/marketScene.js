@@ -1,4 +1,5 @@
 import ItemData, { categories } from '../data/items.js'
+import imageManager from '../utils/imageManager.js'
 
 const newspapers = [
     { title: '市场快报', content: '今日市场行情平稳，各商品价格小幅波动。' },
@@ -21,16 +22,55 @@ export default class MarketScene {
         this.bgImage = null
         this.imageLoaded = false
         this.todayNewspaper = null
+        this.newspaperBgImage = null
+        this.newspaperBgLoaded = false
+        this.useCloudBgImage = false
+        this.useCloudNewspaperImage = false
         this.loadBackground()
+        this.loadNewspaperBackground()
         this.initPrices()
     }
     
-    loadBackground() {
+    async loadBackground() {
+        try {
+            const cloudImage = await imageManager.loadImageFromCloud('shichang')
+            if (cloudImage && cloudImage.image) {
+                this.bgImage = cloudImage.image
+                this.imageLoaded = true
+                this.useCloudBgImage = true
+                console.log('使用云存储背景图: shichang')
+                return
+            }
+        } catch (e) {
+            console.warn('从云端加载市场背景图失败，使用本地图片:', e)
+        }
+        
         this.bgImage = wx.createImage()
         this.bgImage.onload = () => {
             this.imageLoaded = true
         }
         this.bgImage.src = 'tupian/shichang.png'
+    }
+    
+    async loadNewspaperBackground() {
+        try {
+            const cloudImage = await imageManager.loadImageFromCloud('baozhi')
+            if (cloudImage && cloudImage.image) {
+                this.newspaperBgImage = cloudImage.image
+                this.newspaperBgLoaded = true
+                this.useCloudNewspaperImage = true
+                console.log('使用云存储报纸背景图: baozhi')
+                return
+            }
+        } catch (e) {
+            console.warn('从云端加载报纸背景图失败，使用本地图片:', e)
+        }
+        
+        this.newspaperBgImage = wx.createImage()
+        this.newspaperBgImage.onload = () => {
+            this.newspaperBgLoaded = true
+        }
+        this.newspaperBgImage.src = 'tupian/baozhi.png'
     }
     
     initPrices() {
@@ -56,15 +96,23 @@ export default class MarketScene {
         const state = this.game.gameState.data
         if (!state.newspaperShown) {
             const paper = this.generateNewspaper()
-            this.game.uiManager.addModal({
-                type: 'confirm',
-                title: `第${state.day}天 ${paper.title}`,
-                content: paper.content,
-                confirmText: '知道了',
-                onConfirm: () => {
-                    this.game.gameState.set('newspaperShown', true)
-                }
-            })
+            // 延迟显示报纸，确保背景图片已加载
+            setTimeout(() => {
+                this.game.uiManager.addModal({
+                    type: 'confirm',
+                    title: `第${state.day}天 ${paper.title}`,
+                    content: paper.content,
+                    confirmText: '知道了',
+                    singleButton: true,
+                    backgroundImage: this.newspaperBgImage,
+                    backgroundImageLoaded: this.newspaperBgLoaded,
+                    height: 320,
+                    isNewspaper: true, // 标记为报纸弹窗
+                    onConfirm: () => {
+                        this.game.gameState.set('newspaperShown', true)
+                    }
+                })
+            }, 100)
         }
     }
     
