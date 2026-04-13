@@ -139,7 +139,7 @@ class ImageManager {
       await this.db.collection('images').doc(imageData._id).update({
         data: {
           isActive: false,
-          updateTime: this.db.serverDate()
+          updateTime: this.db ? this.db.serverDate() : new Date()
         }
       })
       

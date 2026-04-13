@@ -1,5 +1,4 @@
 import ItemData from '../data/items.js'
-import imageManager from './imageManager.js'
 
 const CLOUD_ENV_ID = 'cloud1-1glyk3ivc2fc740d'
 
@@ -15,11 +14,6 @@ export async function initializeCloudDatabase() {
     })
 
     console.log('开始初始化云数据库...')
-    
-    // 初始化图片
-    console.log('开始初始化图片...')
-    await imageManager.initDefaultImages()
-    console.log('图片初始化完成')
 
     const configCount = await db.collection('config').count()
     if (configCount.total === 0) {
