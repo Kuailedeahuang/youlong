@@ -1,0 +1,46 @@
+{
+  "description": "事件记录集合",
+  "fields": [
+    {
+      "name": "_id",
+      "type": "string",
+      "description": "事件唯一标识"
+    },
+    {
+      "name": "_openid",
+      "type": "string",
+      "description": "用户OpenID"
+    },
+    {
+      "name": "day",
+      "type": "number",
+      "description": "游戏天数"
+    },
+    {
+      "name": "eventType",
+      "type": "string",
+      "description": "事件类型"
+    },
+    {
+      "name": "eventText",
+      "type": "string",
+      "description": "事件内容"
+    },
+    {
+      "name": "effects",
+      "type": "object",
+      "description": "事件影响"
+    },
+    {
+      "name": "createTime",
+      "type": "date",
+      "description": "创建时间"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "_openid_day_index",
+      "fields": ["_openid", "day"]
+    }
+  ]
+}

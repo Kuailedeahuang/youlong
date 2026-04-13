@@ -1,0 +1,65 @@
+{
+  "description": "交易记录集合",
+  "fields": [
+    {
+      "name": "_id",
+      "type": "string",
+      "description": "交易唯一标识"
+    },
+    {
+      "name": "_openid",
+      "type": "string",
+      "description": "用户OpenID"
+    },
+    {
+      "name": "day",
+      "type": "number",
+      "description": "游戏天数"
+    },
+    {
+      "name": "transactionType",
+      "type": "string",
+      "description": "交易类型（buy/sell/deposit/loan/repay/donation）"
+    },
+    {
+      "name": "itemId",
+      "type": "number",
+      "description": "商品ID（商品交易时）"
+    },
+    {
+      "name": "itemName",
+      "type": "string",
+      "description": "商品名称"
+    },
+    {
+      "name": "quantity",
+      "type": "number",
+      "description": "数量"
+    },
+    {
+      "name": "price",
+      "type": "number",
+      "description": "单价"
+    },
+    {
+      "name": "totalAmount",
+      "type": "number",
+      "description": "总金额"
+    },
+    {
+      "name": "createTime",
+      "type": "date",
+      "description": "创建时间"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "_openid_day_index",
+      "fields": ["_openid", "day"]
+    },
+    {
+      "name": "transactionType_index",
+      "fields": ["transactionType"]
+    }
+  ]
+}

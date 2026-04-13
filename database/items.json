@@ -1,0 +1,46 @@
+{
+  "description": "商品数据集合",
+  "fields": [
+    {
+      "name": "_id",
+      "type": "string",
+      "description": "商品唯一标识"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "description": "商品名称"
+    },
+    {
+      "name": "category",
+      "type": "string",
+      "description": "商品分类"
+    },
+    {
+      "name": "basePrice",
+      "type": "number",
+      "description": "基础价格"
+    },
+    {
+      "name": "naturalFluctuation",
+      "type": "object",
+      "description": "价格波动范围"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "description": "商品描述"
+    },
+    {
+      "name": "createTime",
+      "type": "date",
+      "description": "创建时间"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "category_index",
+      "fields": ["category"]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "version": "1.0.0",
+  "description": "游龙市场为买房游戏数据库初始化配置",
+  "collections": [
+    {
+      "name": "users",
+      "description": "用户信息集合",
+      "permissions": {
+        "read": "doc._openid == auth.openid",
+        "write": "doc._openid == auth.openid"
+      }
+    },
+    {
+      "name": "gameProgress",
+      "description": "游戏进度集合",
+      "permissions": {
+        "read": "doc._openid == auth.openid",
+        "write": "doc._openid == auth.openid"
+      }
+    },
+    {
+      "name": "items",
+      "description": "商品数据集合",
+      "permissions": {
+        "read": true,
+        "write": "auth.openid == 'admin_openid'"
+      }
+    },
+    {
+      "name": "events",
+      "description": "事件记录集合",
+      "permissions": {
+        "read": "doc._openid == auth.openid",
+        "write": "doc._openid == auth.openid"
+      }
+    },
+    {
+      "name": "transactions",
+      "description": "交易记录集合",
+      "permissions": {
+        "read": "doc._openid == auth.openid",
+        "write": "doc._openid == auth.openid"
+      }
+    },
+    {
+      "name": "config",
+      "description": "系统配置集合",
+      "permissions": {
+        "read": true,
+        "write": "auth.openid == 'admin_openid'"
+      }
+    }
+  ],
+  "initialData": {
+    "config": [
+      {
+        "key": "dailyExpenseBase",
+        "value": 80,
+        "description": "每日基础开销"
+      },
+      {
+        "key": "dailyExpenseFluctuation",
+        "value": 5,
+        "description": "每日开销波动范围"
+      },
+      {
+        "key": "bankDepositRate",
+        "value": 0.02,
+        "description": "银行存款利率（每6天）"
+      },
+      {
+        "key": "bankLoanRate",
+        "value": 0.06,
+        "description": "银行贷款利率（每6天）"
+      },
+      {
+        "key": "privateLoanRate",
+        "value": 0.025,
+        "description": "私人借贷日利率"
+      }
+    ]
+  }
+}

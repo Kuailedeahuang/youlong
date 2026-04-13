@@ -1,0 +1,133 @@
+{
+  "description": "游戏进度集合",
+  "fields": [
+    {
+      "name": "_id",
+      "type": "string",
+      "description": "记录唯一标识"
+    },
+    {
+      "name": "_openid",
+      "type": "string",
+      "description": "用户OpenID"
+    },
+    {
+      "name": "money",
+      "type": "number",
+      "description": "金币",
+      "defaultValue": 5000
+    },
+    {
+      "name": "health",
+      "type": "number",
+      "description": "健康值",
+      "defaultValue": 100
+    },
+    {
+      "name": "energy",
+      "type": "number",
+      "description": "精力值",
+      "defaultValue": 5
+    },
+    {
+      "name": "maxEnergy",
+      "type": "number",
+      "description": "最大精力",
+      "defaultValue": 5
+    },
+    {
+      "name": "mood",
+      "type": "number",
+      "description": "心情值",
+      "defaultValue": 100
+    },
+    {
+      "name": "reputation",
+      "type": "number",
+      "description": "名誉值",
+      "defaultValue": 100
+    },
+    {
+      "name": "day",
+      "type": "number",
+      "description": "当前天数",
+      "defaultValue": 1
+    },
+    {
+      "name": "totalDays",
+      "type": "number",
+      "description": "总天数",
+      "defaultValue": 180
+    },
+    {
+      "name": "bankLoan",
+      "type": "number",
+      "description": "银行贷款",
+      "defaultValue": 0
+    },
+    {
+      "name": "bankDeposit",
+      "type": "number",
+      "description": "银行存款",
+      "defaultValue": 0
+    },
+    {
+      "name": "privateLoan",
+      "type": "number",
+      "description": "私人借贷",
+      "defaultValue": 0
+    },
+    {
+      "name": "overdueDays",
+      "type": "number",
+      "description": "逾期天数",
+      "defaultValue": 0
+    },
+    {
+      "name": "warehouseCapacity",
+      "type": "number",
+      "description": "仓库容量",
+      "defaultValue": 20
+    },
+    {
+      "name": "warehouse",
+      "type": "object",
+      "description": "仓库物品"
+    },
+    {
+      "name": "jobLevel",
+      "type": "number",
+      "description": "工作等级",
+      "defaultValue": 1
+    },
+    {
+      "name": "jobTitle",
+      "type": "string",
+      "description": "工作名称",
+      "defaultValue": "外卖/快递员"
+    },
+    {
+      "name": "yesterdayExpense",
+      "type": "number",
+      "description": "昨日开销",
+      "defaultValue": 0
+    },
+    {
+      "name": "createTime",
+      "type": "date",
+      "description": "创建时间"
+    },
+    {
+      "name": "updateTime",
+      "type": "date",
+      "description": "更新时间"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "_openid_index",
+      "fields": ["_openid"],
+      "unique": true
+    }
+  ]
+}

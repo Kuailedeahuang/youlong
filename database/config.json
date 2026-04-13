@@ -1,0 +1,37 @@
+{
+  "description": "系统配置集合",
+  "fields": [
+    {
+      "name": "_id",
+      "type": "string",
+      "description": "配置唯一标识"
+    },
+    {
+      "name": "key",
+      "type": "string",
+      "description": "配置键"
+    },
+    {
+      "name": "value",
+      "type": "any",
+      "description": "配置值"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "description": "配置描述"
+    },
+    {
+      "name": "updateTime",
+      "type": "date",
+      "description": "更新时间"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "key_index",
+      "fields": ["key"],
+      "unique": true
+    }
+  ]
+}
