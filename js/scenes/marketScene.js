@@ -33,12 +33,12 @@ export default class MarketScene {
     
     async loadBackground() {
         try {
-            const cloudImage = await imageManager.loadImageFromCloud('shichang')
+            const cloudImage = await imageManager.loadImageFromCloud('ShiChang.png')
             if (cloudImage && cloudImage.image) {
                 this.bgImage = cloudImage.image
                 this.imageLoaded = true
                 this.useCloudBgImage = true
-                console.log('使用云存储背景图: shichang')
+                console.log('使用云存储背景图: ShiChang.png')
                 return
             }
         } catch (e) {
@@ -54,12 +54,12 @@ export default class MarketScene {
     
     async loadNewspaperBackground() {
         try {
-            const cloudImage = await imageManager.loadImageFromCloud('baozhi')
+            const cloudImage = await imageManager.loadImageFromCloud('BaoZhi.png')
             if (cloudImage && cloudImage.image) {
                 this.newspaperBgImage = cloudImage.image
                 this.newspaperBgLoaded = true
                 this.useCloudNewspaperImage = true
-                console.log('使用云存储报纸背景图: baozhi')
+                console.log('使用云存储报纸背景图: BaoZhi.png')
                 return
             }
         } catch (e) {

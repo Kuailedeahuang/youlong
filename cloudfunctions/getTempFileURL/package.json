@@ -1,0 +1,9 @@
+{
+  "name": "getTempFileURL",
+  "version": "1.0.0",
+  "description": "获取云存储文件的临时链接，绕过权限验证",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.10.0"
+  }
+}

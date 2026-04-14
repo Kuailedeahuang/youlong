@@ -1,3 +1,4 @@
+import { CLOUD_ENV_ID } from '../config.js'
 import { checkCloudDatabase, initializeCloudDatabase } from './initCloud.js'
 import { resetGameProgress, exportGameProgress } from './resetGame.js'
 
@@ -55,7 +56,7 @@ export async function testCloudFunctions() {
 
 export function showCloudStatus() {
   console.log('=== 云开发状态 ===')
-  console.log('环境ID: cloud1-1glyk3ivc2fc740d')
+  console.log('环境ID:', CLOUD_ENV_ID)
   console.log('云开发状态:', wx.cloud ? '已初始化' : '未初始化')
   
   if (wx.cloud) {

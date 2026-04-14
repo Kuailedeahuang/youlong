@@ -1,4 +1,4 @@
-const CLOUD_ENV_ID = 'cloud1-1glyk3ivc2fc740d'
+import { CLOUD_ENV_ID } from '../config.js'
 
 export function resetGameProgress() {
   try {

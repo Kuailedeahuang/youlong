@@ -1,6 +1,5 @@
+import { CLOUD_ENV_ID } from '../config.js'
 import ItemData from '../data/items.js'
-
-const CLOUD_ENV_ID = 'cloud1-1glyk3ivc2fc740d'
 
 export async function initializeCloudDatabase() {
   if (!wx.cloud) {
@@ -9,6 +8,11 @@ export async function initializeCloudDatabase() {
   }
 
   try {
+    wx.cloud.init({
+      env: CLOUD_ENV_ID,
+      traceUser: true
+    })
+
     const db = wx.cloud.database({
       env: CLOUD_ENV_ID
     })
