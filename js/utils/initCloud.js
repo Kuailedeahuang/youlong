@@ -81,6 +81,14 @@ export async function initializeCloudDatabase() {
       console.log('商品数据已存在，跳过初始化')
     }
 
+    // 确保 gameProgress 集合存在（尝试查询，触发集合创建）
+    try {
+      await db.collection('gameProgress').count()
+      console.log('gameProgress 集合已存在')
+    } catch (e) {
+      console.log('gameProgress 集合不存在，将在首次保存时自动创建')
+    }
+
     console.log('云数据库初始化完成')
     return true
   } catch (e) {

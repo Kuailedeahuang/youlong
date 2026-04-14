@@ -38,7 +38,7 @@ export default class MarketScene {
                 this.bgImage = cloudImage.image
                 this.imageLoaded = true
                 this.useCloudImage = true
-                console.log('使用云存储背景图: ShiChang')
+                console.log('使用云存储背景图: ShiChang.png')
                 return
             }
         } catch (e) {
@@ -54,7 +54,7 @@ export default class MarketScene {
     
     async loadNewspaperBackground() {
         try {
-            const cloudImage = await imageManager.loadImageFromCloud('BaoZhi')
+            const cloudImage = await imageManager.loadImageFromCloud('BaoZhi.png')
             if (cloudImage && cloudImage.image) {
                 this.newspaperImage = cloudImage.image
                 this.newspaperImageLoaded = true

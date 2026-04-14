@@ -15,12 +15,12 @@ export default class HomeScene {
     
     async loadBackground() {
         try {
-            const cloudImage = await imageManager.loadImageFromCloud('ChuZuWu')
+            const cloudImage = await imageManager.loadImageFromCloud('ChuZuWu.png')
             if (cloudImage && cloudImage.image) {
                 this.bgImage = cloudImage.image
                 this.imageLoaded = true
                 this.useCloudImage = true
-                console.log('使用云存储背景图: ChuZuWu')
+                console.log('使用云存储背景图: ChuZuWu.png')
                 return
             }
         } catch (e) {

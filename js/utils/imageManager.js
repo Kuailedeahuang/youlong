@@ -81,8 +81,7 @@ class ImageManager {
       
       const res = await this.db.collection('images')
         .where({
-          name: name,
-          isActive: true
+          name: name
         })
         .limit(1)
         .get()
@@ -108,8 +107,7 @@ class ImageManager {
     try {
       const res = await this.db.collection('images')
         .where({
-          type: type,
-          isActive: true
+          type: type
         })
         .get()
       

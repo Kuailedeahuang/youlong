@@ -63,18 +63,25 @@ export default class GameState {
                 console.log('云开发初始化成功')
                 
                 const db = wx.cloud.database({})
-                const res = await db.collection('gameProgress').limit(1).get()
-                
-                if (res.data && res.data.length > 0) {
-                    const cloudData = res.data[0]
-                    this.data = { ...this.getDefaultState(), ...cloudData }
-                    this.isCloudReady = true
-                    console.log('从云数据库加载成功')
-                    return
+                try {
+                    const res = await db.collection('gameProgress').limit(1).get()
+                    
+                    if (res.data && res.data.length > 0) {
+                        const cloudData = res.data[0]
+                        this.data = { ...this.getDefaultState(), ...cloudData }
+                        this.isCloudReady = true
+                        console.log('从云数据库加载成功')
+                        return
+                    } else {
+                        console.log('云数据库中无记录，使用默认数据')
+                    }
+                } catch (dbError) {
+                    console.warn('gameProgress 集合操作失败，将使用本地存储:', dbError)
+                    this.isCloudReady = false
                 }
             }
         } catch (e) {
-            console.warn('云数据库加载失败，尝试本地存储:', e)
+            console.warn('云开发初始化失败，使用本地存储:', e)
         }
         
         try {
@@ -107,29 +114,34 @@ export default class GameState {
                 delete saveData._id
                 delete saveData._openid
                 
-                if (this.data._id) {
-                    await db.collection('gameProgress').doc(this.data._id).update({
-                        data: {
-                            ...saveData,
-                            updateTime: db.serverDate()
-                        }
-                    })
-                    console.log('云数据库更新成功')
-                } else {
-                    const res = await db.collection('gameProgress').add({
-                        data: {
-                            ...saveData,
-                            createTime: db.serverDate(),
-                            updateTime: db.serverDate()
-                        }
-                    })
-                    this.data._id = res._id
-                    this.isCloudReady = true
-                    console.log('云数据库创建成功')
+                try {
+                    if (this.data._id) {
+                        await db.collection('gameProgress').doc(this.data._id).update({
+                            data: {
+                                ...saveData,
+                                updateTime: db.serverDate()
+                            }
+                        })
+                        console.log('云数据库更新成功')
+                    } else {
+                        const res = await db.collection('gameProgress').add({
+                            data: {
+                                ...saveData,
+                                createTime: db.serverDate(),
+                                updateTime: db.serverDate()
+                            }
+                        })
+                        this.data._id = res._id
+                        this.isCloudReady = true
+                        console.log('云数据库创建成功')
+                    }
+                } catch (dbError) {
+                    console.warn('gameProgress 集合操作失败，将使用本地存储:', dbError)
+                    this.isCloudReady = false
                 }
             }
         } catch (e) {
-            console.warn('云数据库保存失败，尝试本地存储:', e)
+            console.warn('云开发保存失败，使用本地存储:', e)
         }
         
         try {
