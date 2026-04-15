@@ -295,7 +295,7 @@ export default class UIManager {
                 modal.cancelBtn = { x: modalX + 10, y: btnY, w: btnW, h: 40 }
                 modal.confirmBtn = { x: modalX + btnW + 20, y: btnY, w: btnW, h: 40 }
                 
-                renderer.drawButton(modal.cancelBtn.x, modal.cancelBtn.y, modal.cancelBtn.w, modal.cancelBtn.h, '取消', '#7f8c8d')
+          rawButton(modal.cancelBtn.x, modal.cancelBtn.y, modal.cancelBtn.w, modal.cancelBtn.h, '取消', '#7f8c8d')
                 renderer.drawButton(modal.confirmBtn.x, modal.confirmBtn.y, modal.confirmBtn.w, modal.confirmBtn.h, modal.confirmText || '确定', '#f39c12')
             }
         } else if (modal.type === 'action') {

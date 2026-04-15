@@ -14,11 +14,11 @@ export default class SplashScene {
     async loadLogo() {
         try {
             // 尝试从云端加载logo图片
-            const cloudImage = await imageManager.loadImageFromCloud('Logo.png')
+            const cloudImage = await imageManager.loadImageFromCloud('game_logo.png')
             if (cloudImage && cloudImage.image) {
                 this.logoImage = cloudImage.image
                 this.imageLoaded = true
-                console.log('使用云存储Logo图片')
+                console.log('使用云存储Logo图片: game_logo.png')
                 return
             }
         } catch (e) {
