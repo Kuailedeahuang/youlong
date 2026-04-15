@@ -25,14 +25,14 @@ export async function resetGameProgressWithCloud() {
       
       try {
         // 获取当前用户的游戏进度记录
-        const res = await db.collection('gameProgress').where({
+        const res = await db.collection('gameprogress').where({
           _openid: '{openid}'
         }).get()
         
         // 删除所有记录
         if (res.data && res.data.length > 0) {
           for (const record of res.data) {
-            await db.collection('gameProgress').doc(record._id).remove()
+            await db.collection('gameprogress').doc(record._id).remove()
           }
           console.log('云数据库游戏进度已清除')
         }
@@ -84,7 +84,7 @@ export function migrateToCloud() {
   }
   
   const db = wx.cloud.database()
-  db.collection('gameProgress').add({
+  db.collection('gameprogress').add({
     data: {
       ...localData,
       updateTime: db.serverDate()

@@ -1,16 +1,23 @@
 import HomeScene from '../scenes/homeScene.js'
 import MarketScene from '../scenes/marketScene.js'
 import HouseScene from '../scenes/houseScene.js'
+import SplashScene from '../scenes/splashScene.js'
 
 export default class SceneManager {
     constructor(game) {
         this.game = game
         this.scenes = {
+            splash: new SplashScene(game),
             home: new HomeScene(game),
             market: new MarketScene(game),
             house: new HouseScene(game)
         }
-        this.currentScene = 'home'
+        this.currentScene = 'splash'
+        
+        // 启动启动页
+        setTimeout(() => {
+            this.scenes.splash.onEnter()
+        }, 0)
     }
     
     switchTo(sceneName) {

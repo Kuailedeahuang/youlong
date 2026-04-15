@@ -1,4 +1,5 @@
 import { getAllHouses, checkPurchaseEligibility } from '../data/houses.js'
+import animationManager from '../utils/animationManager.js'
 
 export class HouseScene {
     constructor(game) {
@@ -6,10 +7,60 @@ export class HouseScene {
         this.name = 'house'
         this.houses = getAllHouses()
         this.selectedHouse = null
+        
+        // 滚动相关
+        this.scrollY = 0
+        this.maxScrollY = 0
+        this.isDragging = false
+        this.lastTouchY = 0
+        this.contentHeight = 0
+        
+        // 卡片布局参数
+        this.cardPadding = 10
+        this.cardHeight = 180
+        this.topBarHeight = 60
+        this.titleHeight = 40
+        this.listStartY = this.topBarHeight + this.titleHeight
+        
+        this.initTouchEvents()
+    }
+    
+    initTouchEvents() {
+        // 监听触摸事件用于滚动
+        wx.onTouchStart((e) => {
+            if (this.selectedHouse) return // 详情弹窗打开时不处理滚动
+            
+            const touch = e.touches[0]
+            this.isDragging = true
+            this.lastTouchY = touch.clientY
+        })
+        
+        wx.onTouchMove((e) => {
+            if (!this.isDragging || this.selectedHouse) return
+            
+            const touch = e.touches[0]
+            const deltaY = touch.clientY - this.lastTouchY
+            this.lastTouchY = touch.clientY
+            
+            // 更新滚动位置
+            this.scrollY += deltaY
+            
+            // 限制滚动范围
+            this.scrollY = Math.max(-this.maxScrollY, Math.min(0, this.scrollY))
+        })
+        
+        wx.onTouchEnd(() => {
+            this.isDragging = false
+        })
+        
+        wx.onTouchCancel(() => {
+            this.isDragging = false
+        })
     }
     
     onEnter() {
         this.selectedHouse = null
+        this.scrollY = 0
     }
     
     onExit() {
@@ -36,9 +87,9 @@ export class HouseScene {
         // 绘制标题
         renderer.drawText('售楼部', w / 2, 50, '#f39c12', 18, 'center')
         
-        // 如果没有选中房型，绘制房型列表（两列）
+        // 如果没有选中房型，绘制房型列表（两列，可滚动）
         if (!this.selectedHouse) {
-            this.renderHouseList(renderer, state)
+            this.renderHouseList(renderer, state, w, h)
         }
         
         // 如果选中了房型，显示详情弹窗
@@ -77,24 +128,41 @@ export class HouseScene {
         renderer.drawText(`精力: ${state.energy}/${state.maxEnergy}`, w - 15, 25, '#7f8c8d', 12, 'right')
     }
     
-    renderHouseList(renderer, state) {
-        const w = renderer.width
-        const h = renderer.height
-        const startY = 70
-        const padding = 10
-        const cardW = (w - padding * 3) / 2
-        const cardH = 180
+    renderHouseList(renderer, state, w, h) {
+        const cardW = (w - this.cardPadding * 3) / 2
+        const cardsPerRow = 2
+        const totalRows = Math.ceil(this.houses.length / cardsPerRow)
+        
+        // 计算内容总高度
+        this.contentHeight = totalRows * (this.cardHeight + this.cardPadding) + this.cardPadding
+        const visibleHeight = h - this.listStartY
+        
+        // 计算最大滚动距离
+        this.maxScrollY = Math.max(0, this.contentHeight - visibleHeight)
+        
+        const ctx = renderer.ctx
+        
+        // 设置裁剪区域（只显示列表区域）
+        ctx.save()
+        ctx.beginPath()
+        ctx.rect(0, this.listStartY, w, visibleHeight)
+        ctx.clip()
         
         const ui = this.game.uiManager
         
         this.houses.forEach((house, index) => {
-            const col = index % 2
-            const row = Math.floor(index / 2)
-            const x = padding + col * (cardW + padding)
-            const y = startY + row * (cardH + padding)
+            const col = index % cardsPerRow
+            const row = Math.floor(index / cardsPerRow)
+            const x = this.cardPadding + col * (cardW + this.cardPadding)
+            const y = this.listStartY + this.scrollY + this.cardPadding + row * (this.cardHeight + this.cardPadding)
+            
+            // 只渲染可见区域内的卡片
+            if (y + this.cardHeight < this.listStartY || y > h) {
+                return
+            }
             
             // 绘制卡片背景
-            renderer.drawRect(x, y, cardW, cardH, 'rgba(22, 33, 62, 0.9)', 8)
+            renderer.drawRect(x, y, cardW, this.cardHeight, 'rgba(22, 33, 62, 0.9)', 8)
             
             // 绘制图片区域（占位符）
             const imgH = 100
@@ -111,10 +179,31 @@ export class HouseScene {
             renderer.drawText(shortDesc, x + cardW / 2, y + imgH + 55, '#bdc3c7', 10, 'center')
             
             // 添加点击区域
-            ui.addButton(x, y, cardW, cardH, '', () => {
+            ui.addButton(x, y, cardW, this.cardHeight, '', () => {
                 this.selectedHouse = house
             }, { bgColor: 'transparent' })
         })
+        
+        ctx.restore()
+        
+        // 绘制滚动条（如果有需要滚动）
+        if (this.maxScrollY > 0) {
+            this.renderScrollBar(renderer, w, h, visibleHeight)
+        }
+    }
+    
+    renderScrollBar(renderer, w, h, visibleHeight) {
+        const scrollBarWidth = 4
+        const scrollBarX = w - scrollBarWidth - 4
+        const scrollBarHeight = Math.max(30, visibleHeight * (visibleHeight / this.contentHeight))
+        const scrollProgress = Math.abs(this.scrollY) / this.maxScrollY
+        const scrollBarY = this.listStartY + (visibleHeight - scrollBarHeight) * scrollProgress
+        
+        // 绘制滚动条背景
+        renderer.drawRect(scrollBarX, this.listStartY, scrollBarWidth, visibleHeight, 'rgba(255, 255, 255, 0.1)', 2)
+        
+        // 绘制滚动条滑块
+        renderer.drawRect(scrollBarX, scrollBarY, scrollBarWidth, scrollBarHeight, 'rgba(243, 156, 18, 0.6)', 2)
     }
     
     renderHouseDetail(renderer, state) {
@@ -186,6 +275,9 @@ export class HouseScene {
         
         this.game.gameState.save()
         
+        // 添加延迟动画
+        this.game.gameState.addDelayedAnimation('decrease', house.price, 'money', '金币', '#f39c12')
+        
         // 关闭详情
         this.selectedHouse = null
         
@@ -196,7 +288,10 @@ export class HouseScene {
             content: `恭喜您购买了 ${house.name}！\n${house.parentAttitude}`,
             confirmText: '知道了',
             singleButton: true,
-            onConfirm: () => {}
+            onConfirm: () => {
+                // 返回首页播放动画
+                this.game.sceneManager.switchTo('home')
+            }
         })
     }
 }

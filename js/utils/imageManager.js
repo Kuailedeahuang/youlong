@@ -1,116 +1,84 @@
-const CLOUD_ENV_ID = 'cloud1-1glyk3ivc2fc740d'
+import { CLOUD_ENV_ID } from '../config.js'
 
 class ImageManager {
   constructor() {
     this.imageCache = new Map()
-    this.db = null
-    this.init()
+    this._db = null
   }
 
-  init() {
-    if (wx.cloud) {
-      // 初始化云开发
+  get db() {
+    if (!this._db) {
+      if (!wx.cloud) {
+        console.error('云开发未初始化，请先调用 wx.cloud.init()')
+        return null
+      }
       wx.cloud.init({
         env: CLOUD_ENV_ID,
         traceUser: true
       })
-      this.db = wx.cloud.database({})
-      console.log('云开发初始化成功')
+      this._db = wx.cloud.database({
+        env: CLOUD_ENV_ID
+      })
     }
-  }
-
-  async uploadImage(filePath, name, type = 'background', category = '', description = '') {
-    try {
-      console.log(`开始上传图片: ${name}`)
-      
-      const cloudPath = `images/${type}/${name}_${Date.now()}.png`
-      
-      const uploadRes = await wx.cloud.uploadFile({
-        cloudPath: cloudPath,
-        filePath: filePath
-      })
-      
-      console.log('上传成功:', uploadRes.fileID)
-      
-      const fileInfo = await wx.cloud.getTempFileURL({
-        fileList: [uploadRes.fileID]
-      })
-      
-      const imageData = {
-        name: name,
-        type: type,
-        category: category,
-        fileID: uploadRes.fileID,
-        url: fileInfo.fileList[0].tempFileURL,
-        description: description,
-        version: '1.0.0',
-        isActive: true,
-        createTime: this.db.serverDate(),
-        updateTime: this.db.serverDate()
-      }
-      
-      const addRes = await this.db.collection('images').add({
-        data: imageData
-      })
-      
-      console.log('图片信息保存到数据库成功:', addRes._id)
-      
-      return {
-        success: true,
-        fileID: uploadRes.fileID,
-        url: fileInfo.fileList[0].tempFileURL,
-        _id: addRes._id
-      }
-    } catch (e) {
-      console.error('上传图片失败:', e)
-      return {
-        success: false,
-        error: e.message
-      }
-    }
+    return this._db
   }
 
   async getImage(name) {
     try {
       if (this.imageCache.has(name)) {
+        console.log(`[ImageManager] 使用缓存: ${name}`)
         return this.imageCache.get(name)
       }
-      
-      console.log('正在查询数据库，图片名称:', name)
-      console.log('数据库实例:', this.db)
-      
-      const res = await this.db.collection('images')
+
+      const database = this.db
+      if (!database) {
+        console.error('[ImageManager] 数据库初始化失败')
+        return null
+      }
+
+      console.log(`[ImageManager] 查询数据库, name: "${name}"`)
+
+      const res = await database.collection('images')
         .where({
           name: name
         })
         .limit(1)
         .get()
-      
-      console.log('数据库查询结果:', res)
-      
+
+      console.log(`[ImageManager] 查询结果:`, JSON.stringify(res, null, 2))
+
       if (res.data && res.data.length > 0) {
         const imageData = res.data[0]
+        console.log(`[ImageManager] 找到图片记录:`)
+        console.log(`  - name: ${imageData.name}`)
+        console.log(`  - fileID: ${imageData.fileID}`)
+        console.log(`  - type: ${imageData.type}`)
         this.imageCache.set(name, imageData)
-        console.log('找到图片数据:', imageData)
         return imageData
       }
-      
-      console.warn('未找到对应的图片记录')
+
+      console.warn(`[ImageManager] 未找到匹配的图片: ${name}`)
       return null
     } catch (e) {
-      console.error('获取图片失败:', e)
+      console.error('[ImageManager] 获取图片失败:', e)
       return null
     }
   }
 
   async getImageByType(type) {
     try {
-      const res = await this.db.collection('images')
+      const database = this.db
+      if (!database) {
+        console.error('数据库初始化失败')
+        return []
+      }
+
+      const res = await database.collection('images')
         .where({
           type: type
         })
         .get()
-      
+
       return res.data || []
     } catch (e) {
       console.error('获取图片列表失败:', e)
@@ -120,12 +88,15 @@ class ImageManager {
 
   async getAllImages() {
     try {
-      const res = await this.db.collection('images')
-        .where({
-          isActive: true
-        })
+      const database = this.db
+      if (!database) {
+        console.error('数据库初始化失败')
+        return []
+      }
+
+      const res = await database.collection('images')
         .get()
-      
+
       return res.data || []
     } catch (e) {
       console.error('获取所有图片失败:', e)
@@ -133,152 +104,66 @@ class ImageManager {
     }
   }
 
-  async deleteImage(name) {
-    try {
-      const imageData = await this.getImage(name)
-      if (!imageData) {
-        console.warn('图片不存在:', name)
-        return false
-      }
-      
-      await wx.cloud.deleteFile({
-        fileList: [imageData.fileID]
-      })
-      
-      await this.db.collection('images').doc(imageData._id).update({
-        data: {
-          isActive: false,
-          updateTime: this.db ? this.db.serverDate() : new Date()
-        }
-      })
-      
-      this.imageCache.delete(name)
-      
-      console.log('图片删除成功:', name)
-      return true
-    } catch (e) {
-      console.error('删除图片失败:', e)
-      return false
-    }
-  }
-
-  async updateImage(name, updateData) {
-    try {
-      const imageData = await this.getImage(name)
-      if (!imageData) {
-        console.warn('图片不存在:', name)
-        return false
-      }
-      
-      await this.db.collection('images').doc(imageData._id).update({
-        data: {
-          ...updateData,
-          updateTime: this.db.serverDate()
-        }
-      })
-      
-      this.imageCache.delete(name)
-      
-      console.log('图片更新成功:', name)
-      return true
-    } catch (e) {
-      console.error('更新图片失败:', e)
-      return false
-    }
-  }
-
-  async initDefaultImages() {
-    try {
-      console.log('开始初始化默认图片...')
-      
-      const defaultImages = [
-        {
-          name: 'baozhi',
-          type: 'background',
-          category: 'newspaper',
-          description: '每日报纸背景图',
-          localPath: 'tupian/baozhi.png'
-        },
-        {
-          name: 'chuzuwu',
-          type: 'background',
-          category: 'home',
-          description: '出租屋背景图',
-          localPath: 'tupian/chuzuwu.png'
-        },
-        {
-          name: 'shichang',
-          type: 'background',
-          category: 'market',
-          description: '市场背景图',
-          localPath: 'tupian/shichang.png'
-        }
-      ]
-      
-      for (const imageInfo of defaultImages) {
-        const existingImage = await this.getImage(imageInfo.name)
-        if (existingImage) {
-          console.log(`图片已存在，跳过: ${imageInfo.name}`)
-          continue
-        }
-        
-        console.log(`上传图片: ${imageInfo.name}`)
-        
-        const fs = wx.getFileSystemManager()
-        try {
-          fs.accessSync(imageInfo.localPath)
-          
-          const uploadRes = await this.uploadImage(
-            imageInfo.localPath,
-            imageInfo.name,
-            imageInfo.type,
-            imageInfo.category,
-            imageInfo.description
-          )
-          
-          if (uploadRes.success) {
-            console.log(`图片上传成功: ${imageInfo.name}`)
-          } else {
-            console.error(`图片上传失败: ${imageInfo.name}`, uploadRes.error)
-          }
-        } catch (e) {
-          console.warn(`本地图片不存在: ${imageInfo.localPath}`)
-        }
-      }
-      
-      console.log('默认图片初始化完成')
-      return true
-    } catch (e) {
-      console.error('初始化默认图片失败:', e)
-      return false
-    }
-  }
-
   async loadImageFromCloud(name) {
     try {
+      console.log(`[ImageManager] 开始加载云端图片: ${name}`)
+
       const imageData = await this.getImage(name)
       if (!imageData) {
-        console.warn('云存储中未找到图片:', name)
+        console.warn(`[ImageManager] 云存储中未找到图片: ${name}`)
         return null
       }
-      
+
+      if (!wx.cloud) {
+        console.error('[ImageManager] 云开发未初始化')
+        return null
+      }
+
+      console.log(`[ImageManager] 通过云函数获取临时URL, fileID: ${imageData.fileID}`)
+
+      const res = await wx.cloud.callFunction({
+        name: 'getTempFileURL',
+        data: {
+          fileList: [imageData.fileID]
+        }
+      })
+
+      console.log(`[ImageManager] 云函数返回:`, JSON.stringify(res, null, 2))
+
+      if (!res.result) {
+        console.error(`[ImageManager] 云函数调用失败, result 为空`)
+        return null
+      }
+
+      if (!res.result.success) {
+        console.error(`[ImageManager] 云函数获取临时链接失败: ${res.result.error}`)
+        return null
+      }
+
+      const tempURL = res.result.fileList[0].tempFileURL
+      if (!tempURL) {
+        console.error(`[ImageManager] tempURL 为空, status: ${res.result.fileList[0].status}, errMsg: ${res.result.fileList[0].errMsg}`)
+        return null
+      }
+      console.log(`[ImageManager] 临时URL: ${tempURL}`)
+
       return new Promise((resolve, reject) => {
         const img = wx.createImage()
         img.onload = () => {
-          console.log(`图片加载成功: ${name}`)
+          console.log(`[ImageManager] 图片加载成功: ${name}`)
           resolve({
             image: img,
             data: imageData
           })
         }
         img.onerror = (err) => {
-          console.error(`图片加载失败: ${name}`, err)
+          console.error(`[ImageManager] 图片加载失败: ${name}`, err)
           reject(err)
         }
-        img.src = imageData.url
+        img.src = tempURL
       })
     } catch (e) {
-      console.error('从云端加载图片失败:', e)
+      console.error('[ImageManager] 从云端加载图片失败:', e)
       return null
     }
   }
@@ -292,10 +177,6 @@ class ImageManager {
 const imageManager = new ImageManager()
 
 export default imageManager
-
-export async function uploadGameImages() {
-  return await imageManager.initDefaultImages()
-}
 
 export async function getCloudImage(name) {
   return await imageManager.loadImageFromCloud(name)

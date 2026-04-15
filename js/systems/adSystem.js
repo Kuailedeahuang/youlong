@@ -1,4 +1,6 @@
 // 广告系统
+import animationManager from '../utils/animationManager.js'
+
 export default class AdSystem {
     constructor(game) {
         this.game = game
@@ -51,7 +53,7 @@ export default class AdSystem {
     // 获取剩余次数
     getRemainingCount() {
         const state = this.game.gameState.data
-        return this.maxWatchCount - state.adWatchedCount
+        return Math.max(0, this.maxWatchCount - state.adWatchedCount)
     }
     
     // 显示广告
@@ -116,13 +118,19 @@ export default class AdSystem {
         state.adWatchedCount++
         this.game.gameState.save()
         
+        // 添加延迟动画
+        this.game.gameState.addDelayedAnimation('increase', rewardAmount, 'money', '金币', '#f39c12')
+        
         this.game.uiManager.addModal({
             type: 'confirm',
             title: '奖励已发放',
             content: `获得 ${rewardAmount} 金币！\n本局剩余次数: ${this.getRemainingCount()}/3`,
             confirmText: '知道了',
             singleButton: true,
-            onConfirm: () => {}
+            onConfirm: () => {
+                // 返回首页播放动画
+                this.game.sceneManager.switchTo('home')
+            }
         })
     }
     

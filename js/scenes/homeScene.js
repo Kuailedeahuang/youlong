@@ -1,6 +1,7 @@
 import ItemData, { categories } from '../data/items.js'
 import imageManager from '../utils/imageManager.js'
 import { restartGame } from '../utils/resetGame.js'
+import animationManager from '../utils/animationManager.js'
 
 export default class HomeScene {
     constructor(game) {
@@ -11,6 +12,27 @@ export default class HomeScene {
         this.useCloudImage = false
         this.loadBackground()
         this.initPrices()
+        
+    }
+    
+    // 获取各数值显示位置
+    getStatPositions() {
+        const w = this.game.renderer.width
+        const h = this.game.renderer.height
+        const roadY = h * 0.40
+        const roadH = h * 0.15
+        const padding = 15
+        
+        return {
+            money: { x: w - 50, y: 15 },
+            reputation: { x: padding + 30, y: roadY + padding + 10 },
+            energy: { x: w - padding - 30, y: roadY + padding + 10 },
+            mood: { x: padding + 30, y: roadY + roadH - padding - 5 },
+            health: { x: w - padding - 30, y: roadY + roadH - padding - 5 },
+            privateLoan: { x: w - 50, y: 45 },
+            bankLoan: { x: w - 50, y: 30 },
+            bankDeposit: { x: w - 50, y: 55 }
+        }
     }
     
     async loadBackground() {
@@ -43,10 +65,58 @@ export default class HomeScene {
     
     onEnter() {
         this.initPrices()
+        
+        // 播放延迟动画
+        this.playDelayedAnimations()
+    }
+    
+    // 播放延迟动画
+    playDelayedAnimations() {
+        const anims = this.game.gameState.getAndClearDelayedAnimations()
+        console.log('[动画] 播放延迟动画，数量:', anims.length)
+        if (anims.length === 0) return
+        
+        const positions = this.getStatPositions()
+        
+        anims.forEach((anim, index) => {
+            console.log('[动画] 准备播放:', anim.type, anim.statType, anim.value)
+            // 延迟播放，每个动画间隔200ms
+            setTimeout(() => {
+                const pos = positions[anim.statType]
+                if (pos) {
+                    const color = anim.color || this.getDefaultColor(anim.statType)
+                    console.log('[动画] 开始播放:', anim.type, '位置:', pos.x, pos.y)
+                    if (anim.type === 'increase') {
+                        animationManager.addIncreaseAnimation(pos.x, pos.y, anim.value, anim.label, color)
+                    } else if (anim.type === 'decrease') {
+                        animationManager.addDecreaseAnimation(pos.x, pos.y, anim.value, anim.label, color)
+                    } else if (anim.type === 'loan') {
+                        animationManager.addLoanAnimation(pos.x, pos.y, anim.value, anim.label, color)
+                    }
+                } else {
+                    console.warn('[动画] 未找到位置:', anim.statType)
+                }
+            }, index * 200)
+        })
+    }
+    
+    // 获取默认颜色
+    getDefaultColor(statType) {
+        const colorMap = {
+            money: '#f39c12',
+            health: '#27ae60',
+            energy: '#3498db',
+            mood: '#e91e63',
+            reputation: '#9b59b6',
+            privateLoan: '#e74c3c',
+            bankLoan: '#3498db',
+            bankDeposit: '#27ae60'
+        }
+        return colorMap[statType] || '#ffffff'
     }
     
     update(deltaTime) {
-        
+        // 动画在 render 中更新和渲染
     }
     
     render(renderer) {
@@ -72,6 +142,9 @@ export default class HomeScene {
         
         this.renderButtons(renderer, h - tabBarH, state)
         this.renderTabBar(renderer)
+        
+        // 渲染动画（在UI之上）
+        animationManager.updateAndRender(renderer)
     }
     
     renderTopBar(renderer, state) {
@@ -295,6 +368,13 @@ export default class HomeScene {
                 state.privateLoan += qty
                 state.money += qty
                 this.game.gameState.save()
+                
+                // 添加延迟动画
+                this.game.gameState.addDelayedAnimation('loan', qty, 'privateLoan', '私人贷款', '#e74c3c')
+                this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
+                
+                // 返回首页播放动画
+                this.game.sceneManager.switchTo('home')
             }
         })
     }
@@ -342,6 +422,13 @@ export default class HomeScene {
                     state.money -= qty
                     state.privateLoan -= qty
                     this.game.gameState.save()
+                    
+                    // 添加延迟动画
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'privateLoan', '私人贷款', '#e74c3c')
+                    
+                    // 返回首页播放动画
+                    this.game.sceneManager.switchTo('home')
                 }
             }
         })
@@ -388,6 +475,13 @@ export default class HomeScene {
                     state.money -= qty
                     state.bankDeposit += qty
                     this.game.gameState.save()
+                    
+                    // 添加延迟动画
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
+                    this.game.gameState.addDelayedAnimation('increase', qty, 'bankDeposit', '银行存款', '#27ae60')
+                    
+                    // 返回首页播放动画
+                    this.game.sceneManager.switchTo('home')
                 }
             }
         })
@@ -411,6 +505,13 @@ export default class HomeScene {
                 state.bankLoan += qty
                 state.money += qty
                 this.game.gameState.save()
+                
+                // 添加延迟动画
+                this.game.gameState.addDelayedAnimation('loan', qty, 'bankLoan', '银行贷款', '#3498db')
+                this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
+                
+                // 返回首页播放动画
+                this.game.sceneManager.switchTo('home')
             }
         })
     }
@@ -436,6 +537,13 @@ export default class HomeScene {
                     state.money -= qty
                     state.bankLoan -= qty
                     this.game.gameState.save()
+                    
+                    // 添加延迟动画
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'bankLoan', '银行贷款', '#3498db')
+                    
+                    // 返回首页播放动画
+                    this.game.sceneManager.switchTo('home')
                 }
             }
         })
@@ -509,14 +617,36 @@ export default class HomeScene {
             return
         }
         
-        state.energy -= 1
+        // 数据立即改变
+        state.energy = Math.max(0, state.energy - 1)
         state.money += salary
         
         if (isOvertime) {
-            state.health -= 5
+            state.health = Math.max(0, state.health - 5)
         }
         
         this.game.gameState.save()
+        
+        // 添加延迟动画 - 回到首页时播放
+        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
+        this.game.gameState.addDelayedAnimation('increase', salary, 'money', '金币', '#f39c12')
+        
+        if (isOvertime) {
+            this.game.gameState.addDelayedAnimation('decrease', 5, 'health', '健康', '#27ae60')
+        }
+        
+        // 显示工作完成提示并返回首页
+        this.game.uiManager.addModal({
+            type: 'confirm',
+            title: '工作完成',
+            content: `获得 ${salary} 金币！`,
+            confirmText: '知道了',
+            singleButton: true,
+            onConfirm: () => {
+                // 返回首页
+                this.game.sceneManager.switchTo('home')
+            }
+        })
     }
     
     doCharity() {
@@ -569,10 +699,20 @@ export default class HomeScene {
             height: 220,
             onConfirm: (qty) => {
                 if (state.money >= qty) {
+                    const reputationGain = 5 + Math.floor(Math.random() * 6)
+                    const moodGain = 5 + Math.floor(Math.random() * 6)
                     state.money -= qty
-                    state.reputation = Math.min(100, state.reputation + 5 + Math.floor(Math.random() * 6))
-                    state.mood = Math.min(100, state.mood + 5 + Math.floor(Math.random() * 6))
+                    state.reputation = Math.min(100, state.reputation + reputationGain)
+                    state.mood = Math.min(100, state.mood + moodGain)
                     this.game.gameState.save()
+                    
+                    // 添加延迟动画
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
+                    this.game.gameState.addDelayedAnimation('increase', reputationGain, 'reputation', '名誉', '#9b59b6')
+                    this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
+                    
+                    // 返回首页播放动画
+                    this.game.sceneManager.switchTo('home')
                 }
             }
         })
@@ -594,12 +734,17 @@ export default class HomeScene {
         }
         
         // 直接执行，不显示确认弹窗
-        state.energy -= 1
         const reputationGain = 5 + Math.floor(Math.random() * 6)
         const moodGain = 5 + Math.floor(Math.random() * 6)
+        state.energy -= 1
         state.reputation = Math.min(100, state.reputation + reputationGain)
         state.mood = Math.min(100, state.mood + moodGain)
         this.game.gameState.save()
+        
+        // 添加延迟动画
+        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
+        this.game.gameState.addDelayedAnimation('increase', reputationGain, 'reputation', '名誉', '#9b59b6')
+        this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
         
         // 显示结果
         this.game.uiManager.addModal({
@@ -608,7 +753,10 @@ export default class HomeScene {
             content: `你参与了体力劳动！\n\n消耗: 1精力\n获得: 名誉+${reputationGain}, 心情+${moodGain}`,
             confirmText: '知道了',
             singleButton: true,
-            onConfirm: () => {}
+            onConfirm: () => {
+                // 返回首页播放动画
+                this.game.sceneManager.switchTo('home')
+            }
         })
     }
     
@@ -637,6 +785,14 @@ export default class HomeScene {
                     state.money -= 100
                     state.health = Math.min(100, state.health + 30)
                     this.game.gameState.save()
+                    
+                    // 添加延迟动画
+                    this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
+                    this.game.gameState.addDelayedAnimation('decrease', 100, 'money', '金币', '#f39c12')
+                    this.game.gameState.addDelayedAnimation('increase', 30, 'health', '健康', '#27ae60')
+                    
+                    // 返回首页播放动画
+                    this.game.sceneManager.switchTo('home')
                 }
             }
         })
@@ -662,8 +818,9 @@ export default class HomeScene {
             content: '消耗1精力\n健康+5~+10\n连续健身可提升精力上限',
             confirmText: '健身',
             onConfirm: () => {
+                const healthGain = 5 + Math.floor(Math.random() * 6)
                 state.energy -= 1
-                state.health = Math.min(100, state.health + 5 + Math.floor(Math.random() * 6))
+                state.health = Math.min(100, state.health + healthGain)
                 state.consecutiveGymDays++
                 
                 if (state.consecutiveGymDays >= 3) {
@@ -671,6 +828,13 @@ export default class HomeScene {
                 }
                 
                 this.game.gameState.save()
+                
+                // 添加延迟动画
+                this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
+                this.game.gameState.addDelayedAnimation('increase', healthGain, 'health', '健康', '#27ae60')
+                
+                // 返回首页播放动画
+                this.game.sceneManager.switchTo('home')
             }
         })
     }
@@ -696,11 +860,20 @@ export default class HomeScene {
             confirmText: '娱乐',
             onConfirm: () => {
                 if (state.money >= 50) {
+                    const moodGain = 15 + Math.floor(Math.random() * 11)
                     state.energy -= 1
                     state.money -= 50
-                    state.mood = Math.min(100, state.mood + 15 + Math.floor(Math.random() * 11))
+                    state.mood = Math.min(100, state.mood + moodGain)
                     state.consecutiveGymDays = 0
                     this.game.gameState.save()
+                    
+                    // 添加延迟动画
+                    this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
+                    this.game.gameState.addDelayedAnimation('decrease', 50, 'money', '金币', '#f39c12')
+                    this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
+                    
+                    // 返回首页播放动画
+                    this.game.sceneManager.switchTo('home')
                 }
             }
         })
@@ -722,6 +895,9 @@ export default class HomeScene {
                 
                 // 执行每日检查（破产、结局等）
                 this.game.dailyCheck()
+                
+                // 返回首页播放动画
+                this.game.sceneManager.switchTo('home')
             }
         })
     }
@@ -732,20 +908,61 @@ export default class HomeScene {
         
         if (eventChance < 0.15) {
             const events = [
-                { text: '路边捡到钱包，获得50金币', effect: () => { state.money += 50 } },
-                { text: '不小心丢了钱包，损失30金币', effect: () => { state.money = Math.max(0, state.money - 30) } },
-                { text: '遇到好心人，心情+10', effect: () => { state.mood = Math.min(100, state.mood + 10) } },
-                { text: '被小偷偷了，损失20金币', effect: () => { state.money = Math.max(0, state.money - 20) } },
-                { text: '身体不适，健康-5', effect: () => { state.health = Math.max(0, state.health - 5) } },
-                { text: '收到红包，获得100金币', effect: () => { state.money += 100 } },
-                { text: '帮助老人，名誉+5', effect: () => { state.reputation = Math.min(100, state.reputation + 5) } },
-                { text: '被误解，名誉-5', effect: () => { state.reputation = Math.max(-100, state.reputation - 5) } },
-                { text: '睡了个好觉，心情+5', effect: () => { state.mood = Math.min(100, state.mood + 5) } },
-                { text: '做了噩梦，心情-5', effect: () => { state.mood = Math.max(0, state.mood - 5) } }
+                { 
+                    text: '路边捡到钱包，获得50金币', 
+                    effect: () => { state.money += 50 },
+                    anim: () => this.game.gameState.addDelayedAnimation('increase', 50, 'money', '金币', '#f39c12')
+                },
+                { 
+                    text: '不小心丢了钱包，损失30金币', 
+                    effect: () => { state.money = Math.max(0, state.money - 30) },
+                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 30, 'money', '金币', '#f39c12')
+                },
+                { 
+                    text: '遇到好心人，心情+10', 
+                    effect: () => { state.mood = Math.min(100, state.mood + 10) },
+                    anim: () => this.game.gameState.addDelayedAnimation('increase', 10, 'mood', '心情', '#e91e63')
+                },
+                { 
+                    text: '被小偷偷了，损失20金币', 
+                    effect: () => { state.money = Math.max(0, state.money - 20) },
+                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 20, 'money', '金币', '#f39c12')
+                },
+                { 
+                    text: '身体不适，健康-5', 
+                    effect: () => { state.health = Math.max(0, state.health - 5) },
+                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 5, 'health', '健康', '#27ae60')
+                },
+                { 
+                    text: '收到红包，获得100金币', 
+                    effect: () => { state.money += 100 },
+                    anim: () => this.game.gameState.addDelayedAnimation('increase', 100, 'money', '金币', '#f39c12')
+                },
+                { 
+                    text: '帮助老人，名誉+5', 
+                    effect: () => { state.reputation = Math.min(100, state.reputation + 5) },
+                    anim: () => this.game.gameState.addDelayedAnimation('increase', 5, 'reputation', '名誉', '#9b59b6')
+                },
+                { 
+                    text: '被误解，名誉-5', 
+                    effect: () => { state.reputation = Math.max(-100, state.reputation - 5) },
+                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 5, 'reputation', '名誉', '#9b59b6')
+                },
+                { 
+                    text: '睡了个好觉，心情+5', 
+                    effect: () => { state.mood = Math.min(100, state.mood + 5) },
+                    anim: () => this.game.gameState.addDelayedAnimation('increase', 5, 'mood', '心情', '#e91e63')
+                },
+                { 
+                    text: '做了噩梦，心情-5', 
+                    effect: () => { state.mood = Math.max(0, state.mood - 5) },
+                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 5, 'mood', '心情', '#e91e63')
+                }
             ]
             
             const event = events[Math.floor(Math.random() * events.length)]
             event.effect()
+            event.anim()
             
             // 直接显示随机事件弹窗
             this.game.uiManager.addModal({

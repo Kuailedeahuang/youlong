@@ -1,5 +1,6 @@
 import ItemData, { categories } from '../data/items.js'
 import imageManager from '../utils/imageManager.js'
+import animationManager from '../utils/animationManager.js'
 
 const newspapers = [
     { title: '市场快报', content: '今日市场行情平稳，各商品价格小幅波动。' },
@@ -33,11 +34,11 @@ export default class MarketScene {
     
     async loadBackground() {
         try {
-            const cloudImage = await imageManager.loadImageFromCloud('ShiChang')
+            const cloudImage = await imageManager.loadImageFromCloud('ShiChang.png')
             if (cloudImage && cloudImage.image) {
                 this.bgImage = cloudImage.image
                 this.imageLoaded = true
-                this.useCloudImage = true
+                this.useCloudBgImage = true
                 console.log('使用云存储背景图: ShiChang.png')
                 return
             }
@@ -56,10 +57,10 @@ export default class MarketScene {
         try {
             const cloudImage = await imageManager.loadImageFromCloud('BaoZhi.png')
             if (cloudImage && cloudImage.image) {
-                this.newspaperImage = cloudImage.image
-                this.newspaperImageLoaded = true
+                this.newspaperBgImage = cloudImage.image
+                this.newspaperBgLoaded = true
                 this.useCloudNewspaperImage = true
-                console.log('使用云存储报纸背景图: BaoZhi')
+                console.log('使用云存储报纸背景图: BaoZhi.png')
                 return
             }
         } catch (e) {
@@ -94,6 +95,32 @@ export default class MarketScene {
         this.selectedCategory = null
         
         const state = this.game.gameState.data
+        
+        // 首次进入市场消耗2精力
+        if (!state.marketEnteredToday) {
+            if (state.energy >= 2) {
+                state.energy -= 2
+                state.marketEnteredToday = true
+                this.game.gameState.save()
+                
+                // 添加延迟动画
+                this.game.gameState.addDelayedAnimation('decrease', 2, 'energy', '精力', '#3498db')
+            } else {
+                // 精力不足，返回首页
+                this.game.uiManager.addModal({
+                    type: 'confirm',
+                    title: '精力不足',
+                    content: '需要2点精力才能进入市场',
+                    confirmText: '知道了',
+                    singleButton: true,
+                    onConfirm: () => {
+                        this.game.sceneManager.switchTo('home')
+                    }
+                })
+                return
+            }
+        }
+        
         if (!state.newspaperShown) {
             const paper = this.generateNewspaper()
             // 延迟显示报纸，确保背景图片已加载
@@ -299,17 +326,6 @@ export default class MarketScene {
     showBuyModal(item, priceData) {
         const state = this.game.gameState.data
         
-        if (state.energy < 2) {
-            this.game.uiManager.addModal({
-                type: 'confirm',
-                title: '精力不足',
-                content: '需要2点精力才能交易',
-                confirmText: '知道了',
-                onConfirm: () => {}
-            })
-            return
-        }
-        
         let usedSlots = 0
         Object.keys(state.warehouse).forEach(id => {
             if (state.warehouse[id] && state.warehouse[id].quantity > 0) usedSlots++
@@ -323,7 +339,7 @@ export default class MarketScene {
         this.game.uiManager.addModal({
             type: 'trade',
             title: '购买商品',
-            content: '消耗2精力',
+            content: '',
             itemName: item.name,
             price: priceData.current,
             quantity: 1,
@@ -331,11 +347,13 @@ export default class MarketScene {
             total: priceData.current,
             tradeType: 'buy',
             onConfirm: (qty, total) => {
-                if (state.money >= total && state.energy >= 2) {
+                if (state.money >= total) {
                     state.money -= total
-                    state.energy -= 2
                     
                     this.game.gameState.addToWarehouse(item.id, qty, total)
+                    
+                    // 添加延迟动画
+                    this.game.gameState.addDelayedAnimation('decrease', total, 'money', '金币', '#f39c12')
                 }
             }
         })
@@ -358,6 +376,9 @@ export default class MarketScene {
                 if (this.game.gameState.getWarehouseQuantity(item.id) >= qty) {
                     state.money += total
                     this.game.gameState.removeFromWarehouse(item.id, qty)
+                    
+                    // 添加延迟动画
+                    this.game.gameState.addDelayedAnimation('increase', total, 'money', '金币', '#f39c12')
                 }
             }
         })

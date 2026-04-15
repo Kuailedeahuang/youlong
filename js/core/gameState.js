@@ -5,7 +5,36 @@ export default class GameState {
     constructor() {
         this.data = this.getDefaultState()
         this.isCloudReady = false
+        
+        // 延迟动画队列 - 数据改变时记录，回到首页时播放
+        this.delayedAnimations = []
+        
         this.load()
+    }
+    
+    // 添加延迟动画到队列
+    addDelayedAnimation(type, value, statType, label, color = null) {
+        console.log('[动画队列] 添加动画:', type, statType, value)
+        this.delayedAnimations.push({
+            type,           // 'increase', 'decrease', 'loan'
+            value,
+            statType,       // 'money', 'health', 'energy', 'mood', 'reputation', 'privateLoan', 'bankLoan'
+            label,
+            color,
+            timestamp: Date.now()
+        })
+    }
+    
+    // 获取并清空延迟动画队列
+    getAndClearDelayedAnimations() {
+        const anims = [...this.delayedAnimations]
+        this.delayedAnimations = []
+        return anims
+    }
+    
+    // 检查是否有延迟动画
+    hasDelayedAnimations() {
+        return this.delayedAnimations.length > 0
     }
     
     getDefaultState() {
@@ -47,6 +76,7 @@ export default class GameState {
             todayEvents: [],
             newspaperShown: false,
             yesterdayExpense: 0,
+            marketEnteredToday: false,
             hasEnteredMarketToday: false,
             _id: null
         }
@@ -64,7 +94,7 @@ export default class GameState {
                 
                 const db = wx.cloud.database({})
                 try {
-                    const res = await db.collection('gameProgress').limit(1).get()
+                    const res = await db.collection('gameprogress').limit(1).get()
                     
                     if (res.data && res.data.length > 0) {
                         const cloudData = res.data[0]
@@ -76,7 +106,7 @@ export default class GameState {
                         console.log('云数据库中无记录，使用默认数据')
                     }
                 } catch (dbError) {
-                    console.warn('gameProgress 集合操作失败，将使用本地存储:', dbError)
+                    console.warn('gameprogress 集合操作失败，将使用本地存储:', dbError)
                     this.isCloudReady = false
                 }
             }
@@ -116,7 +146,7 @@ export default class GameState {
                 
                 try {
                     if (this.data._id) {
-                        await db.collection('gameProgress').doc(this.data._id).update({
+                        await db.collection('gameprogress').doc(this.data._id).update({
                             data: {
                                 ...saveData,
                                 updateTime: db.serverDate()
@@ -124,7 +154,7 @@ export default class GameState {
                         })
                         console.log('云数据库更新成功')
                     } else {
-                        const res = await db.collection('gameProgress').add({
+                        const res = await db.collection('gameprogress').add({
                             data: {
                                 ...saveData,
                                 createTime: db.serverDate(),
@@ -136,7 +166,7 @@ export default class GameState {
                         console.log('云数据库创建成功')
                     }
                 } catch (dbError) {
-                    console.warn('gameProgress 集合操作失败，将使用本地存储:', dbError)
+                    console.warn('gameprogress 集合操作失败，将使用本地存储:', dbError)
                     this.isCloudReady = false
                 }
             }
@@ -245,6 +275,7 @@ export default class GameState {
         this.data.energy = this.data.maxEnergy
         this.data.newspaperShown = false
         this.data.hasEnteredMarketToday = false
+        this.data.marketEnteredToday = false
         this.data.todayEvents = []
         
         let baseExpense = 80
@@ -255,12 +286,17 @@ export default class GameState {
         
         if (this.data.money >= dailyExpense) {
             this.data.money -= dailyExpense
+            // 添加日常消费动画
+            this.addDelayedAnimation('decrease', dailyExpense, 'money', '日常消费', '#f39c12')
         } else {
             const deficit = dailyExpense - this.data.money
             this.data.money = 0
             this.data.privateLoan += Math.ceil(deficit * 1.05)
             this.data.overdueDays++
             this.addEvent('因资金不足，自动借入私人借贷')
+            // 添加借贷动画
+            this.addDelayedAnimation('decrease', this.data.money, 'money', '金币', '#f39c12')
+            this.addDelayedAnimation('loan', Math.ceil(deficit * 1.05), 'privateLoan', '私人贷款', '#e74c3c')
         }
         
         if (this.data.mood < 40) {
