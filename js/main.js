@@ -22,7 +22,6 @@ class Game {
         this.canvas.height = this.height * this.dpr
         this.ctx.scale(this.dpr, this.dpr)
         
-        // 先初始化云开发，等待完成后再创建依赖云开发的对象
         this.initCloudSync()
     }
     
@@ -35,13 +34,11 @@ class Game {
           console.error('云开发初始化失败:', e)
         }
         
-        // 云开发初始化完成后，再创建依赖云开发的对象
         this.gameState = new GameState()
         this.renderer = new Renderer(this.ctx, this.width, this.height)
         this.uiManager = new UIManager(this)
         this.sceneManager = new SceneManager(this)
         
-        // 初始化系统
         this.endingSystem = new EndingSystem(this)
         this.adSystem = new AdSystem(this)
         this.houseSystem = new HouseSystem(this)
@@ -84,25 +81,20 @@ class Game {
         this.uiManager.render(this.renderer)
     }
     
-    // 重置游戏
     async resetGame() {
         console.log('重置游戏...')
         await restartGame()
     }
     
-    // 每日检查
     dailyCheck() {
-        // 检查破产
         if (this.bankruptcySystem.checkAndExecuteBankruptcy()) {
             return
         }
         
-        // 检查结局
         if (this.endingSystem.dailyCheck()) {
             return
         }
         
-        // 显示破产预警
         this.bankruptcySystem.showBankruptcyWarning()
     }
 }

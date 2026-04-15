@@ -15,7 +15,6 @@ export default class HomeScene {
         
     }
     
-    // 获取各数值显示位置
     getStatPositions() {
         const w = this.game.renderer.width
         const h = this.game.renderer.height
@@ -66,11 +65,9 @@ export default class HomeScene {
     onEnter() {
         this.initPrices()
         
-        // 播放延迟动画
         this.playDelayedAnimations()
     }
     
-    // 播放延迟动画
     playDelayedAnimations() {
         const anims = this.game.gameState.getAndClearDelayedAnimations()
         console.log('[动画] 播放延迟动画，数量:', anims.length)
@@ -80,7 +77,6 @@ export default class HomeScene {
         
         anims.forEach((anim, index) => {
             console.log('[动画] 准备播放:', anim.type, anim.statType, anim.value)
-            // 延迟播放，每个动画间隔200ms
             setTimeout(() => {
                 const pos = positions[anim.statType]
                 if (pos) {
@@ -100,7 +96,6 @@ export default class HomeScene {
         })
     }
     
-    // 获取默认颜色
     getDefaultColor(statType) {
         const colorMap = {
             money: '#f39c12',
@@ -116,7 +111,7 @@ export default class HomeScene {
     }
     
     update(deltaTime) {
-        // 动画在 render 中更新和渲染
+        
     }
     
     render(renderer) {
@@ -143,7 +138,6 @@ export default class HomeScene {
         this.renderButtons(renderer, h - tabBarH, state)
         this.renderTabBar(renderer)
         
-        // 渲染动画（在UI之上）
         animationManager.updateAndRender(renderer)
     }
     
@@ -154,13 +148,11 @@ export default class HomeScene {
         
         renderer.drawText(`金币: ${state.money}`, renderer.width - 15, 15, '#f39c12', 12, 'right')
         
-        // 显示银行存款/欠款
         const bankNet = state.bankDeposit - state.bankLoan
         const bankColor = bankNet >= 0 ? '#27ae60' : '#e74c3c'
         const bankText = bankNet >= 0 ? `银行存款: +${bankNet}` : `银行欠款: ${bankNet}`
         renderer.drawText(bankText, renderer.width - 15, 30, bankColor, 10, 'right')
         
-        // 显示个人借贷欠款
         if (state.privateLoan > 0) {
             renderer.drawText(`个人欠款: ${state.privateLoan}`, renderer.width - 15, 45, '#e74c3c', 10, 'right')
         }
@@ -182,7 +174,6 @@ export default class HomeScene {
         
         ctx.font = `bold ${fontSize}px sans-serif`
         
-        // 第一行：名誉和精力（靠上）
         ctx.textAlign = 'left'
         ctx.fillStyle = '#ffffff'
         ctx.fillText(`名誉 ${state.reputation}/100`, padding + 5, roadY + padding + 10)
@@ -190,7 +181,6 @@ export default class HomeScene {
         ctx.textAlign = 'right'
         ctx.fillText(`精力 ${state.energy}/${state.maxEnergy}`, w - padding - 5, roadY + padding + 10)
         
-        // 第二行：心情和健康（靠下，到达马路底角）
         ctx.textAlign = 'left'
         ctx.fillText(`心情 ${state.mood}/100`, padding + 5, roadY + roadH - padding - 5)
         
@@ -242,19 +232,16 @@ export default class HomeScene {
             ui.addButton(innerX + i * (btnW2 + btnGap), startY + btnH + btnGap, btnW2, btnH, btn.text, btn.action, { fontSize: 12 })
         })
         
-        // 第三行：售楼部和广告
         const row3Y = startY + btnH * 2 + btnGap * 2
         const btnW3 = (innerW - btnGap) / 2
         ui.addButton(innerX, row3Y, btnW3, btnH, '售楼部', () => this.enterHouseScene(), { fontSize: 12 })
         
-        // 广告按钮
         const adText = this.game.adSystem.getAdButtonText()
         ui.addButton(innerX + btnW3 + btnGap, row3Y, btnW3, btnH, adText, () => this.game.adSystem.showAd(), { fontSize: 11 })
         
         const endBtnY = row3Y + btnH + btnGap + 5
         ui.addButton(innerX + (innerW - 120) / 2, endBtnY, 120, endBtnH, '结束今日', () => this.endDay(), { bgColor: '#f39c12', fontSize: 14 })
         
-        // 添加重新开始按钮
         const restartBtnY = endBtnY + endBtnH + btnGap
         ui.addButton(innerX + (innerW - 100) / 2, restartBtnY, 100, restartBtnH, '重新开始', () => this.showRestartConfirm(), { bgColor: '#e74c3c', fontSize: 11 })
     }
@@ -292,9 +279,7 @@ export default class HomeScene {
     enterMarket() {
         const state = this.game.gameState.data
         
-        // 检查今日是否已进过市场
         if (!state.hasEnteredMarketToday) {
-            // 首次进入市场消耗2点精力
             if (state.energy < 2) {
                 this.game.uiManager.addModal({
                     type: 'confirm',
@@ -306,7 +291,6 @@ export default class HomeScene {
                 return
             }
             
-            // 扣除精力并标记今日已进入市场
             state.energy -= 2
             state.hasEnteredMarketToday = true
             this.game.gameState.save()
@@ -316,24 +300,20 @@ export default class HomeScene {
     }
     
     enterHouseScene() {
-        // 直接进入售楼部场景，不需要精力
         this.game.sceneManager.switchTo('house')
     }
     
     showLoanModal() {
         const state = this.game.gameState.data
         
-        // 首先显示选择界面：借贷/还款/取消
         const actions = []
         
-        // 借贷选项
         actions.push({
             text: '借贷',
             callback: () => this.doPrivateLoan(),
             color: '#e74c3c'
         })
         
-        // 还款选项（有欠款时才显示）
         if (state.privateLoan > 0) {
             actions.push({
                 text: '还款',
@@ -369,11 +349,9 @@ export default class HomeScene {
                 state.money += qty
                 this.game.gameState.save()
                 
-                // 添加延迟动画
                 this.game.gameState.addDelayedAnimation('loan', qty, 'privateLoan', '私人贷款', '#e74c3c')
                 this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
                 
-                // 返回首页播放动画
                 this.game.sceneManager.switchTo('home')
             }
         })
@@ -423,11 +401,9 @@ export default class HomeScene {
                     state.privateLoan -= qty
                     this.game.gameState.save()
                     
-                    // 添加延迟动画
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'privateLoan', '私人贷款', '#e74c3c')
                     
-                    // 返回首页播放动画
                     this.game.sceneManager.switchTo('home')
                 }
             }
@@ -437,13 +413,11 @@ export default class HomeScene {
     showBankModal() {
         const state = this.game.gameState.data
         
-        // 构建银行操作按钮
         const actions = [
             { text: '存款', callback: () => this.doDeposit() },
             { text: '贷款', callback: () => this.doLoan() }
         ]
         
-        // 有银行欠款时才显示还款按钮
         if (state.bankLoan > 0) {
             actions.push({ text: '还款', callback: () => this.doRepay() })
         }
@@ -476,11 +450,9 @@ export default class HomeScene {
                     state.bankDeposit += qty
                     this.game.gameState.save()
                     
-                    // 添加延迟动画
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('increase', qty, 'bankDeposit', '银行存款', '#27ae60')
                     
-                    // 返回首页播放动画
                     this.game.sceneManager.switchTo('home')
                 }
             }
@@ -506,11 +478,9 @@ export default class HomeScene {
                 state.money += qty
                 this.game.gameState.save()
                 
-                // 添加延迟动画
                 this.game.gameState.addDelayedAnimation('loan', qty, 'bankLoan', '银行贷款', '#3498db')
                 this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
                 
-                // 返回首页播放动画
                 this.game.sceneManager.switchTo('home')
             }
         })
@@ -538,11 +508,9 @@ export default class HomeScene {
                     state.bankLoan -= qty
                     this.game.gameState.save()
                     
-                    // 添加延迟动画
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'bankLoan', '银行贷款', '#3498db')
                     
-                    // 返回首页播放动画
                     this.game.sceneManager.switchTo('home')
                 }
             }
@@ -617,7 +585,6 @@ export default class HomeScene {
             return
         }
         
-        // 数据立即改变
         state.energy = Math.max(0, state.energy - 1)
         state.money += salary
         
@@ -627,7 +594,6 @@ export default class HomeScene {
         
         this.game.gameState.save()
         
-        // 添加延迟动画 - 回到首页时播放
         this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
         this.game.gameState.addDelayedAnimation('increase', salary, 'money', '金币', '#f39c12')
         
@@ -635,7 +601,6 @@ export default class HomeScene {
             this.game.gameState.addDelayedAnimation('decrease', 5, 'health', '健康', '#27ae60')
         }
         
-        // 显示工作完成提示并返回首页
         this.game.uiManager.addModal({
             type: 'confirm',
             title: '工作完成',
@@ -643,7 +608,6 @@ export default class HomeScene {
             confirmText: '知道了',
             singleButton: true,
             onConfirm: () => {
-                // 返回首页
                 this.game.sceneManager.switchTo('home')
             }
         })
@@ -706,12 +670,10 @@ export default class HomeScene {
                     state.mood = Math.min(100, state.mood + moodGain)
                     this.game.gameState.save()
                     
-                    // 添加延迟动画
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('increase', reputationGain, 'reputation', '名誉', '#9b59b6')
                     this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
                     
-                    // 返回首页播放动画
                     this.game.sceneManager.switchTo('home')
                 }
             }
@@ -733,7 +695,6 @@ export default class HomeScene {
             return
         }
         
-        // 直接执行，不显示确认弹窗
         const reputationGain = 5 + Math.floor(Math.random() * 6)
         const moodGain = 5 + Math.floor(Math.random() * 6)
         state.energy -= 1
@@ -741,12 +702,10 @@ export default class HomeScene {
         state.mood = Math.min(100, state.mood + moodGain)
         this.game.gameState.save()
         
-        // 添加延迟动画
         this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
         this.game.gameState.addDelayedAnimation('increase', reputationGain, 'reputation', '名誉', '#9b59b6')
         this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
         
-        // 显示结果
         this.game.uiManager.addModal({
             type: 'confirm',
             title: '公益活动完成',
@@ -754,7 +713,6 @@ export default class HomeScene {
             confirmText: '知道了',
             singleButton: true,
             onConfirm: () => {
-                // 返回首页播放动画
                 this.game.sceneManager.switchTo('home')
             }
         })
@@ -786,12 +744,10 @@ export default class HomeScene {
                     state.health = Math.min(100, state.health + 30)
                     this.game.gameState.save()
                     
-                    // 添加延迟动画
                     this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
                     this.game.gameState.addDelayedAnimation('decrease', 100, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('increase', 30, 'health', '健康', '#27ae60')
                     
-                    // 返回首页播放动画
                     this.game.sceneManager.switchTo('home')
                 }
             }
@@ -829,11 +785,9 @@ export default class HomeScene {
                 
                 this.game.gameState.save()
                 
-                // 添加延迟动画
                 this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
                 this.game.gameState.addDelayedAnimation('increase', healthGain, 'health', '健康', '#27ae60')
                 
-                // 返回首页播放动画
                 this.game.sceneManager.switchTo('home')
             }
         })
@@ -867,12 +821,10 @@ export default class HomeScene {
                     state.consecutiveGymDays = 0
                     this.game.gameState.save()
                     
-                    // 添加延迟动画
                     this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
                     this.game.gameState.addDelayedAnimation('decrease', 50, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
                     
-                    // 返回首页播放动画
                     this.game.sceneManager.switchTo('home')
                 }
             }
@@ -886,17 +838,12 @@ export default class HomeScene {
             content: '确定结束今天吗?\n将自动扣除日常消费',
             confirmText: '确定',
             onConfirm: () => {
-                // 触发随机事件并直接显示弹窗
                 this.triggerRandomEventsDirect()
                 
                 this.game.gameState.nextDay()
                 
-                // 注意：广告次数不再每天重置，整局游戏只能看3次
-                
-                // 执行每日检查（破产、结局等）
                 this.game.dailyCheck()
                 
-                // 返回首页播放动画
                 this.game.sceneManager.switchTo('home')
             }
         })
@@ -964,7 +911,6 @@ export default class HomeScene {
             event.effect()
             event.anim()
             
-            // 直接显示随机事件弹窗
             this.game.uiManager.addModal({
                 type: 'confirm',
                 title: '随机事件',

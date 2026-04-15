@@ -1,4 +1,3 @@
-// 房产数据
 export const HOUSES_DATA = [
     {
         id: 1,
@@ -102,17 +101,14 @@ export const HOUSES_DATA = [
     }
 ]
 
-// 获取房产信息
 export function getHouseById(id) {
     return HOUSES_DATA.find(house => house.id === id)
 }
 
-// 获取所有房产
 export function getAllHouses() {
     return HOUSES_DATA
 }
 
-// 检查购房资格
 export function checkPurchaseEligibility(state, houseId) {
     const house = getHouseById(houseId)
     if (!house) {
@@ -122,7 +118,6 @@ export function checkPurchaseEligibility(state, houseId) {
         }
     }
     
-    // 检查天数
     if (state.day > 180) {
         return {
             eligible: false,
@@ -130,7 +125,6 @@ export function checkPurchaseEligibility(state, houseId) {
         }
     }
     
-    // 检查负债
     if (state.bankLoan > 0) {
         return {
             eligible: false,
@@ -145,7 +139,6 @@ export function checkPurchaseEligibility(state, houseId) {
         }
     }
     
-    // 检查金币
     if (state.money < house.price) {
         return {
             eligible: false,

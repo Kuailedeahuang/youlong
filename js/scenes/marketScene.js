@@ -96,17 +96,14 @@ export default class MarketScene {
         
         const state = this.game.gameState.data
         
-        // 首次进入市场消耗2精力
         if (!state.marketEnteredToday) {
             if (state.energy >= 2) {
                 state.energy -= 2
                 state.marketEnteredToday = true
                 this.game.gameState.save()
                 
-                // 添加延迟动画
                 this.game.gameState.addDelayedAnimation('decrease', 2, 'energy', '精力', '#3498db')
             } else {
-                // 精力不足，返回首页
                 this.game.uiManager.addModal({
                     type: 'confirm',
                     title: '精力不足',
@@ -123,7 +120,6 @@ export default class MarketScene {
         
         if (!state.newspaperShown) {
             const paper = this.generateNewspaper()
-            // 延迟显示报纸，确保背景图片已加载
             setTimeout(() => {
                 this.game.uiManager.addModal({
                     type: 'confirm',
@@ -134,7 +130,7 @@ export default class MarketScene {
                     backgroundImage: this.newspaperBgImage,
                     backgroundImageLoaded: this.newspaperBgLoaded,
                     height: 320,
-                    isNewspaper: true, // 标记为报纸弹窗
+                    isNewspaper: true,
                     onConfirm: () => {
                         this.game.gameState.set('newspaperShown', true)
                     }
@@ -352,7 +348,6 @@ export default class MarketScene {
                     
                     this.game.gameState.addToWarehouse(item.id, qty, total)
                     
-                    // 添加延迟动画
                     this.game.gameState.addDelayedAnimation('decrease', total, 'money', '金币', '#f39c12')
                 }
             }
@@ -377,7 +372,6 @@ export default class MarketScene {
                     state.money += total
                     this.game.gameState.removeFromWarehouse(item.id, qty)
                     
-                    // 添加延迟动画
                     this.game.gameState.addDelayedAnimation('increase', total, 'money', '金币', '#f39c12')
                 }
             }

@@ -71,7 +71,6 @@ export default class UIManager {
                 this.closeModal()
             }
         } else if (modal.type === 'action') {
-            // 检查是否点击了取消按钮
             if (modal.cancelBtn && this.hitTest(x, y, modal.cancelBtn)) {
                 this.closeModal()
                 return
@@ -80,7 +79,6 @@ export default class UIManager {
             for (const action of modal.actions || []) {
                 if (this.hitTest(x, y, action)) {
                     if (action.callback) action.callback()
-                    // 注意：callback中可能会打开新弹窗，所以不自动关闭
                     break
                 }
             }
@@ -214,22 +212,18 @@ export default class UIManager {
             
             let drawW, drawH, drawX, drawY
             
-            // 使用 cover 模式，确保图片填满整个弹窗
             if (imgRatio > modalRatio) {
-                // 图片更宽，以高度为基准，宽度溢出
                 drawH = modalH
                 drawW = drawH * imgRatio
                 drawX = modalX - (drawW - modalW) / 2
                 drawY = modalY
             } else {
-                // 图片更高，以宽度为基准，高度溢出
                 drawW = modalW
                 drawH = drawW / imgRatio
                 drawX = modalX
                 drawY = modalY - (drawH - modalH) / 2
             }
             
-            // 确保图片至少填满弹窗，可以更大
             const scale = Math.max(modalW / drawW, modalH / drawH)
             if (scale > 1) {
                 drawW *= scale
@@ -241,8 +235,6 @@ export default class UIManager {
             ctx.drawImage(img, drawX, drawY, drawW, drawH)
             ctx.restore()
             
-            // 报纸弹窗不添加半透明底色，直接使用报纸背景
-            // 只在非报纸弹窗时添加半透明遮罩
             if (!modal.isNewspaper) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'
                 this.drawRoundRect(ctx, modalX, modalY, modalW, modalH, 12)
@@ -257,13 +249,11 @@ export default class UIManager {
         ctx.lineWidth = 1
         ctx.stroke()
         
-        // 报纸弹窗使用深色文字以便在报纸背景上显示
         const titleColor = modal.isNewspaper ? '#1a1a2e' : '#f39c12'
         const contentColor = modal.isNewspaper ? '#2d3748' : '#bdc3c7'
         const titleY = modal.isNewspaper ? modalY + 90 : modalY + 25
         const contentStartY = modal.isNewspaper ? modalY + 160 : modalY + 55
         
-        // 报纸标题居中显示
         if (modal.isNewspaper) {
             renderer.drawText(modal.title, modalX + modalW / 2, titleY, titleColor, 18, 'center')
         } else {
@@ -285,7 +275,6 @@ export default class UIManager {
             const btnY = modalY + modalH - 45
             
             if (modal.singleButton) {
-                // 按钮宽度调小并居中
                 const btnW = 100
                 modal.confirmBtn = { x: modalX + (modalW - btnW) / 2, y: btnY, w: btnW, h: 32 }
                 renderer.drawButton(modal.confirmBtn.x, modal.confirmBtn.y, modal.confirmBtn.w, modal.confirmBtn.h, modal.confirmText || '确定', '#f39c12')
@@ -295,12 +284,12 @@ export default class UIManager {
                 modal.cancelBtn = { x: modalX + 10, y: btnY, w: btnW, h: 40 }
                 modal.confirmBtn = { x: modalX + btnW + 20, y: btnY, w: btnW, h: 40 }
                 
-          rawButton(modal.cancelBtn.x, modal.cancelBtn.y, modal.cancelBtn.w, modal.cancelBtn.h, '取消', '#7f8c8d')
+                renderer.drawButton(modal.cancelBtn.x, modal.cancelBtn.y, modal.cancelBtn.w, modal.cancelBtn.h, '取消', '#7f8c8d')
                 renderer.drawButton(modal.confirmBtn.x, modal.confirmBtn.y, modal.confirmBtn.w, modal.confirmBtn.h, modal.confirmText || '确定', '#f39c12')
             }
         } else if (modal.type === 'action') {
             const btnY = modalY + modalH - 50
-            const hasCancel = modal.showCancel !== false // 默认显示取消按钮
+            const hasCancel = modal.showCancel !== false
             const actionCount = modal.actions.length + (hasCancel ? 1 : 0)
             const btnW = (modalW - 20) / actionCount - 5
             
@@ -312,7 +301,6 @@ export default class UIManager {
                 renderer.drawButton(action.x, action.y, action.w, action.h, action.text, action.color || '#3498db')
             })
             
-            // 添加取消按钮
             if (hasCancel) {
                 modal.cancelBtn = {
                     x: modalX + 10 + modal.actions.length * (btnW + 5),

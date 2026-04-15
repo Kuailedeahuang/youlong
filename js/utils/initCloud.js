@@ -1,6 +1,6 @@
-import ItemData from '../data/items.js'
+export const CLOUD_ENV_ID = 'cloud1-1glyk3ivc2fc740d'
 
-const CLOUD_ENV_ID = 'cloud1-1glyk3ivc2fc740d'
+import ItemData from '../data/items.js'
 
 export async function initializeCloudDatabase() {
   if (!wx.cloud) {
@@ -9,7 +9,6 @@ export async function initializeCloudDatabase() {
   }
 
   try {
-    // 初始化云开发
     await wx.cloud.init({
       env: CLOUD_ENV_ID,
       traceUser: true
@@ -81,7 +80,6 @@ export async function initializeCloudDatabase() {
       console.log('商品数据已存在，跳过初始化')
     }
 
-    // 确保 gameprogress 集合存在（尝试查询，触发集合创建）
     try {
       await db.collection('gameprogress').count()
       console.log('gameprogress 集合已存在')

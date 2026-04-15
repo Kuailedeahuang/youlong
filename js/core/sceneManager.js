@@ -14,7 +14,6 @@ export default class SceneManager {
         }
         this.currentScene = 'splash'
         
-        // 启动启动页
         setTimeout(() => {
             this.scenes.splash.onEnter()
         }, 0)
