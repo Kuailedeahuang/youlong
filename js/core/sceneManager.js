@@ -13,6 +13,7 @@ export default class SceneManager {
             house: new HouseScene(game)
         }
         this.currentScene = 'splash'
+        this.isSwitching = false
         
         setTimeout(() => {
             this.scenes.splash.onEnter()
@@ -20,11 +21,17 @@ export default class SceneManager {
     }
     
     switchTo(sceneName) {
-        if (this.scenes[sceneName]) {
+        if (this.scenes[sceneName] && !this.isSwitching) {
+            this.isSwitching = true
             this.game.uiManager.clearAll()
             this.currentScene = sceneName
             this.game.gameState.set('currentScene', sceneName)
-            this.scenes[sceneName].onEnter()
+            
+            // 延迟执行场景进入，避免渲染冲突
+            setTimeout(() => {
+                this.scenes[sceneName].onEnter()
+                this.isSwitching = false
+            }, 50)
         }
     }
     

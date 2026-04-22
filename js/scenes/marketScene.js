@@ -150,9 +150,14 @@ export default class MarketScene {
         
         this.game.uiManager.clear()
         
-        if (this.imageLoaded && this.bgImage) {
-            const ctx = renderer.ctx
-            ctx.drawImage(this.bgImage, 0, 0, w, h)
+        if (this.imageLoaded && this.bgImage && this.bgImage.width > 0) {
+            try {
+                const ctx = renderer.ctx
+                ctx.drawImage(this.bgImage, 0, 0, w, h)
+            } catch (e) {
+                console.warn('绘制背景图失败:', e)
+                renderer.clear('#16213e')
+            }
         } else {
             renderer.clear('#16213e')
         }

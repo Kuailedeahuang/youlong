@@ -61,12 +61,16 @@ class Game {
     }
     
     loop() {
-        const now = Date.now()
-        this.deltaTime = (now - this.lastTime) / 1000
-        this.lastTime = now
-        
-        this.update()
-        this.render()
+        try {
+            const now = Date.now()
+            this.deltaTime = (now - this.lastTime) / 1000
+            this.lastTime = now
+            
+            this.update()
+            this.render()
+        } catch (e) {
+            console.error('渲染循环错误:', e)
+        }
         
         requestAnimationFrame(() => this.loop())
     }

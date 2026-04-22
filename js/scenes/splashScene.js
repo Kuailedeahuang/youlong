@@ -66,8 +66,14 @@ export default class SplashScene {
         const logoX = (w - logoSize) / 2
         const logoY = h * 0.25
         
-        if (this.imageLoaded && this.logoImage) {
-            ctx.drawImage(this.logoImage, logoX, logoY, logoSize, logoSize)
+        if (this.imageLoaded && this.logoImage && this.logoImage.width > 0) {
+            try {
+                ctx.drawImage(this.logoImage, logoX, logoY, logoSize, logoSize)
+            } catch (e) {
+                console.warn('绘制Logo失败:', e)
+                renderer.drawRect(logoX, logoY, logoSize, logoSize, '#2c3e50')
+                renderer.drawText('游', logoX + logoSize / 2, logoY + logoSize / 2, '#f39c12', 48, 'center')
+            }
         } else {
             // 图片未加载时显示占位符
             renderer.drawRect(logoX, logoY, logoSize, logoSize, '#2c3e50')

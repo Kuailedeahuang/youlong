@@ -206,7 +206,11 @@ export default class UIManager {
                 drawY = modalY - (drawH - modalH) / 2
             }
             
-            ctx.drawImage(img, drawX, drawY, drawW, drawH)
+            try {
+                ctx.drawImage(img, drawX, drawY, drawW, drawH)
+            } catch (e) {
+                console.warn('绘制弹窗背景图失败:', e)
+            }
             ctx.restore()
             
             if (!modal.isNewspaper) {
