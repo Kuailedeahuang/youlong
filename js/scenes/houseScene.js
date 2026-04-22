@@ -1,5 +1,6 @@
 import { getAllHouses, checkPurchaseEligibility } from '../data/houses.js'
 import animationManager from '../utils/animationManager.js'
+import { CLOUD_ENV_ID } from '../config.js'
 
 export class HouseScene {
     constructor(game) {
@@ -286,18 +287,51 @@ export class HouseScene {
             title: '结局 - 安家立业',
             content: endingContent,
             confirmText: '再活一世',
-            singleButton: true,
+            cancelText: '退出游戏',
+            singleButton: false,
             onConfirm: () => {
                 this.restartGameWithUnlockedHouses()
+            },
+            onCancel: () => {
+                // 退出游戏
+                wx.exitMiniProgram({
+                    success: () => {
+                        console.log('退出游戏成功')
+                    },
+                    fail: (err) => {
+                        console.error('退出游戏失败:', err)
+                        wx.showModal({
+                            title: '退出失败',
+                            content: '请手动关闭小程序',
+                            showCancel: false
+                        })
+                    }
+                })
             }
         })
     }
     
-    restartGameWithUnlockedHouses() {
-        const state = this.game.gameState.data
+    async restartGameWithUnlockedHouses() {
+        // 从云数据库获取用户的解锁房屋列表（永久保留）
+        let unlockedHouses = []
         
-        // 保存解锁的房屋列表（永久保留）
-        const unlockedHouses = state.unlockedHouses || []
+        try {
+            if (wx.cloud) {
+                const db = wx.cloud.database({ env: CLOUD_ENV_ID })
+                const res = await db.collection('user_unlocked_houses').where({
+                    _openid: '{openid}'
+                }).limit(1).get()
+                
+                if (res.data && res.data.length > 0) {
+                    unlockedHouses = res.data[0].unlockedHouses || []
+                    console.log('从云数据库获取解锁房屋:', unlockedHouses)
+                }
+            }
+        } catch (e) {
+            console.warn('从云数据库获取解锁房屋失败:', e)
+            // 回退到当前数据
+            unlockedHouses = this.game.gameState.data.unlockedHouses || []
+        }
         
         // 清除本地存储
         wx.clearStorageSync()
@@ -343,7 +377,15 @@ export class HouseScene {
         
         // 更新游戏状态
         this.game.gameState.data = defaultState
-        this.game.gameState.save()
+        
+        // 先保存解锁房屋到云端，确保不会丢失
+        await this.game.gameState.saveUserUnlockedHouses()
+        
+        // 再保存游戏状态
+        await this.game.gameState.save()
+        
+        // 重新从云端加载解锁房屋，确保数据一致
+        await this.game.gameState.loadUserUnlockedHouses()
         
         // 切换到首页场景
         this.game.sceneManager.switchTo('home')
