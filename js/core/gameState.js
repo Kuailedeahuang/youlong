@@ -184,8 +184,26 @@ export default class GameState {
     }
 
     async reset() {
-        // 保存解锁的房屋列表（永久保留）
-        const unlockedHouses = this.data.unlockedHouses || []
+        // 从云数据库获取用户的解锁房屋列表（永久保留）
+        let unlockedHouses = []
+        
+        try {
+            if (wx.cloud) {
+                const db = wx.cloud.database({})
+                const res = await db.collection('user_unlocked_houses').where({
+                    _openid: '{openid}'
+                }).limit(1).get()
+                
+                if (res.data && res.data.length > 0) {
+                    unlockedHouses = res.data[0].unlockedHouses || []
+                    console.log('reset: 从云数据库获取解锁房屋:', unlockedHouses)
+                }
+            }
+        } catch (e) {
+            console.warn('reset: 从云数据库获取解锁房屋失败:', e)
+            // 回退到当前数据
+            unlockedHouses = this.data.unlockedHouses || []
+        }
         
         // 重置为默认状态，但保留解锁的房屋
         this.data = this.getDefaultState()
