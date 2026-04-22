@@ -180,7 +180,13 @@ export default class GameState {
     }
 
     async reset() {
+        // 保存解锁的房屋列表（永久保留）
+        const unlockedHouses = this.data.unlockedHouses || []
+        
+        // 重置为默认状态，但保留解锁的房屋
         this.data = this.getDefaultState()
+        this.data.unlockedHouses = unlockedHouses
+        
         await this.save()
     }
 
