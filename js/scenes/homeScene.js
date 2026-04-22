@@ -592,6 +592,12 @@ export default class HomeScene {
             nextLevelInfo = `\n\n【下一级】\nLv.${nextJob.level} ${nextJob.title}\n日薪: ${nextJob.baseSalary}金币`
         }
         
+        // 计算内容高度，确保按钮不会被遮挡
+        let contentHeight = 180 // 基础高度：标题+当前岗位+上班/加班信息
+        if (nextJob) {
+            contentHeight += 70 // 下一级信息高度
+        }
+        
         this.game.uiManager.addModal({
             type: 'action',
             title: `工作 - ${state.jobTitle}`,
@@ -600,7 +606,7 @@ export default class HomeScene {
                 { text: '上班', callback: () => this.doWork(false, baseSalary) },
                 { text: '加班', callback: () => this.doWork(true, overtimeSalary) }
             ],
-            height: 240
+            height: Math.max(280, contentHeight)
         })
     }
     
