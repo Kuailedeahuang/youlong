@@ -593,10 +593,9 @@ export default class HomeScene {
         }
         
         // 计算内容高度，确保按钮不会被遮挡
-        let contentHeight = 180 // 基础高度：标题+当前岗位+上班/加班信息
-        if (nextJob) {
-            contentHeight += 70 // 下一级信息高度
-        }
+        // 每行内容约22像素，按钮区域需要80像素
+        const lineCount = 6 + (nextJob ? 3 : 0) // 基础6行 + 下一级3行
+        const contentHeight = 55 + lineCount * 22 + 80 // 标题55 + 内容 + 按钮区域80
         
         this.game.uiManager.addModal({
             type: 'action',
@@ -606,7 +605,7 @@ export default class HomeScene {
                 { text: '上班', callback: () => this.doWork(false, baseSalary) },
                 { text: '加班', callback: () => this.doWork(true, overtimeSalary) }
             ],
-            height: Math.max(280, contentHeight)
+            height: Math.max(350, contentHeight)
         })
     }
     
