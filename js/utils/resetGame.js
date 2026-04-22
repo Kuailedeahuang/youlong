@@ -96,9 +96,27 @@ export async function restartGame(gameInstance = null) {
   console.log('重新开始游戏...')
   
   try {
-    // 保存解锁的房屋列表（永久保留）
-    const currentData = wx.getStorageSync('bigcitylife_save')
-    const unlockedHouses = currentData && currentData.unlockedHouses ? currentData.unlockedHouses : []
+    // 从云数据库获取用户的解锁房屋列表（永久保留）
+    let unlockedHouses = []
+    
+    try {
+      if (wx.cloud) {
+        const db = wx.cloud.database({ env: CLOUD_ENV_ID })
+        const res = await db.collection('user_unlocked_houses').where({
+          _openid: '{openid}'
+        }).limit(1).get()
+        
+        if (res.data && res.data.length > 0) {
+          unlockedHouses = res.data[0].unlockedHouses || []
+          console.log('从云数据库获取解锁房屋:', unlockedHouses)
+        }
+      }
+    } catch (e) {
+      console.warn('从云数据库获取解锁房屋失败:', e)
+      // 尝试从本地存储获取
+      const currentData = wx.getStorageSync('bigcitylife_save')
+      unlockedHouses = currentData && currentData.unlockedHouses ? currentData.unlockedHouses : []
+    }
     
     // 清除本地存储
     wx.clearStorageSync()
