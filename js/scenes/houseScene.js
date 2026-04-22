@@ -265,7 +265,9 @@ export class HouseScene {
             state.unlockedHouses.push(house.id)
         }
         
+        // 保存游戏状态和用户解锁的房屋（用户独立的永久数据）
         this.game.gameState.save()
+        this.game.gameState.saveUserUnlockedHouses()
         
         this.game.gameState.addDelayedAnimation('decrease', house.price, 'money', '金币', '#f39c12')
         
