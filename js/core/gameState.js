@@ -75,7 +75,6 @@ export default class GameState {
             newspaperShown: false,
             yesterdayExpense: 0,
             marketEnteredToday: false,
-            hasEnteredMarketToday: false,
             _id: null
         }
     }
@@ -270,7 +269,6 @@ export default class GameState {
         this.data.day++
         this.data.energy = this.data.maxEnergy
         this.data.newspaperShown = false
-        this.data.hasEnteredMarketToday = false
         this.data.marketEnteredToday = false
         this.data.todayEvents = []
 

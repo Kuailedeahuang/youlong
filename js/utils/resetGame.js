@@ -136,8 +136,7 @@ export async function restartGame(gameInstance = null) {
       todayEvents: [],
       newspaperShown: false,
       yesterdayExpense: 0,
-      marketEnteredToday: false,
-      hasEnteredMarketToday: false
+      marketEnteredToday: false
     }
     
     // 保存新状态

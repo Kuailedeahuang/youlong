@@ -284,7 +284,8 @@ export default class HomeScene {
     enterMarket() {
         const state = this.game.gameState.data
         
-        if (!state.hasEnteredMarketToday) {
+        // 检查是否是今天第一次进入市场
+        if (!state.marketEnteredToday) {
             if (state.energy < 2) {
                 this.game.uiManager.addModal({
                     type: 'confirm',
@@ -297,8 +298,10 @@ export default class HomeScene {
             }
             
             state.energy -= 2
-            state.hasEnteredMarketToday = true
+            state.marketEnteredToday = true
             this.game.gameState.save()
+            
+            this.game.gameState.addDelayedAnimation('decrease', 2, 'energy', '精力', '#3498db')
         }
         
         this.game.sceneManager.switchTo('market')
