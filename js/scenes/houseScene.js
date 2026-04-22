@@ -271,15 +271,84 @@ export class HouseScene {
         
         this.selectedHouse = null
         
+        // 播放结局（购房结局）
+        this.playEnding(house)
+    }
+    
+    playEnding(house) {
+        // 结局内容（临时，等待图片制作完成）
+        const endingContent = `【购房结局】\n\n您成功购买了 ${house.name}！\n\n${house.parentAttitude}\n\n在这个繁华的大都市，您终于拥有了自己的栖身之所。虽然前路依然充满挑战，但您已经迈出了重要的一步。\n\n愿您在新的家园中，开启人生的新篇章。`
+        
         this.game.uiManager.addModal({
             type: 'confirm',
-            title: '购房成功',
-            content: `恭喜您购买了 ${house.name}！\n${house.parentAttitude}`,
-            confirmText: '知道了',
+            title: '结局 - 安家立业',
+            content: endingContent,
+            confirmText: '再活一世',
             singleButton: true,
             onConfirm: () => {
-                this.game.sceneManager.switchTo('home')
+                this.restartGameWithUnlockedHouses()
             }
+        })
+    }
+    
+    restartGameWithUnlockedHouses() {
+        const state = this.game.gameState.data
+        
+        // 保存解锁的房屋列表（永久保留）
+        const unlockedHouses = state.unlockedHouses || []
+        
+        // 清除本地存储
+        wx.clearStorageSync()
+        
+        // 创建新的默认状态，保留解锁的房屋
+        const defaultState = {
+            money: 5000,
+            health: 100,
+            energy: 5,
+            maxEnergy: 5,
+            mood: 100,
+            reputation: 100,
+            day: 1,
+            totalDays: 180,
+            consecutiveGymDays: 0,
+            bankLoan: 0,
+            bankDeposit: 0,
+            privateLoan: 0,
+            overdueDays: 0,
+            warehouseCapacity: 20,
+            warehouse: {},
+            purchasedHouse: null,
+            unlockedHouses: unlockedHouses, // 保留解锁的房屋
+            gameEnded: false,
+            jobLevel: 1,
+            jobTitle: '外卖/快递员',
+            salaryDeduction: false,
+            salaryDeductionDays: 0,
+            unemployed: false,
+            unemployedDays: 0,
+            adWatchedCount: 0,
+            housingType: 'suburban',
+            bankruptcyCount: 0,
+            currentScene: 'home',
+            todayEvents: [],
+            newspaperShown: false,
+            yesterdayExpense: 0,
+            marketEnteredToday: false
+        }
+        
+        // 保存新状态
+        wx.setStorageSync('bigcitylife_save', defaultState)
+        
+        // 更新游戏状态
+        this.game.gameState.data = defaultState
+        this.game.gameState.save()
+        
+        // 切换到首页场景
+        this.game.sceneManager.switchTo('home')
+        
+        wx.showToast({
+            title: '重新开始游戏',
+            icon: 'success'
         })
     }
 }
