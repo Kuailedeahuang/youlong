@@ -163,7 +163,15 @@ export async function restartGame(gameInstance = null) {
     // 如果提供了游戏实例，直接重置状态而不重启小程序
     if (gameInstance && gameInstance.gameState) {
       gameInstance.gameState.data = defaultState
-      gameInstance.gameState.save()
+      
+      // 先保存解锁房屋到云端，确保不会丢失
+      await gameInstance.gameState.saveUserUnlockedHouses()
+      
+      // 再保存游戏状态
+      await gameInstance.gameState.save()
+      
+      // 重新从云端加载解锁房屋，确保数据一致
+      await gameInstance.gameState.loadUserUnlockedHouses()
       
       wx.showModal({
         title: '游戏已重置',
