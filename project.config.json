@@ -47,6 +47,7 @@
   "libVersion": "3.15.1",
   "appid": "wx5db80083f821eb43",
   "projectname": "bigcitylife",
+  "cloudfunctionRoot": "cloudfunctions/",
   "cloudfunctionTemplateRoot": "",
   "cloudbaseRoot": "cloudbaserc.json/",
   "condition": {},

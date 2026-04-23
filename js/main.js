@@ -56,6 +56,11 @@ class Game {
             const touch = e.touches[0]
             const x = touch.clientX
             const y = touch.clientY
+            
+            if (this.sceneManager.handleTouch(x, y)) {
+                return
+            }
+            
             this.uiManager.handleTouch(x, y)
         })
     }

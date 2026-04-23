@@ -1,15 +1,43 @@
 import { CLOUD_ENV_ID } from '../config.js'
 
 const STORAGE_KEY = 'bigcitylife_save'
+const USER_INFO_KEY = 'user_info'
 
 export default class GameState {
     constructor() {
         this.data = this.getDefaultState()
+        this.userInfo = this.getUserInfo()
         this.isCloudReady = false
+        this.isLoaded = false
 
         this.delayedAnimations = []
 
-        this.load()
+        this.loadPromise = this.load()
+    }
+    
+    getUserInfo() {
+        try {
+            const saved = wx.getStorageSync(USER_INFO_KEY)
+            if (saved) {
+                return saved
+            }
+        } catch (e) {
+            console.warn('获取用户信息失败:', e)
+        }
+        return null
+    }
+    
+    setUserInfo(info) {
+        this.userInfo = info
+        try {
+            wx.setStorageSync(USER_INFO_KEY, info)
+        } catch (e) {
+            console.warn('保存用户信息失败:', e)
+        }
+    }
+    
+    isLoggedIn() {
+        return this.userInfo && this.userInfo.openid
     }
 
     addDelayedAnimation(type, value, statType, label, color = null) {
@@ -89,12 +117,13 @@ export default class GameState {
                 console.log('云开发初始化成功')
 
                 const db = wx.cloud.database({})
-                
-                // 加载用户的解锁房屋（用户独立的永久数据）
+
                 await this.loadUserUnlockedHouses()
-                
+
                 try {
-                    const res = await db.collection('gameprogress').limit(1).get()
+                    const res = await db.collection('gameprogress').where({
+                        _openid: '{openid}'
+                    }).limit(1).get()
 
                     if (res.data && res.data.length > 0) {
                         const cloudData = res.data[0]
@@ -128,7 +157,7 @@ export default class GameState {
 
     async save() {
         try {
-            if (wx.cloud && this.isCloudReady) {
+            if (wx.cloud) {
                 if (!wx.cloud.database) {
                     await wx.cloud.init({
                         env: CLOUD_ENV_ID,
@@ -138,35 +167,45 @@ export default class GameState {
                 }
 
                 const db = wx.cloud.database({})
+                const openid = this.userInfo?.openid
 
-                const saveData = { ...this.data }
-                delete saveData._id
-                delete saveData._openid
+                if (!openid) {
+                    console.warn('没有 openid，无法保存到云数据库')
+                } else {
+                    const saveData = { ...this.data }
+                    delete saveData._id
+                    delete saveData._openid
 
-                try {
-                    if (this.data._id) {
-                        await db.collection('gameprogress').doc(this.data._id).update({
-                            data: {
-                                ...saveData,
-                                updateTime: db.serverDate()
-                            }
-                        })
-                        console.log('云数据库更新成功')
-                    } else {
-                        const res = await db.collection('gameprogress').add({
-                            data: {
-                                ...saveData,
-                                createTime: db.serverDate(),
-                                updateTime: db.serverDate()
-                            }
-                        })
-                        this.data._id = res._id
-                        this.isCloudReady = true
-                        console.log('云数据库创建成功')
+                    try {
+                        const res = await db.collection('gameprogress').where({
+                            _openid: openid
+                        }).limit(1).get()
+
+                        if (res.data && res.data.length > 0) {
+                            const cloudId = res.data[0]._id
+                            await db.collection('gameprogress').doc(cloudId).update({
+                                data: {
+                                    ...saveData,
+                                    updateTime: db.serverDate()
+                                }
+                            })
+                            this.data._id = cloudId
+                            console.log('云数据库更新成功')
+                        } else {
+                            const addRes = await db.collection('gameprogress').add({
+                                data: {
+                                    ...saveData,
+                                    createTime: db.serverDate(),
+                                    updateTime: db.serverDate()
+                                }
+                            })
+                            this.data._id = addRes._id
+                            this.isCloudReady = true
+                            console.log('云数据库创建成功')
+                        }
+                    } catch (dbError) {
+                        console.warn('gameprogress 集合操作失败，将使用本地存储:', dbError)
                     }
-                } catch (dbError) {
-                    console.warn('gameprogress 集合操作失败，将使用本地存储:', dbError)
-                    this.isCloudReady = false
                 }
             }
         } catch (e) {
@@ -181,6 +220,9 @@ export default class GameState {
         } catch (e) {
             console.error('本地存储保存失败:', e)
         }
+
+        // 保存用户的解锁房屋到独立集合
+        await this.saveUserUnlockedHouses()
     }
 
     async reset() {

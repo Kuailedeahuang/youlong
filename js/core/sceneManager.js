@@ -1,3 +1,4 @@
+import LoginScene from '../scenes/loginScene.js'
 import HomeScene from '../scenes/homeScene.js'
 import MarketScene from '../scenes/marketScene.js'
 import HouseScene from '../scenes/houseScene.js'
@@ -7,16 +8,17 @@ export default class SceneManager {
     constructor(game) {
         this.game = game
         this.scenes = {
+            login: new LoginScene(game),
             splash: new SplashScene(game),
             home: new HomeScene(game),
             market: new MarketScene(game),
             house: new HouseScene(game)
         }
-        this.currentScene = 'splash'
+        this.currentScene = 'login'
         this.isSwitching = false
         
         setTimeout(() => {
-            this.scenes.splash.onEnter()
+            this.scenes.login.onEnter()
         }, 0)
     }
     
@@ -47,5 +49,13 @@ export default class SceneManager {
         if (scene) {
             scene.render(renderer)
         }
+    }
+    
+    handleTouch(x, y) {
+        const scene = this.scenes[this.currentScene]
+        if (scene && scene.handleTouchStart) {
+            return scene.handleTouchStart(x, y)
+        }
+        return false
     }
 }
