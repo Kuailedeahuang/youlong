@@ -21,7 +21,46 @@ export class HouseScene {
         this.titleHeight = 40
         this.listStartY = this.topBarHeight + this.titleHeight
         
+        // 存储加载的房屋图片
+        this.houseImages = {}
+        
         this.initTouchEvents()
+        this.loadHouseImages()
+    }
+    
+    // 从云存储加载房屋图片
+    async loadHouseImages() {
+        try {
+            if (!wx.cloud) return
+            
+            for (const house of this.houses) {
+                if (house.imageName) {
+                    const filePath = `sellhouse/${house.imageName}.png`
+                    try {
+                        const res = await wx.cloud.downloadFile({
+                            fileID: `cloud://${CLOUD_ENV_ID}/${filePath}`
+                        })
+                        
+                        if (res.tempFilePath) {
+                            // 加载图片
+                            const img = wx.createImage()
+                            img.src = res.tempFilePath
+                            img.onload = () => {
+                                this.houseImages[house.id] = img
+                                console.log(`加载房屋图片成功: ${house.name}`)
+                            }
+                            img.onerror = () => {
+                                console.warn(`加载房屋图片失败: ${house.name}`)
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`下载房屋图片失败: ${house.name}`, e)
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('加载房屋图片失败:', e)
+        }
     }
     
     initTouchEvents() {
@@ -158,11 +197,49 @@ export class HouseScene {
             
             // 绘制图片区域
             const imgH = 100
-            renderer.drawRect(x + 5, y + 5, cardW - 10, imgH, imgBgColor, 4)
+            const imgX = x + 5
+            const imgY = y + 5
+            const imgW = cardW - 10
+            
+            // 绘制图片背景
+            renderer.drawRect(imgX, imgY, imgW, imgH, imgBgColor, 4)
+            
+            // 绘制房屋图片（如果已加载）
+            const houseImg = this.houseImages[house.id]
+            if (houseImg && houseImg.width > 0) {
+                try {
+                    ctx.save()
+                    ctx.beginPath()
+                    ctx.rect(imgX, imgY, imgW, imgH)
+                    ctx.clip()
+                    
+                    // 计算图片绘制尺寸（保持比例填充）
+                    const imgRatio = houseImg.width / houseImg.height
+                    const drawRatio = imgW / imgH
+                    
+                    let drawW, drawH, drawX, drawY
+                    if (imgRatio > drawRatio) {
+                        drawH = imgH
+                        drawW = drawH * imgRatio
+                        drawX = imgX - (drawW - imgW) / 2
+                        drawY = imgY
+                    } else {
+                        drawW = imgW
+                        drawH = drawW / imgRatio
+                        drawX = imgX
+                        drawY = imgY - (drawH - imgH) / 2
+                    }
+                    
+                    ctx.drawImage(houseImg, drawX, drawY, drawW, drawH)
+                    ctx.restore()
+                } catch (e) {
+                    console.warn('绘制房屋图片失败:', e)
+                }
+            }
             
             // 如果未解锁，添加灰色遮罩
             if (!isUnlocked) {
-                renderer.drawRect(x + 5, y + 5, cardW - 10, imgH, 'rgba(0, 0, 0, 0.4)', 4)
+                renderer.drawRect(imgX, imgY, imgW, imgH, 'rgba(0, 0, 0, 0.4)', 4)
             }
             
             // 绘制房屋名称

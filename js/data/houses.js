@@ -7,7 +7,8 @@ export const HOUSES_DATA = [
         parentAttitude: '强烈反对',
         location: '城中村',
         area: '20㎡',
-        facilities: ['公共卫生间', '简易厨房']
+        facilities: ['公共卫生间', '简易厨房'],
+        imageName: 'chengzhongcunpengwu'
     },
     {
         id: 2,
@@ -17,7 +18,8 @@ export const HOUSES_DATA = [
         parentAttitude: '不太满意',
         location: '老城区',
         area: '35㎡',
-        facilities: ['独立卫生间', '小厨房']
+        facilities: ['独立卫生间', '小厨房'],
+        imageName: 'laojiuminfang'
     },
     {
         id: 3,
@@ -27,7 +29,8 @@ export const HOUSES_DATA = [
         parentAttitude: '勉强认可',
         location: '市区',
         area: '45㎡',
-        facilities: ['独立卫生间', '小厨房', '阳台']
+        facilities: ['独立卫生间', '小厨房', '阳台'],
+        imageName: 'biaozhunyijushi'
     },
     {
         id: 4,
@@ -37,7 +40,8 @@ export const HOUSES_DATA = [
         parentAttitude: '非常满意',
         location: '市区',
         area: '75㎡',
-        facilities: ['双卫生间', '大厨房', '阳台', '客厅']
+        facilities: ['双卫生间', '大厨房', '阳台', '客厅'],
+        imageName: 'shushiliangjushi'
     },
     {
         id: 5,
@@ -47,7 +51,8 @@ export const HOUSES_DATA = [
         parentAttitude: '无比自豪',
         location: '高档小区',
         area: '120㎡',
-        facilities: ['双卫生间', '开放式厨房', '大阳台', '客厅', '书房']
+        facilities: ['双卫生间', '开放式厨房', '大阳台', '客厅', '书房'],
+        imageName: 'haohuasanjushi'
     },
     {
         id: 6,
@@ -57,7 +62,8 @@ export const HOUSES_DATA = [
         parentAttitude: '骄傲不已',
         location: '江边豪宅区',
         area: '250㎡',
-        facilities: ['多卫生间', '豪华厨房', '花园', '车库', '健身房', '娱乐室', '江景阳台']
+        facilities: ['多卫生间', '豪华厨房', '花园', '车库', '健身房', '娱乐室', '江景阳台'],
+        imageName: 'jiangjingbieshu'
     },
     {
         id: 7,
@@ -67,7 +73,8 @@ export const HOUSES_DATA = [
         parentAttitude: '非常满意',
         location: '郊区',
         area: '150㎡',
-        facilities: ['双卫生间', '大厨房', '花园', '阳台', '客厅', '书房']
+        facilities: ['双卫生间', '大厨房', '花园', '阳台', '客厅', '书房'],
+        imageName: 'huayuanyangfang'
     },
     {
         id: 8,
@@ -77,7 +84,8 @@ export const HOUSES_DATA = [
         parentAttitude: '满意',
         location: '市中心',
         area: '65㎡',
-        facilities: ['独立卫生间', '开放式厨房', '阳台', '客厅']
+        facilities: ['独立卫生间', '开放式厨房', '阳台', '客厅'],
+        imageName: 'shizhongxingongyu'
     },
     {
         id: 9,
@@ -87,7 +95,8 @@ export const HOUSES_DATA = [
         parentAttitude: '非常自豪',
         location: '郊区',
         area: '180㎡',
-        facilities: ['双卫生间', '大厨房', '小花园', '车库', '客厅', '书房']
+        facilities: ['双卫生间', '大厨房', '小花园', '车库', '客厅', '书房'],
+        imageName: 'lianpaibieshu'
     },
     {
         id: 10,
@@ -97,7 +106,8 @@ export const HOUSES_DATA = [
         parentAttitude: '极度骄傲',
         location: '海边',
         area: '300㎡',
-        facilities: ['多卫生间', '豪华厨房', '花园', '车库', '健身房', '娱乐室', '海景阳台', '私人泳池']
+        facilities: ['多卫生间', '豪华厨房', '花园', '车库', '健身房', '娱乐室', '海景阳台', '私人泳池'],
+        imageName: 'haijingbieshu'
     }
 ]
 
