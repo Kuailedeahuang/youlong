@@ -46,7 +46,7 @@ export class HouseScene {
                     console.log(`尝试加载图片: ${house.name}, fileID: ${fileID}`)
                     
                     try {
-                        // 通过云函数获取临时链接
+                        // 通过云函数获取临时链接（使用专门的房屋图片云函数）
                         const res = await wx.cloud.callFunction({
                             name: 'getFangwuURL',
                             data: {
