@@ -102,7 +102,13 @@ export class HouseScene {
                 }
             }
             
-            console.log('房屋图片加载完成，已加载:', Object.keys(this.houseImages))
+            const loadedCount = Object.keys(this.houseImages).length
+            console.log(`房屋图片加载完成，成功加载 ${loadedCount}/${this.houses.length} 张图片`)
+            
+            // 如果至少加载了一张图片，标记为已加载
+            if (loadedCount > 0) {
+                this.imagesLoaded = true
+            }
         } catch (e) {
             console.warn('加载房屋图片失败:', e)
         }
@@ -144,8 +150,9 @@ export class HouseScene {
         
         // 进入场景时加载图片（确保云开发已初始化）
         if (!this.imagesLoaded) {
+            console.log('onEnter: 开始加载房屋图片')
             await this.loadHouseImages()
-            this.imagesLoaded = true
+            console.log('onEnter: 房屋图片加载完成')
         }
     }
     
