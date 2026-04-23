@@ -37,20 +37,31 @@ export class HouseScene {
                 if (house.imageName) {
                     const filePath = `sellhouse/${house.imageName}.png`
                     try {
-                        const res = await wx.cloud.downloadFile({
-                            fileID: `cloud://${CLOUD_ENV_ID}/${filePath}`
+                        // 先获取图片临时链接
+                        const res = await wx.cloud.getTempFileURL({
+                            fileList: [`cloud://${CLOUD_ENV_ID}/${filePath}`]
                         })
                         
-                        if (res.tempFilePath) {
-                            // 加载图片
-                            const img = wx.createImage()
-                            img.src = res.tempFilePath
-                            img.onload = () => {
-                                this.houseImages[house.id] = img
-                                console.log(`加载房屋图片成功: ${house.name}`)
-                            }
-                            img.onerror = () => {
-                                console.warn(`加载房屋图片失败: ${house.name}`)
+                        if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
+                            const tempURL = res.fileList[0].tempFileURL
+                            
+                            // 下载图片到本地临时文件
+                            const downloadRes = await wx.downloadFile({
+                                url: tempURL
+                            })
+                            
+                            if (downloadRes.statusCode === 200) {
+                                // 获取图片信息
+                                const imgInfo = await wx.getImageInfo({
+                                    src: downloadRes.tempFilePath
+                                })
+                                
+                                this.houseImages[house.id] = {
+                                    path: downloadRes.tempFilePath,
+                                    width: imgInfo.width,
+                                    height: imgInfo.height
+                                }
+                                console.log(`加载房屋图片成功: ${house.name}`, imgInfo)
                             }
                         }
                     } catch (e) {
@@ -206,7 +217,7 @@ export class HouseScene {
             
             // 绘制房屋图片（如果已加载）
             const houseImg = this.houseImages[house.id]
-            if (houseImg && houseImg.width > 0) {
+            if (houseImg && houseImg.path) {
                 try {
                     ctx.save()
                     ctx.beginPath()
@@ -230,7 +241,7 @@ export class HouseScene {
                         drawY = imgY - (drawH - imgH) / 2
                     }
                     
-                    ctx.drawImage(houseImg, drawX, drawY, drawW, drawH)
+                    ctx.drawImage(houseImg.path, drawX, drawY, drawW, drawH)
                     ctx.restore()
                 } catch (e) {
                     console.warn('绘制房屋图片失败:', e)
