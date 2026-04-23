@@ -51,52 +51,26 @@ export class HouseScene {
                             fileList: [fileID]
                         })
                         
-                        console.log(`getTempFileURL 结果:`, res)
-                        console.log(`fileList[0]:`, res.fileList ? res.fileList[0] : 'undefined')
-                        
                         if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
                             const tempURL = res.fileList[0].tempFileURL
-                            console.log(`获取临时链接成功: ${tempURL}`)
+                            console.log(`获取临时链接成功: ${house.name}`)
                             
-                            // 使用 Promise 包装 downloadFile
+                            // 使用 wx.createImage 加载图片（与市场、报纸等场景一致）
                             await new Promise((resolve, reject) => {
-                                wx.downloadFile({
-                                    url: tempURL,
-                                    success: async (downloadRes) => {
-                                        console.log(`下载成功: ${house.name}`, downloadRes)
-                                        
-                                        if (downloadRes.statusCode === 200) {
-                                            try {
-                                                // 获取图片信息
-                                                const imgInfo = await wx.getImageInfo({
-                                                    src: downloadRes.tempFilePath
-                                                })
-                                                
-                                                this.houseImages[house.id] = {
-                                                    path: downloadRes.tempFilePath,
-                                                    width: imgInfo.width,
-                                                    height: imgInfo.height
-                                                }
-                                                console.log(`加载房屋图片成功: ${house.name}`, imgInfo)
-                                                resolve()
-                                            } catch (infoErr) {
-                                                console.warn(`获取图片信息失败: ${house.name}`, infoErr)
-                                                reject(infoErr)
-                                            }
-                                        } else {
-                                            console.warn(`下载状态码错误: ${house.name}, status: ${downloadRes.statusCode}`)
-                                            reject(new Error(`status: ${downloadRes.statusCode}`))
-                                        }
-                                    },
-                                    fail: (err) => {
-                                        console.warn(`下载文件失败: ${house.name}`, err)
-                                        reject(err)
-                                    }
-                                })
+                                const img = wx.createImage()
+                                img.onload = () => {
+                                    this.houseImages[house.id] = img
+                                    console.log(`加载房屋图片成功: ${house.name}, 尺寸: ${img.width}x${img.height}`)
+                                    resolve()
+                                }
+                                img.onerror = (err) => {
+                                    console.warn(`加载房屋图片失败: ${house.name}`, err)
+                                    reject(err)
+                                }
+                                img.src = tempURL
                             })
                         } else {
-                            const fileInfo = res.fileList && res.fileList[0] ? res.fileList[0] : null
-                            console.warn(`获取临时链接失败: ${house.name}`, fileInfo)
+                            console.warn(`获取临时链接失败: ${house.name}`, res.fileList ? res.fileList[0] : null)
                         }
                     } catch (e) {
                         console.warn(`处理图片失败: ${house.name}`, e)
@@ -272,9 +246,8 @@ export class HouseScene {
             
             // 绘制房屋图片（如果已加载）
             const houseImg = this.houseImages[house.id]
-            if (houseImg && houseImg.path) {
+            if (houseImg && houseImg.width > 0) {
                 try {
-                    console.log(`绘制房屋图片: ${house.name}, path: ${houseImg.path}`)
                     ctx.save()
                     ctx.beginPath()
                     ctx.rect(imgX, imgY, imgW, imgH)
@@ -297,14 +270,11 @@ export class HouseScene {
                         drawY = imgY - (drawH - imgH) / 2
                     }
                     
-                    ctx.drawImage(houseImg.path, drawX, drawY, drawW, drawH)
+                    ctx.drawImage(houseImg, drawX, drawY, drawW, drawH)
                     ctx.restore()
-                    console.log(`绘制完成: ${house.name}`)
                 } catch (e) {
                     console.warn('绘制房屋图片失败:', e)
                 }
-            } else {
-                console.log(`房屋图片未加载: ${house.name}, houseImg:`, houseImg)
             }
             
             // 如果未解锁，添加灰色遮罩
