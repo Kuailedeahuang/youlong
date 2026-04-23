@@ -52,6 +52,7 @@ export class HouseScene {
                         })
                         
                         console.log(`getTempFileURL 结果:`, res)
+                        console.log(`fileList[0]:`, res.fileList ? res.fileList[0] : 'undefined')
                         
                         if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
                             const tempURL = res.fileList[0].tempFileURL
@@ -94,7 +95,8 @@ export class HouseScene {
                                 })
                             })
                         } else {
-                            console.warn(`获取临时链接失败: ${house.name}`, res)
+                            const fileInfo = res.fileList && res.fileList[0] ? res.fileList[0] : null
+                            console.warn(`获取临时链接失败: ${house.name}`, fileInfo)
                         }
                     } catch (e) {
                         console.warn(`处理图片失败: ${house.name}`, e)
