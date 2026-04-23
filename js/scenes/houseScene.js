@@ -40,8 +40,8 @@ export class HouseScene {
             
             for (const house of this.houses) {
                 if (house.imageName) {
-                    const filePath = `image/sellhuose/${house.imageName}.png`
-                    const fileID = `cloud://${CLOUD_ENV_ID}/${filePath}`
+                    // 使用完整的云存储 fileID 格式
+                    const fileID = `cloud://${CLOUD_ENV_ID}.636c-${CLOUD_ENV_ID}-1420405327/images/sellhuose/${house.imageName}.png`
                     
                     console.log(`尝试加载图片: ${house.name}, fileID: ${fileID}`)
                     
