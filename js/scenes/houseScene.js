@@ -46,27 +46,19 @@ export class HouseScene {
                     console.log(`尝试加载图片: ${house.name}, fileID: ${fileID}`)
                     
                     try {
-                        // 通过云函数获取临时链接（使用专门的房屋图片云函数）
-                        const res = await wx.cloud.callFunction({
-                            name: 'getFangwuURL',
-                            data: {
-                                fileList: [fileID]
-                            }
+                        // 直接使用 wx.cloud.getTempFileURL 获取临时链接
+                        const res = await wx.cloud.getTempFileURL({
+                            fileList: [fileID]
                         })
                         
-                        console.log(`云函数返回:`, res)
+                        console.log(`getTempFileURL 返回:`, res)
                         
-                        if (!res.result || !res.result.success) {
-                            console.warn(`云函数获取临时链接失败: ${house.name}`, res)
+                        if (!res.fileList || !res.fileList[0] || !res.fileList[0].tempFileURL) {
+                            console.warn(`获取临时链接失败: ${house.name}`, res)
                             continue
                         }
                         
-                        const tempURL = res.result.fileList[0].tempFileURL
-                        if (!tempURL) {
-                            console.warn(`tempURL 为空: ${house.name}`)
-                            continue
-                        }
-                        
+                        const tempURL = res.fileList[0].tempFileURL
                         console.log(`获取临时链接成功: ${tempURL}`)
                         
                         // 使用 wx.createImage 加载图片（与其他场景相同）
