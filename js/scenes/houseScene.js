@@ -170,6 +170,12 @@ export class HouseScene {
         
         renderer.drawText('售楼部', w / 2, 50, '#f39c12', 18, 'center')
         
+        // 如果图片还在加载中，显示加载提示
+        if (!this.imagesLoaded) {
+            renderer.drawText('加载中...', w / 2, h / 2, '#7f8c8d', 16, 'center')
+            return
+        }
+        
         if (!this.selectedHouse) {
             this.renderHouseList(renderer, state, w, h)
         }
