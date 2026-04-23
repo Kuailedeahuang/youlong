@@ -23,9 +23,9 @@ export class HouseScene {
         
         // 存储加载的房屋图片
         this.houseImages = {}
+        this.imagesLoaded = false
         
         this.initTouchEvents()
-        this.loadHouseImages()
     }
     
     // 从云存储加载房屋图片
@@ -138,9 +138,15 @@ export class HouseScene {
         })
     }
     
-    onEnter() {
+    async onEnter() {
         this.selectedHouse = null
         this.scrollY = 0
+        
+        // 进入场景时加载图片（确保云开发已初始化）
+        if (!this.imagesLoaded) {
+            await this.loadHouseImages()
+            this.imagesLoaded = true
+        }
     }
     
     onExit() {
