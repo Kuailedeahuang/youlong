@@ -20,7 +20,7 @@ export default class SceneManager {
         }, 0)
     }
     
-    async switchTo(sceneName) {
+    switchTo(sceneName) {
         if (this.scenes[sceneName] && !this.isSwitching) {
             this.isSwitching = true
             this.game.uiManager.clearAll()
@@ -28,12 +28,8 @@ export default class SceneManager {
             this.game.gameState.set('currentScene', sceneName)
             
             // 延迟执行场景进入，避免渲染冲突
-            setTimeout(async () => {
-                const scene = this.scenes[sceneName]
-                // 支持异步 onEnter
-                if (scene.onEnter) {
-                    await scene.onEnter()
-                }
+            setTimeout(() => {
+                this.scenes[sceneName].onEnter()
                 this.isSwitching = false
             }, 50)
         }

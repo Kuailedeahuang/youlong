@@ -28,7 +28,7 @@ export class HouseScene {
         this.initTouchEvents()
     }
     
-    // 从云存储加载房屋图片
+    // 从云存储加载房屋图片（使用与其他场景相同的方式）
     async loadHouseImages() {
         try {
             if (!wx.cloud) {
@@ -40,47 +40,37 @@ export class HouseScene {
             
             for (const house of this.houses) {
                 if (house.imageName) {
-                    // 使用完整的云存储 fileID 格式
-                    const fileID = `cloud://${CLOUD_ENV_ID}.636c-${CLOUD_ENV_ID}-1420405327/images/sellhouse/${house.imageName}.png`
+                    const filePath = `sellhouse/${house.imageName}.png`
+                    const fileID = `cloud://${CLOUD_ENV_ID}/${filePath}`
                     
                     console.log(`尝试加载图片: ${house.name}, fileID: ${fileID}`)
                     
                     try {
-                        // 使用云函数获取临时链接（与 imageManager 一致）
-                        const res = await wx.cloud.callFunction({
-                            name: 'getTempFileURL',
-                            data: {
-                                fileList: [fileID]
-                            }
+                        // 先获取图片临时链接（与其他场景相同）
+                        const res = await wx.cloud.getTempFileURL({
+                            fileList: [fileID]
                         })
                         
-                        console.log(`云函数返回:`, res)
-                        
-                        if (res.result && res.result.success && res.result.fileList && res.result.fileList[0]) {
-                            const fileInfo = res.result.fileList[0]
-                            if (fileInfo.tempFileURL) {
-                                const tempURL = fileInfo.tempFileURL
-                                console.log(`获取临时链接成功: ${house.name}`)
-                                
-                                // 使用 wx.createImage 加载图片（与市场、报纸等场景一致）
-                                await new Promise((resolve, reject) => {
-                                    const img = wx.createImage()
-                                    img.onload = () => {
-                                        this.houseImages[house.id] = img
-                                        console.log(`加载房屋图片成功: ${house.name}, 尺寸: ${img.width}x${img.height}`)
-                                        resolve()
-                                    }
-                                    img.onerror = (err) => {
-                                        console.warn(`加载房屋图片失败: ${house.name}`, err)
-                                        reject(err)
-                                    }
-                                    img.src = tempURL
-                                })
-                            } else {
-                                console.warn(`临时链接为空: ${house.name}, status: ${fileInfo.status}, errMsg: ${fileInfo.errMsg}`)
-                            }
+                        if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
+                            const tempURL = res.fileList[0].tempFileURL
+                            console.log(`获取临时链接成功: ${tempURL}`)
+                            
+                            // 使用 wx.createImage 加载图片（与其他场景相同）
+                            await new Promise((resolve, reject) => {
+                                const img = wx.createImage()
+                                img.onload = () => {
+                                    this.houseImages[house.id] = img
+                                    console.log(`加载房屋图片成功: ${house.name}, size: ${img.width}x${img.height}`)
+                                    resolve()
+                                }
+                                img.onerror = (err) => {
+                                    console.warn(`加载房屋图片失败: ${house.name}`, err)
+                                    reject(err)
+                                }
+                                img.src = tempURL
+                            })
                         } else {
-                            console.warn(`云函数调用失败: ${house.name}`, res)
+                            console.warn(`获取临时链接失败: ${house.name}`, res)
                         }
                     } catch (e) {
                         console.warn(`处理图片失败: ${house.name}`, e)
@@ -88,13 +78,7 @@ export class HouseScene {
                 }
             }
             
-            const loadedCount = Object.keys(this.houseImages).length
-            console.log(`房屋图片加载完成，成功加载 ${loadedCount}/${this.houses.length} 张图片`)
-            
-            // 如果至少加载了一张图片，标记为已加载
-            if (loadedCount > 0) {
-                this.imagesLoaded = true
-            }
+            console.log('房屋图片加载完成，已加载:', Object.keys(this.houseImages))
         } catch (e) {
             console.warn('加载房屋图片失败:', e)
         }
@@ -136,9 +120,8 @@ export class HouseScene {
         
         // 进入场景时加载图片（确保云开发已初始化）
         if (!this.imagesLoaded) {
-            console.log('onEnter: 开始加载房屋图片')
             await this.loadHouseImages()
-            console.log('onEnter: 房屋图片加载完成')
+            this.imagesLoaded = true
         }
     }
     
@@ -162,12 +145,6 @@ export class HouseScene {
         this.renderTopBar(renderer, state)
         
         renderer.drawText('售楼部', w / 2, 50, '#f39c12', 18, 'center')
-        
-        // 如果图片还在加载中，显示加载提示
-        if (!this.imagesLoaded) {
-            renderer.drawText('加载中...', w / 2, h / 2, '#7f8c8d', 16, 'center')
-            return
-        }
         
         if (!this.selectedHouse) {
             this.renderHouseList(renderer, state, w, h)
@@ -280,6 +257,7 @@ export class HouseScene {
                         drawY = imgY - (drawH - imgH) / 2
                     }
                     
+                    // 使用与其他场景相同的绘制方式
                     ctx.drawImage(houseImg, drawX, drawY, drawW, drawH)
                     ctx.restore()
                 } catch (e) {
