@@ -46,31 +46,41 @@ export class HouseScene {
                     console.log(`尝试加载图片: ${house.name}, fileID: ${fileID}`)
                     
                     try {
-                        // 先获取图片临时链接
-                        const res = await wx.cloud.getTempFileURL({
-                            fileList: [fileID]
+                        // 使用云函数获取临时链接（与 imageManager 一致）
+                        const res = await wx.cloud.callFunction({
+                            name: 'getTempFileURL',
+                            data: {
+                                fileList: [fileID]
+                            }
                         })
                         
-                        if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-                            const tempURL = res.fileList[0].tempFileURL
-                            console.log(`获取临时链接成功: ${house.name}`)
-                            
-                            // 使用 wx.createImage 加载图片（与市场、报纸等场景一致）
-                            await new Promise((resolve, reject) => {
-                                const img = wx.createImage()
-                                img.onload = () => {
-                                    this.houseImages[house.id] = img
-                                    console.log(`加载房屋图片成功: ${house.name}, 尺寸: ${img.width}x${img.height}`)
-                                    resolve()
-                                }
-                                img.onerror = (err) => {
-                                    console.warn(`加载房屋图片失败: ${house.name}`, err)
-                                    reject(err)
-                                }
-                                img.src = tempURL
-                            })
+                        console.log(`云函数返回:`, res)
+                        
+                        if (res.result && res.result.success && res.result.fileList && res.result.fileList[0]) {
+                            const fileInfo = res.result.fileList[0]
+                            if (fileInfo.tempFileURL) {
+                                const tempURL = fileInfo.tempFileURL
+                                console.log(`获取临时链接成功: ${house.name}`)
+                                
+                                // 使用 wx.createImage 加载图片（与市场、报纸等场景一致）
+                                await new Promise((resolve, reject) => {
+                                    const img = wx.createImage()
+                                    img.onload = () => {
+                                        this.houseImages[house.id] = img
+                                        console.log(`加载房屋图片成功: ${house.name}, 尺寸: ${img.width}x${img.height}`)
+                                        resolve()
+                                    }
+                                    img.onerror = (err) => {
+                                        console.warn(`加载房屋图片失败: ${house.name}`, err)
+                                        reject(err)
+                                    }
+                                    img.src = tempURL
+                                })
+                            } else {
+                                console.warn(`临时链接为空: ${house.name}, status: ${fileInfo.status}, errMsg: ${fileInfo.errMsg}`)
+                            }
                         } else {
-                            console.warn(`获取临时链接失败: ${house.name}`, res.fileList ? res.fileList[0] : null)
+                            console.warn(`云函数调用失败: ${house.name}`, res)
                         }
                     } catch (e) {
                         console.warn(`处理图片失败: ${house.name}`, e)
