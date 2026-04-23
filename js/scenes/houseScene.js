@@ -40,7 +40,7 @@ export class HouseScene {
             
             for (const house of this.houses) {
                 if (house.imageName) {
-                    const filePath = `sellhouse/${house.imageName}.png`
+                    const filePath = `image/sellhouse/${house.imageName}.png`
                     const fileID = `cloud://${CLOUD_ENV_ID}/${filePath}`
                     
                     console.log(`尝试加载图片: ${house.name}, fileID: ${fileID}`)
