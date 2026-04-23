@@ -1,5 +1,6 @@
 import { getAllHouses, checkPurchaseEligibility } from '../data/houses.js'
 import animationManager from '../utils/animationManager.js'
+import imageManager from '../utils/imageManager.js'
 import { CLOUD_ENV_ID } from '../config.js'
 
 export class HouseScene {
@@ -28,56 +29,26 @@ export class HouseScene {
         this.initTouchEvents()
     }
     
-    // 从云存储加载房屋图片（使用与其他场景相同的方式：云函数 getTempFileURL）
+    // 从云存储加载房屋图片（使用 imageManager，与其他场景保持一致）
     async loadHouseImages() {
         try {
-            if (!wx.cloud) {
-                console.warn('云开发未初始化，无法加载房屋图片')
-                return
-            }
-            
             console.log('开始加载房屋图片...')
             
             for (const house of this.houses) {
                 if (house.imageName) {
-                    const filePath = `sellhouse/${house.imageName}.png`
-                    const fileID = `cloud://${CLOUD_ENV_ID}/${filePath}`
-                    
-                    console.log(`尝试加载图片: ${house.name}, fileID: ${fileID}`)
+                    const imageName = `${house.imageName}.png`
+                    console.log(`尝试加载图片: ${house.name}, imageName: ${imageName}`)
                     
                     try {
-                        // 通过云函数获取临时链接（与其他场景相同）
-                        const res = await wx.cloud.callFunction({
-                            name: 'getTempFileURL',
-                            data: {
-                                fileList: [fileID]
-                            }
-                        })
+                        // 使用 imageManager 加载图片（与其他场景相同）
+                        const cloudImage = await imageManager.loadImageFromCloud(imageName)
                         
-                        console.log(`云函数返回:`, res)
-                        
-                        if (!res.result || !res.result.fileList || !res.result.fileList[0] || !res.result.fileList[0].tempFileURL) {
-                            console.warn(`云函数获取临时链接失败: ${house.name}`, res)
-                            continue
+                        if (cloudImage && cloudImage.image) {
+                            this.houseImages[house.id] = cloudImage.image
+                            console.log(`加载房屋图片成功: ${house.name}, size: ${cloudImage.image.width}x${cloudImage.image.height}`)
+                        } else {
+                            console.warn(`加载房屋图片失败: ${house.name}, 未找到图片`)
                         }
-                        
-                        const tempURL = res.result.fileList[0].tempFileURL
-                        console.log(`获取临时链接成功: ${tempURL}`)
-                        
-                        // 使用 wx.createImage 加载图片（与其他场景相同）
-                        const img = wx.createImage()
-                        img.onload = () => {
-                            this.houseImages[house.id] = img
-                            console.log(`加载房屋图片成功: ${house.name}, size: ${img.width}x${img.height}`)
-                            // 图片加载完成后触发重新渲染
-                            if (this.game && this.game.render) {
-                                this.game.render()
-                            }
-                        }
-                        img.onerror = (err) => {
-                            console.warn(`加载房屋图片失败: ${house.name}`, err)
-                        }
-                        img.src = tempURL
                     } catch (e) {
                         console.warn(`处理图片失败: ${house.name}`, e)
                     }
