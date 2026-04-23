@@ -28,8 +28,8 @@ export default class SceneManager {
             this.game.gameState.set('currentScene', sceneName)
             
             // 延迟执行场景进入，避免渲染冲突
-            setTimeout(() => {
-                this.scenes[sceneName].onEnter()
+            setTimeout(async () => {
+                await this.scenes[sceneName].onEnter()
                 this.isSwitching = false
             }, 50)
         }

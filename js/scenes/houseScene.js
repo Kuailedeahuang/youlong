@@ -121,14 +121,20 @@ export class HouseScene {
     }
     
     async onEnter() {
+        console.log('HouseScene onEnter 开始')
         this.selectedHouse = null
         this.scrollY = 0
         
         // 进入场景时加载图片（确保云开发已初始化）
         if (!this.imagesLoaded) {
+            console.log('开始加载房屋图片...')
             await this.loadHouseImages()
             this.imagesLoaded = true
+            console.log('房屋图片加载完成')
+        } else {
+            console.log('图片已加载，跳过')
         }
+        console.log('HouseScene onEnter 结束')
     }
     
     onExit() {
