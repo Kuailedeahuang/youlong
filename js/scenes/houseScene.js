@@ -37,7 +37,6 @@ export class HouseScene {
             for (const house of this.houses) {
                 if (house.imageName) {
                     const imageName = `${house.imageName}.png`
-                    console.log(`尝试加载图片: ${house.name}, imageName: ${imageName}`)
                     
                     try {
                         // 使用 imageManager 加载图片（与其他场景相同）
@@ -45,7 +44,7 @@ export class HouseScene {
                         
                         if (cloudImage && cloudImage.image) {
                             this.houseImages[house.id] = cloudImage.image
-                            console.log(`加载房屋图片成功: ${house.name}, size: ${cloudImage.image.width}x${cloudImage.image.height}`)
+                            console.log(`加载房屋图片成功: ${house.name}`)
                         } else {
                             console.warn(`加载房屋图片失败: ${house.name}, 未找到图片`)
                         }
@@ -55,7 +54,7 @@ export class HouseScene {
                 }
             }
             
-            console.log('房屋图片加载完成，已加载:', Object.keys(this.houseImages))
+            console.log('房屋图片加载完成，已加载:', Object.keys(this.houseImages).length, '张')
         } catch (e) {
             console.warn('加载房屋图片失败:', e)
         }
@@ -216,7 +215,6 @@ export class HouseScene {
             
             // 绘制房屋图片（如果已加载）
             const houseImg = this.houseImages[house.id]
-            console.log(`渲染房屋 ${house.name}:`, houseImg ? `loaded=${houseImg.width}x${houseImg.height}` : 'not loaded')
             if (houseImg && houseImg.width > 0) {
                 try {
                     ctx.save()
@@ -242,10 +240,8 @@ export class HouseScene {
                     }
                     
                     // 使用与其他场景相同的绘制方式
-                    console.log(`绘制图片 ${house.name}:`, drawX, drawY, drawW, drawH)
                     ctx.drawImage(houseImg, drawX, drawY, drawW, drawH)
                     ctx.restore()
-                    console.log(`绘制完成 ${house.name}`)
                 } catch (e) {
                     console.warn('绘制房屋图片失败:', e)
                 }
