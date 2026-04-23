@@ -31,44 +31,78 @@ export class HouseScene {
     // 从云存储加载房屋图片
     async loadHouseImages() {
         try {
-            if (!wx.cloud) return
+            if (!wx.cloud) {
+                console.warn('云开发未初始化，无法加载房屋图片')
+                return
+            }
+            
+            console.log('开始加载房屋图片...')
             
             for (const house of this.houses) {
                 if (house.imageName) {
                     const filePath = `sellhouse/${house.imageName}.png`
+                    const fileID = `cloud://${CLOUD_ENV_ID}/${filePath}`
+                    
+                    console.log(`尝试加载图片: ${house.name}, fileID: ${fileID}`)
+                    
                     try {
                         // 先获取图片临时链接
                         const res = await wx.cloud.getTempFileURL({
-                            fileList: [`cloud://${CLOUD_ENV_ID}/${filePath}`]
+                            fileList: [fileID]
                         })
+                        
+                        console.log(`getTempFileURL 结果:`, res)
                         
                         if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
                             const tempURL = res.fileList[0].tempFileURL
+                            console.log(`获取临时链接成功: ${tempURL}`)
                             
-                            // 下载图片到本地临时文件
-                            const downloadRes = await wx.downloadFile({
-                                url: tempURL
-                            })
-                            
-                            if (downloadRes.statusCode === 200) {
-                                // 获取图片信息
-                                const imgInfo = await wx.getImageInfo({
-                                    src: downloadRes.tempFilePath
+                            // 使用 Promise 包装 downloadFile
+                            await new Promise((resolve, reject) => {
+                                wx.downloadFile({
+                                    url: tempURL,
+                                    success: async (downloadRes) => {
+                                        console.log(`下载成功: ${house.name}`, downloadRes)
+                                        
+                                        if (downloadRes.statusCode === 200) {
+                                            try {
+                                                // 获取图片信息
+                                                const imgInfo = await wx.getImageInfo({
+                                                    src: downloadRes.tempFilePath
+                                                })
+                                                
+                                                this.houseImages[house.id] = {
+                                                    path: downloadRes.tempFilePath,
+                                                    width: imgInfo.width,
+                                                    height: imgInfo.height
+                                                }
+                                                console.log(`加载房屋图片成功: ${house.name}`, imgInfo)
+                                                resolve()
+                                            } catch (infoErr) {
+                                                console.warn(`获取图片信息失败: ${house.name}`, infoErr)
+                                                reject(infoErr)
+                                            }
+                                        } else {
+                                            console.warn(`下载状态码错误: ${house.name}, status: ${downloadRes.statusCode}`)
+                                            reject(new Error(`status: ${downloadRes.statusCode}`))
+                                        }
+                                    },
+                                    fail: (err) => {
+                                        console.warn(`下载文件失败: ${house.name}`, err)
+                                        reject(err)
+                                    }
                                 })
-                                
-                                this.houseImages[house.id] = {
-                                    path: downloadRes.tempFilePath,
-                                    width: imgInfo.width,
-                                    height: imgInfo.height
-                                }
-                                console.log(`加载房屋图片成功: ${house.name}`, imgInfo)
-                            }
+                            })
+                        } else {
+                            console.warn(`获取临时链接失败: ${house.name}`, res)
                         }
                     } catch (e) {
-                        console.warn(`下载房屋图片失败: ${house.name}`, e)
+                        console.warn(`处理图片失败: ${house.name}`, e)
                     }
                 }
             }
+            
+            console.log('房屋图片加载完成，已加载:', Object.keys(this.houseImages))
         } catch (e) {
             console.warn('加载房屋图片失败:', e)
         }
@@ -219,6 +253,7 @@ export class HouseScene {
             const houseImg = this.houseImages[house.id]
             if (houseImg && houseImg.path) {
                 try {
+                    console.log(`绘制房屋图片: ${house.name}, path: ${houseImg.path}`)
                     ctx.save()
                     ctx.beginPath()
                     ctx.rect(imgX, imgY, imgW, imgH)
@@ -243,9 +278,12 @@ export class HouseScene {
                     
                     ctx.drawImage(houseImg.path, drawX, drawY, drawW, drawH)
                     ctx.restore()
+                    console.log(`绘制完成: ${house.name}`)
                 } catch (e) {
                     console.warn('绘制房屋图片失败:', e)
                 }
+            } else {
+                console.log(`房屋图片未加载: ${house.name}, houseImg:`, houseImg)
             }
             
             // 如果未解锁，添加灰色遮罩
