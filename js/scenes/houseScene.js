@@ -65,19 +65,19 @@ export class HouseScene {
                         console.log(`获取临时链接成功: ${tempURL}`)
                         
                         // 使用 wx.createImage 加载图片（与其他场景相同）
-                        await new Promise((resolve, reject) => {
-                            const img = wx.createImage()
-                            img.onload = () => {
-                                this.houseImages[house.id] = img
-                                console.log(`加载房屋图片成功: ${house.name}, size: ${img.width}x${img.height}`)
-                                resolve()
+                        const img = wx.createImage()
+                        img.onload = () => {
+                            this.houseImages[house.id] = img
+                            console.log(`加载房屋图片成功: ${house.name}, size: ${img.width}x${img.height}`)
+                            // 图片加载完成后触发重新渲染
+                            if (this.game && this.game.render) {
+                                this.game.render()
                             }
-                            img.onerror = (err) => {
-                                console.warn(`加载房屋图片失败: ${house.name}`, err)
-                                reject(err)
-                            }
-                            img.src = tempURL
-                        })
+                        }
+                        img.onerror = (err) => {
+                            console.warn(`加载房屋图片失败: ${house.name}`, err)
+                        }
+                        img.src = tempURL
                     } catch (e) {
                         console.warn(`处理图片失败: ${house.name}`, e)
                     }
