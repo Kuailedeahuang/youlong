@@ -1,7 +1,7 @@
 {
-  "name": "getTempFileURL",
+  "name": "getFangwuURL",
   "version": "1.0.0",
-  "description": "获取云存储文件临时链接",
+  "description": "获取房屋图片临时链接",
   "main": "index.js",
   "dependencies": {
     "wx-server-sdk": "latest"
