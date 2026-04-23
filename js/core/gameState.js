@@ -94,16 +94,19 @@ export default class GameState {
                 await this.loadUserUnlockedHouses()
                 
                 try {
-                    const res = await db.collection('gameprogress').limit(1).get()
+                    // 查询当前用户的游戏进度（用户独立）
+                    const res = await db.collection('gameprogress').where({
+                        _openid: '{openid}'
+                    }).limit(1).get()
 
                     if (res.data && res.data.length > 0) {
                         const cloudData = res.data[0]
                         this.data = { ...this.getDefaultState(), ...cloudData }
                         this.isCloudReady = true
-                        console.log('从云数据库加载成功')
+                        console.log('从云数据库加载成功（用户独立）')
                         return
                     } else {
-                        console.log('云数据库中无记录，使用默认数据')
+                        console.log('云数据库中无该用户记录，使用默认数据')
                     }
                 } catch (dbError) {
                     console.warn('gameprogress 集合操作失败，将使用本地存储:', dbError)
