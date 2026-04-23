@@ -239,6 +239,7 @@ export class HouseScene {
             
             // 绘制房屋图片（如果已加载）
             const houseImg = this.houseImages[house.id]
+            console.log(`渲染房屋 ${house.name}:`, houseImg ? `loaded=${houseImg.width}x${houseImg.height}` : 'not loaded')
             if (houseImg && houseImg.width > 0) {
                 try {
                     ctx.save()
@@ -264,8 +265,10 @@ export class HouseScene {
                     }
                     
                     // 使用与其他场景相同的绘制方式
+                    console.log(`绘制图片 ${house.name}:`, drawX, drawY, drawW, drawH)
                     ctx.drawImage(houseImg, drawX, drawY, drawW, drawH)
                     ctx.restore()
+                    console.log(`绘制完成 ${house.name}`)
                 } catch (e) {
                     console.warn('绘制房屋图片失败:', e)
                 }
