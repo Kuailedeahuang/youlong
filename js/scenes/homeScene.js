@@ -165,6 +165,63 @@ export default class HomeScene {
         if (state.day > 1 && state.yesterdayExpense > 0) {
             renderer.drawText(`昨日开销: ${state.yesterdayExpense}金币`, renderer.width / 2, 25, '#e74c3c', 11, 'center')
         }
+        
+        this.renderLoginStatus(renderer, state)
+    }
+    
+    renderLoginStatus(renderer, state) {
+        const w = renderer.width
+        const isLoggedIn = this.game.gameState.isLoggedIn()
+        const userInfo = this.game.gameState.userInfo
+        
+        if (isLoggedIn) {
+            const loginBadgeX = w - 15 - 140
+            const loginBadgeY = 42
+            const loginBadgeW = 60
+            const logoutBtnW = 70
+            const loginBadgeH = 16
+            
+            renderer.drawRect(loginBadgeX, loginBadgeY, loginBadgeW, loginBadgeH, 'rgba(39, 174, 96, 0.7)', 8)
+            renderer.drawText(`已登录`, loginBadgeX + loginBadgeW / 2, loginBadgeY + 11, '#ffffff', 9, 'center')
+            
+            const ui = this.game.uiManager
+            ui.addButton(loginBadgeX + loginBadgeW + 10, loginBadgeY, logoutBtnW, loginBadgeH, '退出登录', () => {
+                this.handleLogout()
+            }, { bgColor: '#e74c3c', fontSize: 9 })
+        } else {
+            const loginBadgeX = w - 15 - 110
+            const loginBadgeY = 42
+            const loginBadgeW = 50
+            const loginBtnW = 50
+            const loginBadgeH = 16
+            
+            renderer.drawRect(loginBadgeX, loginBadgeY, loginBadgeW, loginBadgeH, 'rgba(231, 76, 60, 0.7)', 8)
+            renderer.drawText(`未登录`, loginBadgeX + loginBadgeW / 2, loginBadgeY + 11, '#ffffff', 9, 'center')
+            
+            const ui = this.game.uiManager
+            ui.addButton(loginBadgeX + loginBadgeW + 10, loginBadgeY, loginBtnW, loginBadgeH, '登录', () => {
+                this.game.sceneManager.switchTo('login')
+            }, { bgColor: '#3498db', fontSize: 9 })
+        }
+    }
+    
+    handleLogout() {
+        this.game.uiManager.addModal({
+            type: 'confirm',
+            title: '退出登录',
+            content: '确定要退出登录吗？\n退出后需要重新登录。',
+            confirmText: '退出',
+            cancelText: '取消',
+            onConfirm: () => {
+                this.game.gameState.setUserInfo(null)
+                wx.showToast({
+                    title: '已退出登录',
+                    icon: 'success',
+                    duration: 1000
+                })
+                this.game.sceneManager.switchTo('login')
+            }
+        })
     }
     
     renderStats(renderer, topBarH, state) {
