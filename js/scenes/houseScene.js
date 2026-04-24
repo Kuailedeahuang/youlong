@@ -113,6 +113,47 @@ export class HouseScene {
         
     }
     
+    // 绘制多行文本，自动换行
+    drawMultiLineText(renderer, text, x, y, maxWidth, lineHeight, color, fontSize, align = 'left') {
+        const ctx = renderer.ctx
+        ctx.fillStyle = color
+        ctx.font = `${fontSize}px sans-serif`
+        ctx.textAlign = align
+        ctx.textBaseline = 'top'
+        
+        const words = text.split('')
+        let line = ''
+        let currentY = y
+        
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i]
+            const metrics = ctx.measureText(testLine)
+            const testWidth = metrics.width
+            
+            if (testWidth > maxWidth && i > 0) {
+                // 绘制当前行
+                let drawX = x
+                if (align === 'center') {
+                    drawX = x + maxWidth / 2
+                }
+                ctx.fillText(line, drawX, currentY)
+                line = words[i]
+                currentY += lineHeight
+            } else {
+                line = testLine
+            }
+        }
+        
+        // 绘制最后一行
+        let drawX = x
+        if (align === 'center') {
+            drawX = x + maxWidth / 2
+        }
+        ctx.fillText(line, drawX, currentY)
+        
+        return currentY + lineHeight - y // 返回总高度
+    }
+    
     render(renderer) {
         const w = renderer.width
         const h = renderer.height
@@ -256,9 +297,11 @@ export class HouseScene {
             // 绘制价格
             renderer.drawText(`${house.price}金币`, x + cardW / 2, y + imgH + 38, priceColor, 11, 'center')
             
-            // 绘制简介
-            const shortDesc = house.description.length > 20 ? house.description.substring(0, 20) + '...' : house.description
-            renderer.drawText(shortDesc, x + cardW / 2, y + imgH + 55, descColor, 10, 'center')
+            // 绘制简介（多行文本，自动换行）
+            const descX = x + 8
+            const descY = y + imgH + 50
+            const descMaxWidth = cardW - 16
+            this.drawMultiLineText(renderer, house.description, descX, descY, descMaxWidth, 12, descColor, 9, 'left')
             
             // 添加点击区域
             ui.addButton(x, y, cardW, this.cardHeight, '', () => {
@@ -289,12 +332,13 @@ export class HouseScene {
         const w = renderer.width
         const h = renderer.height
         const modalW = w * 0.85
-        const modalH = 320
+        const modalH = 360
         const modalX = (w - modalW) / 2
         const modalY = (h - modalH) / 2
         
         const house = this.selectedHouse
         const eligibility = checkPurchaseEligibility(state, house.id)
+        const ctx = renderer.ctx
         
         renderer.drawRect(0, 0, w, h, 'rgba(0, 0, 0, 0.7)')
         
@@ -302,38 +346,65 @@ export class HouseScene {
         
         renderer.drawText(house.name, modalX + modalW / 2, modalY + 25, '#f39c12', 16, 'center')
         
+        // 绘制房屋图片（大图）
         const imgW = modalW - 30
-        const imgH = 100
-        renderer.drawRect(modalX + 15, modalY + 40, imgW, imgH, '#2d3748', 6)
+        const imgH = 180
+        const imgX = modalX + 15
+        const imgY = modalY + 45
         
-        let lineY = modalY + 155
-        renderer.drawText(`价格: ${house.price} 金币`, modalX + 15, lineY, '#27ae60', 12, 'left')
-        lineY += 22
-        renderer.drawText(`位置: ${house.location}`, modalX + 15, lineY, '#bdc3c7', 12, 'left')
-        lineY += 22
-        renderer.drawText(`面积: ${house.area}`, modalX + 15, lineY, '#bdc3c7', 12, 'left')
-        lineY += 22
-        renderer.drawText(`设施: ${house.facilities.join('、')}`, modalX + 15, lineY, '#bdc3c7', 11, 'left')
-        lineY += 22
-        renderer.drawText(`介绍: ${house.description}`, modalX + 15, lineY, '#bdc3c7', 10, 'left')
+        // 绘制图片背景
+        renderer.drawRect(imgX, imgY, imgW, imgH, '#2d3748', 6)
         
-        const btnY = modalY + modalH - 50
+        // 绘制房屋图片
+        const houseImg = this.houseImages[house.id]
+        if (houseImg && houseImg.width > 0) {
+            try {
+                ctx.save()
+                ctx.beginPath()
+                ctx.rect(imgX, imgY, imgW, imgH)
+                ctx.clip()
+                
+                // 计算图片绘制尺寸（保持比例填充）
+                const imgRatio = houseImg.width / houseImg.height
+                const drawRatio = imgW / imgH
+                
+                let drawW, drawH, drawX, drawY
+                if (imgRatio > drawRatio) {
+                    drawH = imgH
+                    drawW = drawH * imgRatio
+                    drawX = imgX - (drawW - imgW) / 2
+                    drawY = imgY
+                } else {
+                    drawW = imgW
+                    drawH = drawW / imgRatio
+                    drawX = imgX
+                    drawY = imgY - (drawH - imgH) / 2
+                }
+                
+                ctx.drawImage(houseImg, drawX, drawY, drawW, drawH)
+                ctx.restore()
+            } catch (e) {
+                console.warn('绘制弹窗房屋图片失败:', e)
+            }
+        }
+        
+        const btnY = modalY + modalH - 55
         const ui = this.game.uiManager
         
         if (eligibility.eligible) {
-            ui.addButton(modalX + 15, btnY, (modalW - 45) / 2, 40, '购买', () => {
+            // 金币足够，显示购买和取消按钮
+            ui.addButton(modalX + 15, btnY, (modalW - 45) / 2, 45, '购买', () => {
                 this.purchaseHouse(house)
-            }, { bgColor: '#27ae60', fontSize: 14 })
+            }, { bgColor: '#27ae60', fontSize: 15 })
             
-            ui.addButton(modalX + 30 + (modalW - 45) / 2, btnY, (modalW - 45) / 2, 40, '取消', () => {
+            ui.addButton(modalX + 30 + (modalW - 45) / 2, btnY, (modalW - 45) / 2, 45, '取消', () => {
                 this.selectedHouse = null
-            }, { bgColor: '#7f8c8d', fontSize: 14 })
+            }, { bgColor: '#7f8c8d', fontSize: 15 })
         } else {
-            renderer.drawText(`无法购买: ${eligibility.reason}`, modalX + modalW / 2, btnY - 10, '#e74c3c', 11, 'center')
-            
-            ui.addButton(modalX + (modalW - 100) / 2, btnY, 100, 40, '关闭', () => {
+            // 金币不够，只显示取消按钮
+            ui.addButton(modalX + (modalW - 120) / 2, btnY, 120, 45, '取消', () => {
                 this.selectedHouse = null
-            }, { bgColor: '#7f8c8d', fontSize: 14 })
+            }, { bgColor: '#7f8c8d', fontSize: 15 })
         }
     }
     
