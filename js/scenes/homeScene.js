@@ -308,6 +308,7 @@ export default class HomeScene {
     }
     
     enterHouseScene() {
+        console.log('[HomeScene] enterHouseScene 被调用')
         this.game.sceneManager.switchTo('house')
     }
     
