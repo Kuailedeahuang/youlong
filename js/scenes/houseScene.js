@@ -61,11 +61,21 @@ export class HouseScene {
     }
     
     initTouchEvents() {
+        this.touchStartX = 0
+        this.touchStartY = 0
+        this.touchStartTime = 0
+        this.isDragging = false
+        this.hasMoved = false
+        
         wx.onTouchStart((e) => {
             if (this.selectedHouse) return
             
             const touch = e.touches[0]
+            this.touchStartX = touch.clientX
+            this.touchStartY = touch.clientY
+            this.touchStartTime = Date.now()
             this.isDragging = true
+            this.hasMoved = false
             this.lastTouchY = touch.clientY
         })
         
@@ -74,20 +84,77 @@ export class HouseScene {
             
             const touch = e.touches[0]
             const deltaY = touch.clientY - this.lastTouchY
+            const deltaX = touch.clientX - this.touchStartX
+            const totalDeltaY = touch.clientY - this.touchStartY
+            
+            // 如果移动距离超过阈值，认为是滑动
+            if (Math.abs(totalDeltaY) > 5 || Math.abs(deltaX) > 5) {
+                this.hasMoved = true
+            }
+            
             this.lastTouchY = touch.clientY
-            
             this.scrollY += deltaY
-            
             this.scrollY = Math.max(-this.maxScrollY, Math.min(0, this.scrollY))
         })
         
-        wx.onTouchEnd(() => {
+        wx.onTouchEnd((e) => {
+            if (!this.isDragging) return
+            
+            const touch = e.changedTouches[0]
+            const deltaX = touch.clientX - this.touchStartX
+            const deltaY = touch.clientY - this.touchStartY
+            const duration = Date.now() - this.touchStartTime
+            
+            // 判断是点击还是滑动
+            // 点击条件：移动距离小、时间短、没有大幅移动
+            const isClick = !this.hasMoved && 
+                           Math.abs(deltaX) < 10 && 
+                           Math.abs(deltaY) < 10 && 
+                           duration < 300
+            
+            if (isClick && !this.selectedHouse) {
+                // 处理点击事件
+                this.handleCardClick(touch.clientX, touch.clientY)
+            }
+            
             this.isDragging = false
+            this.hasMoved = false
         })
         
         wx.onTouchCancel(() => {
             this.isDragging = false
+            this.hasMoved = false
         })
+    }
+    
+    // 处理卡片点击
+    handleCardClick(x, y) {
+        const w = this.game.renderer.width
+        const cardW = (w - 30) / 2
+        const cardH = this.cardHeight
+        const startX = 10
+        const startY = this.listStartY + this.scrollY
+        
+        // 检查是否点击在列表区域内
+        if (y < this.listStartY || y > this.game.renderer.height - 20) {
+            return
+        }
+        
+        // 计算点击的是哪个卡片
+        const relativeY = y - startY
+        const row = Math.floor(relativeY / (cardH + this.cardPadding))
+        const col = x < w / 2 ? 0 : 1
+        const index = row * 2 + col
+        
+        if (index >= 0 && index < this.houses.length) {
+            const house = this.houses[index]
+            console.log(`点击房屋卡片: ${house.name}`)
+            this.selectedHouse = house
+            // 触发重新渲染
+            if (this.game && this.game.render) {
+                this.game.render()
+            }
+        }
     }
     
     async onEnter() {
@@ -302,11 +369,6 @@ export class HouseScene {
             const descY = y + imgH + 50
             const descMaxWidth = cardW - 16
             this.drawMultiLineText(renderer, house.description, descX, descY, descMaxWidth, 12, descColor, 9, 'left')
-            
-            // 添加点击区域
-            ui.addButton(x, y, cardW, this.cardHeight, '', () => {
-                this.selectedHouse = house
-            }, { bgColor: 'transparent' })
         })
         
         ctx.restore()
