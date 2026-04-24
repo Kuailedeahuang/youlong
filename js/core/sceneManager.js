@@ -21,7 +21,9 @@ export default class SceneManager {
     }
     
     switchTo(sceneName) {
+        console.log(`[SceneManager] switchTo 被调用: ${sceneName}`)
         if (this.scenes[sceneName] && !this.isSwitching) {
+            console.log(`[SceneManager] 开始切换到场景: ${sceneName}`)
             this.isSwitching = true
             this.game.uiManager.clearAll()
             this.currentScene = sceneName
@@ -29,9 +31,13 @@ export default class SceneManager {
             
             // 延迟执行场景进入，避免渲染冲突
             setTimeout(async () => {
+                console.log(`[SceneManager] 调用 ${sceneName}.onEnter()`)
                 await this.scenes[sceneName].onEnter()
+                console.log(`[SceneManager] ${sceneName}.onEnter() 完成`)
                 this.isSwitching = false
             }, 50)
+        } else {
+            console.log(`[SceneManager] 无法切换场景: ${sceneName}, 场景存在: ${!!this.scenes[sceneName]}, 正在切换: ${this.isSwitching}`)
         }
     }
     
