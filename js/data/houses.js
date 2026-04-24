@@ -41,7 +41,7 @@ export const HOUSES_DATA = [
         location: '市区',
         area: '75㎡',
         facilities: ['双卫生间', '大厨房', '阳台', '客厅'],
-        imageName: 'shushiliangjushi'
+        imageName: 'shushierjushi'
     },
     {
         id: 5,
