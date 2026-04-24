@@ -1,3 +1,8 @@
+// 创建全局 window 对象（如果不存在）
+if (typeof window === 'undefined') {
+    global.window = global;
+}
+
 window.canvas = wx.createCanvas();
 window.innerWidth = window.canvas.width;
 window.innerHeight = window.canvas.height;
