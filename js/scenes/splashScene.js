@@ -44,27 +44,33 @@ export default class SplashScene {
     async preloadHouseImages() {
         try {
             console.log('开始预加载房屋图片...')
+            console.log('房屋总数:', this.houses.length)
             
             for (const house of this.houses) {
+                console.log(`处理房屋: ${house.name}, imageName: ${house.imageName}, id: ${house.id}`)
                 if (house.imageName) {
                     const imageName = `${house.imageName}.png`
+                    console.log(`尝试加载图片: ${imageName}`)
                     
                     try {
                         const cloudImage = await imageManager.loadImageFromCloud(imageName)
                         
                         if (cloudImage && cloudImage.image) {
                             this.houseImages[house.id] = cloudImage.image
-                            console.log(`预加载房屋图片成功: ${house.name}`)
+                            console.log(`✓ 预加载成功: ${house.name} (id=${house.id})`)
                         } else {
-                            console.warn(`预加载房屋图片失败: ${house.name}, 未找到图片`)
+                            console.warn(`✗ 预加载失败: ${house.name}, 未找到图片`)
                         }
                     } catch (e) {
-                        console.warn(`预加载图片失败: ${house.name}`, e)
+                        console.warn(`✗ 预加载异常: ${house.name}`, e.message || e)
                     }
+                } else {
+                    console.warn(`✗ 房屋没有 imageName: ${house.name}`)
                 }
             }
             
             console.log('房屋图片预加载完成，已加载:', Object.keys(this.houseImages).length, '张')
+            console.log('已加载的房屋ID:', Object.keys(this.houseImages))
         } catch (e) {
             console.warn('预加载房屋图片失败:', e)
         }
