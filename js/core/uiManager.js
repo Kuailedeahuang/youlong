@@ -43,6 +43,7 @@ export default class UIManager {
     }
     
     handleTouch(x, y) {
+        console.log(`[UIManager] handleTouch: x=${x}, y=${y}`)
         if (this.modals.length > 0) {
             const modal = this.modals[this.modals.length - 1]
             this.handleModalTouch(modal, x, y)
@@ -50,8 +51,10 @@ export default class UIManager {
         }
         
         for (const btn of this.buttons) {
+            console.log(`[UIManager] 检查按钮: ${btn.text}, 区域: (${btn.x}, ${btn.y}, ${btn.w}, ${btn.h})`)
             if (x >= btn.x && x <= btn.x + btn.w &&
                 y >= btn.y && y <= btn.y + btn.h) {
+                console.log(`[UIManager] 按钮被点击: ${btn.text}`)
                 if (btn.callback) {
                     btn.callback()
                 }
