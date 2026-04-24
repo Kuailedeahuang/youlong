@@ -91,7 +91,8 @@ export class HouseScene {
     }
     
     async onEnter() {
-        console.log('HouseScene onEnter 开始')
+        console.log('========== HouseScene onEnter 开始 ==========')
+        console.log('imagesLoaded:', this.imagesLoaded)
         this.selectedHouse = null
         this.scrollY = 0
         
@@ -108,7 +109,7 @@ export class HouseScene {
         } else {
             console.log('图片已加载，跳过')
         }
-        console.log('HouseScene onEnter 结束')
+        console.log('========== HouseScene onEnter 结束 ==========')
     }
     
     onExit() {
