@@ -1,4 +1,5 @@
 import imageManager from '../utils/imageManager.js'
+import { getAllHouses } from '../data/houses.js'
 
 export default class SplashScene {
     constructor(game) {
@@ -8,7 +9,10 @@ export default class SplashScene {
         this.loadingProgress = 0
         this.loadingDuration = 5000 // 5秒加载时间
         this.startTime = null
+        this.houseImages = {} // 预加载的房屋图片
+        this.houses = getAllHouses()
         this.loadLogo()
+        this.preloadHouseImages() // 预加载房屋图片
     }
     
     async loadLogo() {
@@ -34,6 +38,36 @@ export default class SplashScene {
             console.error('Logo图片加载失败')
         }
         this.logoImage.src = 'tupian/logo.png'
+    }
+    
+    // 预加载房屋图片
+    async preloadHouseImages() {
+        try {
+            console.log('开始预加载房屋图片...')
+            
+            for (const house of this.houses) {
+                if (house.imageName) {
+                    const imageName = `${house.imageName}.png`
+                    
+                    try {
+                        const cloudImage = await imageManager.loadImageFromCloud(imageName)
+                        
+                        if (cloudImage && cloudImage.image) {
+                            this.houseImages[house.id] = cloudImage.image
+                            console.log(`预加载房屋图片成功: ${house.name}`)
+                        } else {
+                            console.warn(`预加载房屋图片失败: ${house.name}, 未找到图片`)
+                        }
+                    } catch (e) {
+                        console.warn(`预加载图片失败: ${house.name}`, e)
+                    }
+                }
+            }
+            
+            console.log('房屋图片预加载完成，已加载:', Object.keys(this.houseImages).length, '张')
+        } catch (e) {
+            console.warn('预加载房屋图片失败:', e)
+        }
     }
     
     onEnter() {
