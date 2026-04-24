@@ -100,7 +100,11 @@ export class HouseScene {
             console.log('开始加载房屋图片...')
             await this.loadHouseImages()
             this.imagesLoaded = true
-            console.log('房屋图片加载完成')
+            console.log('房屋图片加载完成，触发重新渲染')
+            // 图片加载完成后触发重新渲染
+            if (this.game && this.game.render) {
+                this.game.render()
+            }
         } else {
             console.log('图片已加载，跳过')
         }
