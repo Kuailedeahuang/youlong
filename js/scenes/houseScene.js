@@ -557,7 +557,7 @@ export class HouseScene {
         
         try {
             if (wx.cloud) {
-                const db = wx.cloud.database({ env: CLOUD_ENV_ID })
+                const db = wx.cloud.database({})
                 const res = await db.collection('user_unlocked_houses').where({
                     _openid: '{openid}'
                 }).limit(1).get()
@@ -569,7 +569,6 @@ export class HouseScene {
             }
         } catch (e) {
             console.warn('从云数据库获取解锁房屋失败:', e)
-            // 回退到当前数据
             unlockedHouses = this.game.gameState.data.unlockedHouses || []
         }
         

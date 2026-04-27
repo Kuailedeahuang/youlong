@@ -118,8 +118,6 @@ export default class GameState {
 
                 const db = wx.cloud.database({})
 
-                await this.loadUserUnlockedHouses()
-
                 try {
                     const res = await db.collection('gameprogress').where({
                         _openid: '{openid}'
@@ -130,7 +128,6 @@ export default class GameState {
                         this.data = { ...this.getDefaultState(), ...cloudData }
                         this.isCloudReady = true
                         console.log('从云数据库加载成功（用户独立）')
-                        return
                     } else {
                         console.log('云数据库中无该用户记录，使用默认数据')
                     }
@@ -138,6 +135,9 @@ export default class GameState {
                     console.warn('gameprogress 集合操作失败，将使用本地存储:', dbError)
                     this.isCloudReady = false
                 }
+
+                // 在 gameprogress 加载之后，再加载用户解锁房屋（覆盖 gameprogress 中的数据）
+                await this.loadUserUnlockedHouses()
             }
         } catch (e) {
             console.warn('云开发初始化失败，使用本地存储', e)
@@ -148,6 +148,11 @@ export default class GameState {
             if (saved) {
                 this.data = { ...this.getDefaultState(), ...saved }
                 console.log('从本地存储加载成功')
+                
+                // 本地存储加载后，也尝试从云端加载解锁房屋
+                if (wx.cloud) {
+                    await this.loadUserUnlockedHouses()
+                }
             }
         } catch (e) {
             console.warn('本地存储加载失败:', e)

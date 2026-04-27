@@ -101,7 +101,7 @@ export async function restartGame(gameInstance = null) {
     
     try {
       if (wx.cloud) {
-        const db = wx.cloud.database({ env: CLOUD_ENV_ID })
+        const db = wx.cloud.database({})
         const res = await db.collection('user_unlocked_houses').where({
           _openid: '{openid}'
         }).limit(1).get()
