@@ -237,9 +237,10 @@ export default class GameState {
         try {
             if (wx.cloud) {
                 const db = wx.cloud.database({})
+                const _ = db.command
                 const res = await db.collection('user_unlocked_houses').where({
-                    _openid: '{openid}'
-                }).limit(1).get()
+                    _openid: _.exists(true)
+                }).orderBy('updateTime', 'desc').limit(1).get()
                 
                 if (res.data && res.data.length > 0) {
                     unlockedHouses = res.data[0].unlockedHouses || []
@@ -271,11 +272,13 @@ export default class GameState {
             }
             
             const db = wx.cloud.database({})
+            const _ = db.command
             
-            // 查询当前用户的解锁房屋记录
+            // 查询当前用户的解锁房屋记录（使用 _openid 查询当前用户）
+            // 注意：在安全规则下，系统会自动过滤为当前用户的记录
             const res = await db.collection('user_unlocked_houses').where({
-                _openid: '{openid}'
-            }).limit(1).get()
+                _openid: _.exists(true)
+            }).orderBy('updateTime', 'desc').limit(1).get()
             
             console.log('[loadUserUnlockedHouses] 查询结果:', JSON.stringify(res.data))
             
@@ -283,7 +286,7 @@ export default class GameState {
                 const cloudUnlockedHouses = res.data[0].unlockedHouses || []
                 this.data.unlockedHouses = cloudUnlockedHouses
                 this.data._unlockedHousesId = res.data[0]._id
-                console.log('[loadUserUnlockedHouses] 从云端加载成功，unlockedHouses:', this.data.unlockedHouses)
+                console.log('[loadUserUnlockedHouses] 从云端加载成功，unlockedHouses:', this.data.unlockedHouses, ', _id:', this.data._unlockedHousesId)
             } else {
                 console.log('[loadUserUnlockedHouses] 云端无记录，保留当前数据')
             }
@@ -317,21 +320,38 @@ export default class GameState {
             }
             
             const db = wx.cloud.database({})
+            const _ = db.command
             const unlockedHouses = this.data.unlockedHouses || []
             
             // 同时保存到本地存储作为备份
             wx.setStorageSync('user_unlocked_houses', { unlockedHouses })
             console.log('[saveUserUnlockedHouses] 已保存到本地存储')
             
-            if (this.data._unlockedHousesId) {
+            // 先查询是否已有该用户的记录
+            let existingRecordId = this.data._unlockedHousesId
+            
+            if (!existingRecordId) {
+                // 如果没有缓存的 ID，先查询
+                const queryRes = await db.collection('user_unlocked_houses').where({
+                    _openid: _.exists(true)
+                }).orderBy('updateTime', 'desc').limit(1).get()
+                
+                if (queryRes.data && queryRes.data.length > 0) {
+                    existingRecordId = queryRes.data[0]._id
+                    console.log('[saveUserUnlockedHouses] 查询到现有记录, _id:', existingRecordId)
+                }
+            }
+            
+            if (existingRecordId) {
                 // 更新现有记录
-                console.log('[saveUserUnlockedHouses] 更新现有记录, _id:', this.data._unlockedHousesId)
-                await db.collection('user_unlocked_houses').doc(this.data._unlockedHousesId).update({
+                console.log('[saveUserUnlockedHouses] 更新现有记录, _id:', existingRecordId)
+                await db.collection('user_unlocked_houses').doc(existingRecordId).update({
                     data: {
                         unlockedHouses: unlockedHouses,
                         updateTime: db.serverDate()
                     }
                 })
+                this.data._unlockedHousesId = existingRecordId
                 console.log('[saveUserUnlockedHouses] 更新成功, unlockedHouses:', unlockedHouses)
             } else {
                 // 创建新记录

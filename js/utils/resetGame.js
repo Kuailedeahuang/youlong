@@ -102,9 +102,10 @@ export async function restartGame(gameInstance = null) {
     try {
       if (wx.cloud) {
         const db = wx.cloud.database({})
+        const _ = db.command
         const res = await db.collection('user_unlocked_houses').where({
-          _openid: '{openid}'
-        }).limit(1).get()
+          _openid: _.exists(true)
+        }).orderBy('updateTime', 'desc').limit(1).get()
         
         if (res.data && res.data.length > 0) {
           unlockedHouses = res.data[0].unlockedHouses || []
