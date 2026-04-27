@@ -26,6 +26,15 @@ export class HouseScene {
         this.houseImages = {}
         this.imagesLoaded = false
         
+        // 结局动画状态
+        this.isEndingPlaying = false
+        this.endingHouse = null
+        this.endingScrollY = 0
+        this.endingStartTime = 0
+        this.endingPhase = ''
+        this.endingLines = []
+        this.endingTextHeight = 0
+        
         this.initTouchEvents()
     }
     
@@ -66,65 +75,80 @@ export class HouseScene {
         this.touchStartTime = 0
         this.isDragging = false
         this.hasMoved = false
+        this.touchHandlers = null
         
-        wx.onTouchStart((e) => {
-            if (this.selectedHouse) return
+        // 保存事件处理函数的引用，以便后续移除
+        this.touchHandlers = {
+            onTouchStart: (e) => {
+                // 检查当前场景是否是 house
+                if (this.game.sceneManager.currentScene !== 'house') return
+                if (this.selectedHouse) return
+                
+                const touch = e.touches[0]
+                this.touchStartX = touch.clientX
+                this.touchStartY = touch.clientY
+                this.touchStartTime = Date.now()
+                this.isDragging = true
+                this.hasMoved = false
+                this.lastTouchY = touch.clientY
+            },
             
-            const touch = e.touches[0]
-            this.touchStartX = touch.clientX
-            this.touchStartY = touch.clientY
-            this.touchStartTime = Date.now()
-            this.isDragging = true
-            this.hasMoved = false
-            this.lastTouchY = touch.clientY
-        })
-        
-        wx.onTouchMove((e) => {
-            if (!this.isDragging || this.selectedHouse) return
+            onTouchMove: (e) => {
+                if (this.game.sceneManager.currentScene !== 'house') return
+                if (!this.isDragging || this.selectedHouse) return
+                
+                const touch = e.touches[0]
+                const deltaY = touch.clientY - this.lastTouchY
+                const deltaX = touch.clientX - this.touchStartX
+                const totalDeltaY = touch.clientY - this.touchStartY
+                
+                if (Math.abs(totalDeltaY) > 5 || Math.abs(deltaX) > 5) {
+                    this.hasMoved = true
+                }
+                
+                this.lastTouchY = touch.clientY
+                this.scrollY += deltaY
+                this.scrollY = Math.max(-this.maxScrollY, Math.min(0, this.scrollY))
+            },
             
-            const touch = e.touches[0]
-            const deltaY = touch.clientY - this.lastTouchY
-            const deltaX = touch.clientX - this.touchStartX
-            const totalDeltaY = touch.clientY - this.touchStartY
+            onTouchEnd: (e) => {
+                if (this.game.sceneManager.currentScene !== 'house') return
+                if (!this.isDragging) return
+                
+                const touch = e.changedTouches[0]
+                const deltaX = touch.clientX - this.touchStartX
+                const deltaY = touch.clientY - this.touchStartY
+                const duration = Date.now() - this.touchStartTime
+                
+                const isClick = !this.hasMoved && 
+                               Math.abs(deltaX) < 10 && 
+                               Math.abs(deltaY) < 10 && 
+                               duration < 300
+                
+                if (isClick) {
+                    // 先检查结局按钮
+                    if (this.isEndingPlaying) {
+                        this.handleEndingTouch(touch.clientX, touch.clientY)
+                    } else if (!this.selectedHouse) {
+                        this.handleCardClick(touch.clientX, touch.clientY)
+                    }
+                }
+                
+                this.isDragging = false
+                this.hasMoved = false
+            },
             
-            // 如果移动距离超过阈值，认为是滑动
-            if (Math.abs(totalDeltaY) > 5 || Math.abs(deltaX) > 5) {
-                this.hasMoved = true
+            onTouchCancel: () => {
+                if (this.game.sceneManager.currentScene !== 'house') return
+                this.isDragging = false
+                this.hasMoved = false
             }
-            
-            this.lastTouchY = touch.clientY
-            this.scrollY += deltaY
-            this.scrollY = Math.max(-this.maxScrollY, Math.min(0, this.scrollY))
-        })
+        }
         
-        wx.onTouchEnd((e) => {
-            if (!this.isDragging) return
-            
-            const touch = e.changedTouches[0]
-            const deltaX = touch.clientX - this.touchStartX
-            const deltaY = touch.clientY - this.touchStartY
-            const duration = Date.now() - this.touchStartTime
-            
-            // 判断是点击还是滑动
-            // 点击条件：移动距离小、时间短、没有大幅移动
-            const isClick = !this.hasMoved && 
-                           Math.abs(deltaX) < 10 && 
-                           Math.abs(deltaY) < 10 && 
-                           duration < 300
-            
-            if (isClick && !this.selectedHouse) {
-                // 处理点击事件
-                this.handleCardClick(touch.clientX, touch.clientY)
-            }
-            
-            this.isDragging = false
-            this.hasMoved = false
-        })
-        
-        wx.onTouchCancel(() => {
-            this.isDragging = false
-            this.hasMoved = false
-        })
+        wx.onTouchStart(this.touchHandlers.onTouchStart)
+        wx.onTouchMove(this.touchHandlers.onTouchMove)
+        wx.onTouchEnd(this.touchHandlers.onTouchEnd)
+        wx.onTouchCancel(this.touchHandlers.onTouchCancel)
     }
     
     // 处理卡片点击
@@ -227,6 +251,12 @@ export class HouseScene {
         const state = this.game.gameState.data
         
         this.game.uiManager.clear()
+        
+        // 如果正在播放结局动画
+        if (this.isEndingPlaying) {
+            this.renderEnding(renderer)
+            return
+        }
         
         renderer.clear('#f5f0e1')
         
@@ -492,7 +522,7 @@ export class HouseScene {
         }
     }
     
-    purchaseHouse(house) {
+    async purchaseHouse(house) {
         const state = this.game.gameState.data
         
         state.money -= house.price
@@ -504,11 +534,16 @@ export class HouseScene {
         }
         if (!state.unlockedHouses.includes(house.id)) {
             state.unlockedHouses.push(house.id)
+            console.log('[purchaseHouse] 添加房屋到解锁列表:', house.id, ', 当前列表:', state.unlockedHouses)
         }
         
-        // 保存游戏状态和用户解锁的房屋（用户独立的永久数据）
-        this.game.gameState.save()
-        this.game.gameState.saveUserUnlockedHouses()
+        // 先保存用户解锁的房屋到云端（确保永久保存）
+        console.log('[purchaseHouse] 开始保存解锁房屋到云端...')
+        await this.game.gameState.saveUserUnlockedHouses()
+        console.log('[purchaseHouse] 解锁房屋已保存到云端')
+        
+        // 再保存游戏状态
+        await this.game.gameState.save()
         
         this.game.gameState.addDelayedAnimation('decrease', house.price, 'money', '金币', '#f39c12')
         
@@ -519,39 +554,252 @@ export class HouseScene {
     }
     
     playEnding(house) {
-        // 结局内容（临时，等待图片制作完成）
-        const endingContent = `【购房结局】\n\n您成功购买了 ${house.name}！\n\n${house.parentAttitude}\n\n在这个繁华的大都市，您终于拥有了自己的栖身之所。虽然前路依然充满挑战，但您已经迈出了重要的一步。\n\n愿您在新的家园中，开启人生的新篇章。`
+        // 设置结局动画状态
+        this.isEndingPlaying = true
+        this.endingHouse = house
+        this.endingScrollY = 0
+        this.endingStartTime = Date.now()
+        this.endingPhase = 'fadein' // fadein -> scrolling -> fadeout -> buttons
         
-        this.game.uiManager.addModal({
-            type: 'confirm',
-            title: '结局 - 安家立业',
-            content: endingContent,
-            confirmText: '再活一世',
-            cancelText: '退出游戏',
-            singleButton: false,
-            onConfirm: () => {
-                this.restartGameWithUnlockedHouses()
-            },
-            onCancel: () => {
-                // 退出游戏
-                wx.exitMiniProgram({
-                    success: () => {
-                        console.log('退出游戏成功')
-                    },
-                    fail: (err) => {
-                        console.error('退出游戏失败:', err)
-                        wx.showModal({
-                            title: '退出失败',
-                            content: '请手动关闭小程序',
-                            showCancel: false
-                        })
-                    }
-                })
+        // 结局文字内容
+        this.endingLines = [
+            '',
+            '',
+            '',
+            '',
+            '【 购 房 结 局 】',
+            '',
+            '',
+            `恭喜您成功购买了`,
+            `${house.name}`,
+            '',
+            '',
+            house.parentAttitude || '',
+            '',
+            '',
+            '在这个繁华的大都市，',
+            '您终于拥有了自己的栖身之所。',
+            '',
+            '虽然前路依然充满挑战，',
+            '但您已经迈出了重要的一步。',
+            '',
+            '',
+            '愿您在新的家园中，',
+            '开启人生的新篇章。',
+            '',
+            '',
+            '',
+            '— 感谢游玩 —',
+            '',
+            ''
+        ]
+        
+        // 计算文字总高度
+        this.endingTextHeight = this.endingLines.length * 35
+    }
+    
+    renderEnding(renderer) {
+        if (!this.isEndingPlaying) return
+        
+        const ctx = renderer.ctx
+        const w = renderer.width
+        const h = renderer.height
+        const elapsed = Date.now() - this.endingStartTime
+        
+        // 获取房屋图片
+        const houseImg = this.houseImages[this.endingHouse.id]
+        
+        // 绘制房屋图片作为背景（半透明）
+        if (houseImg && houseImg.width > 0) {
+            ctx.save()
+            
+            // 计算图片绘制尺寸（覆盖整个屏幕）
+            const imgRatio = houseImg.width / houseImg.height
+            const screenRatio = w / h
+            let drawW, drawH, drawX, drawY
+            
+            if (imgRatio > screenRatio) {
+                drawH = h
+                drawW = drawH * imgRatio
+                drawX = (w - drawW) / 2
+                drawY = 0
+            } else {
+                drawW = w
+                drawH = drawW / imgRatio
+                drawX = 0
+                drawY = (h - drawH) / 2
+            }
+            
+            // 绘制半透明背景图
+            ctx.globalAlpha = 0.4
+            ctx.drawImage(houseImg, drawX, drawY, drawW, drawH)
+            ctx.globalAlpha = 1
+            
+            // 添加深色遮罩
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+            ctx.fillRect(0, 0, w, h)
+            
+            ctx.restore()
+        } else {
+            // 没有图片时使用纯色背景
+            ctx.fillStyle = 'rgba(20, 20, 40, 0.95)'
+            ctx.fillRect(0, 0, w, h)
+        }
+        
+        // 根据阶段处理动画
+        if (this.endingPhase === 'fadein') {
+            // 淡入效果（1秒）
+            const fadeProgress = Math.min(elapsed / 1000, 1)
+            ctx.save()
+            ctx.globalAlpha = fadeProgress
+            this.renderEndingText(renderer)
+            ctx.restore()
+            
+            if (elapsed >= 1000) {
+                this.endingPhase = 'scrolling'
+                this.endingStartTime = Date.now()
+            }
+        } else if (this.endingPhase === 'scrolling') {
+            // 滚动效果
+            const scrollDuration = 8000 // 8秒滚动完成
+            const scrollProgress = Math.min(elapsed / scrollDuration, 1)
+            const totalScroll = this.endingTextHeight + h
+            this.endingScrollY = h - totalScroll * scrollProgress
+            
+            this.renderEndingText(renderer)
+            
+            if (elapsed >= scrollDuration) {
+                this.endingPhase = 'buttons'
+                this.endingStartTime = Date.now()
+            }
+        } else if (this.endingPhase === 'buttons') {
+            // 显示按钮
+            this.renderEndingText(renderer)
+            this.renderEndingButtons(renderer)
+        }
+    }
+    
+    renderEndingText(renderer) {
+        const ctx = renderer.ctx
+        const w = renderer.width
+        const h = renderer.height
+        
+        ctx.save()
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        
+        const startY = this.endingScrollY
+        
+        this.endingLines.forEach((line, index) => {
+            const y = startY + index * 35
+            
+            // 只绘制在屏幕内的文字
+            if (y > -50 && y < h + 50) {
+                // 标题样式
+                if (line.includes('【') && line.includes('】')) {
+                    ctx.font = 'bold 28px sans-serif'
+                    ctx.fillStyle = '#ffd700'
+                } else if (line.includes('—')) {
+                    ctx.font = 'italic 20px sans-serif'
+                    ctx.fillStyle = '#aaaaaa'
+                } else if (line === this.endingHouse.name) {
+                    ctx.font = 'bold 26px sans-serif'
+                    ctx.fillStyle = '#ffffff'
+                } else if (line.includes('恭喜')) {
+                    ctx.font = '22px sans-serif'
+                    ctx.fillStyle = '#ffffff'
+                } else {
+                    ctx.font = '20px sans-serif'
+                    ctx.fillStyle = '#dddddd'
+                }
+                
+                ctx.fillText(line, w / 2, y)
             }
         })
+        
+        ctx.restore()
+    }
+    
+    renderEndingButtons(renderer) {
+        const ctx = renderer.ctx
+        const w = renderer.width
+        const h = renderer.height
+        
+        // 按钮位置
+        const btnW = 140
+        const btnH = 45
+        const btnY = h - 80
+        const gap = 30
+        
+        // 再活一世按钮
+        const btn1X = w / 2 - btnW - gap / 2
+        ctx.fillStyle = '#27ae60'
+        ctx.beginPath()
+        ctx.roundRect(btn1X, btnY, btnW, btnH, 8)
+        ctx.fill()
+        
+        ctx.fillStyle = '#ffffff'
+        ctx.font = '18px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('再活一世', btn1X + btnW / 2, btnY + btnH / 2)
+        
+        // 退出游戏按钮
+        const btn2X = w / 2 + gap / 2
+        ctx.fillStyle = '#7f8c8d'
+        ctx.beginPath()
+        ctx.roundRect(btn2X, btnY, btnW, btnH, 8)
+        ctx.fill()
+        
+        ctx.fillStyle = '#ffffff'
+        ctx.fillText('退出游戏', btn2X + btnW / 2, btnY + btnH / 2)
+    }
+    
+    handleEndingTouch(x, y) {
+        if (!this.isEndingPlaying || this.endingPhase !== 'buttons') return false
+        
+        const w = this.game.renderer.width
+        const h = this.game.renderer.height
+        
+        const btnW = 140
+        const btnH = 45
+        const btnY = h - 80
+        const gap = 30
+        
+        // 再活一世按钮
+        const btn1X = w / 2 - btnW - gap / 2
+        if (x >= btn1X && x <= btn1X + btnW && y >= btnY && y <= btnY + btnH) {
+            this.isEndingPlaying = false
+            this.restartGameWithUnlockedHouses()
+            return true
+        }
+        
+        // 退出游戏按钮
+        const btn2X = w / 2 + gap / 2
+        if (x >= btn2X && x <= btn2X + btnW && y >= btnY && y <= btnY + btnH) {
+            this.isEndingPlaying = false
+            wx.exitMiniProgram({
+                success: () => {
+                    console.log('退出游戏成功')
+                },
+                fail: (err) => {
+                    console.error('退出游戏失败:', err)
+                    wx.showModal({
+                        title: '退出失败',
+                        content: '请手动关闭小程序',
+                        showCancel: false
+                    })
+                }
+            })
+            return true
+        }
+        
+        return false
     }
     
     async restartGameWithUnlockedHouses() {
+        console.log('[restartGameWithUnlockedHouses] 开始重新开始游戏...')
+        
         // 从云数据库获取用户的解锁房屋列表（永久保留）
         let unlockedHouses = []
         
@@ -562,14 +810,17 @@ export class HouseScene {
                     _openid: '{openid}'
                 }).limit(1).get()
                 
+                console.log('[restartGameWithUnlockedHouses] 查询结果:', JSON.stringify(res.data))
+                
                 if (res.data && res.data.length > 0) {
                     unlockedHouses = res.data[0].unlockedHouses || []
-                    console.log('从云数据库获取解锁房屋:', unlockedHouses)
+                    console.log('[restartGameWithUnlockedHouses] 从云端获取解锁房屋:', unlockedHouses)
                 }
             }
         } catch (e) {
-            console.warn('从云数据库获取解锁房屋失败:', e)
+            console.warn('[restartGameWithUnlockedHouses] 从云端获取解锁房屋失败:', e)
             unlockedHouses = this.game.gameState.data.unlockedHouses || []
+            console.log('[restartGameWithUnlockedHouses] 使用当前解锁房屋:', unlockedHouses)
         }
         
         // 清除本地存储
