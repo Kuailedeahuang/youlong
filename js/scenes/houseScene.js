@@ -126,10 +126,8 @@ export class HouseScene {
                                duration < 300
                 
                 if (isClick) {
-                    // 先检查结局按钮
-                    if (this.isEndingPlaying) {
-                        this.handleEndingTouch(touch.clientX, touch.clientY)
-                    } else if (!this.selectedHouse) {
+                    // 结局动画播放时不处理卡片点击
+                    if (!this.isEndingPlaying && !this.selectedHouse) {
                         this.handleCardClick(touch.clientX, touch.clientY)
                     }
                 }
@@ -669,14 +667,44 @@ export class HouseScene {
             this.renderEndingText(renderer)
             
             if (elapsed >= scrollDuration) {
-                this.endingPhase = 'buttons'
-                this.endingStartTime = Date.now()
+                this.endingPhase = 'done'
+                this.showEndingModal()
             }
-        } else if (this.endingPhase === 'buttons') {
-            // 显示按钮
+        } else if (this.endingPhase === 'done') {
+            // 动画完成，保持最后一帧
             this.renderEndingText(renderer)
-            this.renderEndingButtons(renderer)
         }
+    }
+    
+    showEndingModal() {
+        this.game.uiManager.addModal({
+            type: 'confirm',
+            title: '游戏结束',
+            content: '您已成功购房安家！\n\n是否重新开始新的人生？',
+            confirmText: '再活一世',
+            cancelText: '退出游戏',
+            singleButton: false,
+            onConfirm: () => {
+                this.isEndingPlaying = false
+                this.restartGameWithUnlockedHouses()
+            },
+            onCancel: () => {
+                this.isEndingPlaying = false
+                wx.exitMiniProgram({
+                    success: () => {
+                        console.log('退出游戏成功')
+                    },
+                    fail: (err) => {
+                        console.error('退出游戏失败:', err)
+                        wx.showModal({
+                            title: '退出失败',
+                            content: '请手动关闭小程序',
+                            showCancel: false
+                        })
+                    }
+                })
+            }
+        })
     }
     
     renderEndingText(renderer) {
@@ -718,83 +746,6 @@ export class HouseScene {
         })
         
         ctx.restore()
-    }
-    
-    renderEndingButtons(renderer) {
-        const ctx = renderer.ctx
-        const w = renderer.width
-        const h = renderer.height
-        
-        // 按钮位置
-        const btnW = 140
-        const btnH = 45
-        const btnY = h - 80
-        const gap = 30
-        
-        // 再活一世按钮
-        const btn1X = w / 2 - btnW - gap / 2
-        ctx.fillStyle = '#27ae60'
-        ctx.beginPath()
-        ctx.roundRect(btn1X, btnY, btnW, btnH, 8)
-        ctx.fill()
-        
-        ctx.fillStyle = '#ffffff'
-        ctx.font = '18px sans-serif'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('再活一世', btn1X + btnW / 2, btnY + btnH / 2)
-        
-        // 退出游戏按钮
-        const btn2X = w / 2 + gap / 2
-        ctx.fillStyle = '#7f8c8d'
-        ctx.beginPath()
-        ctx.roundRect(btn2X, btnY, btnW, btnH, 8)
-        ctx.fill()
-        
-        ctx.fillStyle = '#ffffff'
-        ctx.fillText('退出游戏', btn2X + btnW / 2, btnY + btnH / 2)
-    }
-    
-    handleEndingTouch(x, y) {
-        if (!this.isEndingPlaying || this.endingPhase !== 'buttons') return false
-        
-        const w = this.game.renderer.width
-        const h = this.game.renderer.height
-        
-        const btnW = 140
-        const btnH = 45
-        const btnY = h - 80
-        const gap = 30
-        
-        // 再活一世按钮
-        const btn1X = w / 2 - btnW - gap / 2
-        if (x >= btn1X && x <= btn1X + btnW && y >= btnY && y <= btnY + btnH) {
-            this.isEndingPlaying = false
-            this.restartGameWithUnlockedHouses()
-            return true
-        }
-        
-        // 退出游戏按钮
-        const btn2X = w / 2 + gap / 2
-        if (x >= btn2X && x <= btn2X + btnW && y >= btnY && y <= btnY + btnH) {
-            this.isEndingPlaying = false
-            wx.exitMiniProgram({
-                success: () => {
-                    console.log('退出游戏成功')
-                },
-                fail: (err) => {
-                    console.error('退出游戏失败:', err)
-                    wx.showModal({
-                        title: '退出失败',
-                        content: '请手动关闭小程序',
-                        showCancel: false
-                    })
-                }
-            })
-            return true
-        }
-        
-        return false
     }
     
     async restartGameWithUnlockedHouses() {
