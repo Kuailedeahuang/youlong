@@ -228,11 +228,11 @@ export class HouseScene {
         
         this.game.uiManager.clear()
         
-        renderer.clear('#1a1a2e')
+        renderer.clear('#f5f0e1')
         
         this.renderTopBar(renderer, state)
         
-        renderer.drawText('售楼部', w / 2, 50, '#f39c12', 18, 'center')
+        renderer.drawText('售楼部', w / 2, 50, '#8b6914', 18, 'center')
         
         if (!this.selectedHouse) {
             this.renderHouseList(renderer, state, w, h)
@@ -246,10 +246,10 @@ export class HouseScene {
     renderTopBar(renderer, state) {
         const w = renderer.width
         
-        renderer.drawRect(0, 0, w, 40, '#16213e')
+        renderer.drawRect(0, 0, w, 40, '#e8dcc8')
         
         const ctx = renderer.ctx
-        ctx.strokeStyle = '#f39c12'
+        ctx.strokeStyle = '#8b6914'
         ctx.lineWidth = 3
         ctx.beginPath()
         ctx.moveTo(25, 20)
@@ -265,7 +265,7 @@ export class HouseScene {
             this.game.sceneManager.switchTo('home')
         }, { bgColor: 'transparent' })
         
-        renderer.drawText(`精力: ${state.energy}/${state.maxEnergy}`, w - 15, 25, '#7f8c8d', 12, 'right')
+        renderer.drawText(`精力: ${state.energy}/${state.maxEnergy}`, w - 15, 25, '#8b6914', 12, 'right')
     }
     
     renderHouseList(renderer, state, w, h) {
@@ -301,11 +301,33 @@ export class HouseScene {
             const isUnlocked = state.unlockedHouses && state.unlockedHouses.includes(house.id)
             
             // 根据解锁状态设置颜色
-            const cardBgColor = isUnlocked ? 'rgba(22, 33, 62, 0.95)' : 'rgba(40, 40, 40, 0.9)'
-            const imgBgColor = isUnlocked ? '#2d3748' : '#4a4a4a'
-            const nameColor = isUnlocked ? '#f39c12' : '#7f8c8d'
-            const priceColor = isUnlocked ? '#27ae60' : '#95a5a6'
-            const descColor = isUnlocked ? '#bdc3c7' : '#7f8c8d'
+            // 未点亮：黑白灰色调；点亮：彩色+金色边框
+            const cardBgColor = isUnlocked ? '#ffffff' : '#d0d0d0'
+            const imgBgColor = isUnlocked ? '#e8e8e8' : '#b0b0b0'
+            const nameColor = isUnlocked ? '#8b6914' : '#666666'
+            const priceColor = isUnlocked ? '#2e7d32' : '#888888'
+            const descColor = isUnlocked ? '#444444' : '#999999'
+            const borderColor = isUnlocked ? '#d4a017' : '#999999'
+            const borderWidth = isUnlocked ? 2.5 : 1.5
+            
+            // 绘制卡片边框
+            ctx.save()
+            ctx.strokeStyle = borderColor
+            ctx.lineWidth = borderWidth
+            ctx.beginPath()
+            const borderRadius = 8
+            ctx.moveTo(x + borderRadius, y)
+            ctx.lineTo(x + cardW - borderRadius, y)
+            ctx.arcTo(x + cardW, y, x + cardW, y + borderRadius, borderRadius)
+            ctx.lineTo(x + cardW, y + this.cardHeight - borderRadius)
+            ctx.arcTo(x + cardW, y + this.cardHeight, x + cardW - borderRadius, y + this.cardHeight, borderRadius)
+            ctx.lineTo(x + borderRadius, y + this.cardHeight)
+            ctx.arcTo(x, y + this.cardHeight, x, y + this.cardHeight - borderRadius, borderRadius)
+            ctx.lineTo(x, y + borderRadius)
+            ctx.arcTo(x, y, x + borderRadius, y, borderRadius)
+            ctx.closePath()
+            ctx.stroke()
+            ctx.restore()
             
             // 绘制卡片背景
             renderer.drawRect(x, y, cardW, this.cardHeight, cardBgColor, 8)
@@ -328,6 +350,11 @@ export class HouseScene {
                     ctx.rect(imgX, imgY, imgW, imgH)
                     ctx.clip()
                     
+                    // 未点亮时使用灰度滤镜
+                    if (!isUnlocked) {
+                        ctx.filter = 'grayscale(100%)'
+                    }
+                    
                     // 计算图片绘制尺寸（保持比例填充）
                     const imgRatio = houseImg.width / houseImg.height
                     const drawRatio = imgW / imgH
@@ -345,17 +372,12 @@ export class HouseScene {
                         drawY = imgY - (drawH - imgH) / 2
                     }
                     
-                    // 使用与其他场景相同的绘制方式
                     ctx.drawImage(houseImg, drawX, drawY, drawW, drawH)
+                    ctx.filter = 'none'
                     ctx.restore()
                 } catch (e) {
                     console.warn('绘制房屋图片失败:', e)
                 }
-            }
-            
-            // 如果未解锁，添加灰色遮罩
-            if (!isUnlocked) {
-                renderer.drawRect(imgX, imgY, imgW, imgH, 'rgba(0, 0, 0, 0.4)', 4)
             }
             
             // 绘制房屋名称
@@ -385,9 +407,9 @@ export class HouseScene {
         const scrollProgress = Math.abs(this.scrollY) / this.maxScrollY
         const scrollBarY = this.listStartY + (visibleHeight - scrollBarHeight) * scrollProgress
         
-        renderer.drawRect(scrollBarX, this.listStartY, scrollBarWidth, visibleHeight, 'rgba(255, 255, 255, 0.1)', 2)
+        renderer.drawRect(scrollBarX, this.listStartY, scrollBarWidth, visibleHeight, 'rgba(139, 105, 20, 0.15)', 2)
         
-        renderer.drawRect(scrollBarX, scrollBarY, scrollBarWidth, scrollBarHeight, 'rgba(243, 156, 18, 0.6)', 2)
+        renderer.drawRect(scrollBarX, scrollBarY, scrollBarWidth, scrollBarHeight, 'rgba(139, 105, 20, 0.5)', 2)
     }
     
     renderHouseDetail(renderer, state) {
@@ -404,9 +426,9 @@ export class HouseScene {
         
         renderer.drawRect(0, 0, w, h, 'rgba(0, 0, 0, 0.7)')
         
-        renderer.drawRect(modalX, modalY, modalW, modalH, '#1a1a2e', 12)
+        renderer.drawRect(modalX, modalY, modalW, modalH, '#ffffff', 12)
         
-        renderer.drawText(house.name, modalX + modalW / 2, modalY + 25, '#f39c12', 16, 'center')
+        renderer.drawText(house.name, modalX + modalW / 2, modalY + 25, '#8b6914', 16, 'center')
         
         // 绘制房屋图片（大图）
         const imgW = modalW - 30
@@ -415,7 +437,7 @@ export class HouseScene {
         const imgY = modalY + 45
         
         // 绘制图片背景
-        renderer.drawRect(imgX, imgY, imgW, imgH, '#2d3748', 6)
+        renderer.drawRect(imgX, imgY, imgW, imgH, '#e8e8e8', 6)
         
         // 绘制房屋图片
         const houseImg = this.houseImages[house.id]
