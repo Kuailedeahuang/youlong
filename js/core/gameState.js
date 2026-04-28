@@ -107,37 +107,29 @@ export default class GameState {
         }
     }
 
-    async load() {
+  async load() {
+    try {
+      if (wx.cloud) {
+        const db = wx.cloud.database({})
+
+                await this.loadUserUnlockedHouses()
+
         try {
-            if (wx.cloud) {
-                await wx.cloud.init({
-                    env: CLOUD_ENV_ID,
-                    traceUser: true
-                })
-                console.log('云开发初始化成功')
-
-                const db = wx.cloud.database({})
-
-                try {
-                    const res = await db.collection('gameprogress').where({
-                        _openid: '{openid}'
-                    }).limit(1).get()
+          const res = await db.collection('gameprogress').limit(1).get()
 
                     if (res.data && res.data.length > 0) {
                         const cloudData = res.data[0]
                         this.data = { ...this.getDefaultState(), ...cloudData }
                         this.isCloudReady = true
-                        console.log('从云数据库加载成功（用户独立）')
+                        console.log('从云数据库加载成功')
+                        return
                     } else {
-                        console.log('云数据库中无该用户记录，使用默认数据')
+                        console.log('云数据库中无记录，使用默认数据')
                     }
                 } catch (dbError) {
                     console.warn('gameprogress 集合操作失败，将使用本地存储:', dbError)
                     this.isCloudReady = false
                 }
-
-                // 在 gameprogress 加载之后，再加载用户解锁房屋（覆盖 gameprogress 中的数据）
-                await this.loadUserUnlockedHouses()
             }
         } catch (e) {
             console.warn('云开发初始化失败，使用本地存储', e)
@@ -148,11 +140,6 @@ export default class GameState {
             if (saved) {
                 this.data = { ...this.getDefaultState(), ...saved }
                 console.log('从本地存储加载成功')
-                
-                // 本地存储加载后，也尝试从云端加载解锁房屋
-                if (wx.cloud) {
-                    await this.loadUserUnlockedHouses()
-                }
             }
         } catch (e) {
             console.warn('本地存储加载失败:', e)
@@ -237,15 +224,12 @@ export default class GameState {
         try {
             if (wx.cloud) {
                 const db = wx.cloud.database({})
-                const _ = db.command
-                const res = await db.collection('user_unlocked_houses').where({
-                    _openid: _.exists(true)
-                }).orderBy('updateTime', 'desc').limit(1).get()
-                
-                if (res.data && res.data.length > 0) {
-                    unlockedHouses = res.data[0].unlockedHouses || []
-                    console.log('reset: 从云数据库获取解锁房屋:', unlockedHouses)
-                }
+      const res = await db.collection('user_unlocked_houses').limit(1).get()
+
+      if (res.data && res.data.length > 0) {
+        unlockedHouses = res.data[0].unlockedHouses || []
+        console.log('reset: 从云数据库获取解锁房屋:', unlockedHouses)
+      }
             }
         } catch (e) {
             console.warn('reset: 从云数据库获取解锁房屋失败:', e)
@@ -262,100 +246,56 @@ export default class GameState {
     
     // 加载用户的解锁房屋（用户独立的永久数据）
     async loadUserUnlockedHouses() {
-        console.log('[loadUserUnlockedHouses] 开始加载...')
-        console.log('[loadUserUnlockedHouses] 当前 unlockedHouses:', this.data.unlockedHouses)
-        
         try {
-            if (!wx.cloud) {
-                console.log('[loadUserUnlockedHouses] wx.cloud 不存在，跳过')
-                return
-            }
+            if (!wx.cloud) return
             
             const db = wx.cloud.database({})
-            const _ = db.command
             
-            // 查询当前用户的解锁房屋记录（使用 _openid 查询当前用户）
-            // 注意：在安全规则下，系统会自动过滤为当前用户的记录
-            const res = await db.collection('user_unlocked_houses').where({
-                _openid: _.exists(true)
-            }).orderBy('updateTime', 'desc').limit(1).get()
-            
-            console.log('[loadUserUnlockedHouses] 查询结果:', JSON.stringify(res.data))
+    const res = await db.collection('user_unlocked_houses').limit(1).get()
             
             if (res.data && res.data.length > 0) {
-                const cloudUnlockedHouses = res.data[0].unlockedHouses || []
-                this.data.unlockedHouses = cloudUnlockedHouses
+                // 用户有解锁记录，加载到当前数据中
+                this.data.unlockedHouses = res.data[0].unlockedHouses || []
                 this.data._unlockedHousesId = res.data[0]._id
-                console.log('[loadUserUnlockedHouses] 从云端加载成功，unlockedHouses:', this.data.unlockedHouses, ', _id:', this.data._unlockedHousesId)
+                console.log('从云数据库加载用户解锁房屋:', this.data.unlockedHouses)
             } else {
-                console.log('[loadUserUnlockedHouses] 云端无记录，保留当前数据')
+                // 用户没有解锁记录，初始化为空数组
+                this.data.unlockedHouses = []
+                this.data._unlockedHousesId = null
+                console.log('用户无解锁房屋记录，初始化为空')
             }
         } catch (e) {
-            console.warn('[loadUserUnlockedHouses] 加载失败:', e)
+            console.warn('加载用户解锁房屋失败:', e)
             // 从本地存储尝试加载
-            try {
-                const saved = wx.getStorageSync('user_unlocked_houses')
-                if (saved && saved.unlockedHouses && saved.unlockedHouses.length > 0) {
-                    this.data.unlockedHouses = saved.unlockedHouses
-                    console.log('[loadUserUnlockedHouses] 从本地存储加载:', this.data.unlockedHouses)
-                }
-            } catch (storageError) {
-                console.warn('[loadUserUnlockedHouses] 本地存储读取失败:', storageError)
+            const saved = wx.getStorageSync('user_unlocked_houses')
+            if (saved && saved.unlockedHouses) {
+                this.data.unlockedHouses = saved.unlockedHouses
             }
         }
     }
     
     // 保存用户的解锁房屋（用户独立的永久数据）
     async saveUserUnlockedHouses() {
-        console.log('[saveUserUnlockedHouses] 开始保存...')
-        console.log('[saveUserUnlockedHouses] 当前 unlockedHouses:', this.data.unlockedHouses)
-        
         try {
-            if (!wx.cloud) {
-                console.log('[saveUserUnlockedHouses] wx.cloud 不存在，只保存到本地')
-                wx.setStorageSync('user_unlocked_houses', { 
-                    unlockedHouses: this.data.unlockedHouses || [] 
-                })
-                return
-            }
+            if (!wx.cloud) return
             
             const db = wx.cloud.database({})
-            const _ = db.command
             const unlockedHouses = this.data.unlockedHouses || []
             
             // 同时保存到本地存储作为备份
             wx.setStorageSync('user_unlocked_houses', { unlockedHouses })
-            console.log('[saveUserUnlockedHouses] 已保存到本地存储')
             
-            // 先查询是否已有该用户的记录
-            let existingRecordId = this.data._unlockedHousesId
-            
-            if (!existingRecordId) {
-                // 如果没有缓存的 ID，先查询
-                const queryRes = await db.collection('user_unlocked_houses').where({
-                    _openid: _.exists(true)
-                }).orderBy('updateTime', 'desc').limit(1).get()
-                
-                if (queryRes.data && queryRes.data.length > 0) {
-                    existingRecordId = queryRes.data[0]._id
-                    console.log('[saveUserUnlockedHouses] 查询到现有记录, _id:', existingRecordId)
-                }
-            }
-            
-            if (existingRecordId) {
+            if (this.data._unlockedHousesId) {
                 // 更新现有记录
-                console.log('[saveUserUnlockedHouses] 更新现有记录, _id:', existingRecordId)
-                await db.collection('user_unlocked_houses').doc(existingRecordId).update({
+                await db.collection('user_unlocked_houses').doc(this.data._unlockedHousesId).update({
                     data: {
                         unlockedHouses: unlockedHouses,
                         updateTime: db.serverDate()
                     }
                 })
-                this.data._unlockedHousesId = existingRecordId
-                console.log('[saveUserUnlockedHouses] 更新成功, unlockedHouses:', unlockedHouses)
+                console.log('更新用户解锁房屋到云数据库:', unlockedHouses)
             } else {
                 // 创建新记录
-                console.log('[saveUserUnlockedHouses] 创建新记录')
                 const res = await db.collection('user_unlocked_houses').add({
                     data: {
                         unlockedHouses: unlockedHouses,
@@ -364,10 +304,10 @@ export default class GameState {
                     }
                 })
                 this.data._unlockedHousesId = res._id
-                console.log('[saveUserUnlockedHouses] 创建成功, _id:', res._id, ', unlockedHouses:', unlockedHouses)
+                console.log('创建用户解锁房屋记录到云数据库:', unlockedHouses)
             }
         } catch (e) {
-            console.warn('[saveUserUnlockedHouses] 保存失败:', e)
+            console.warn('保存用户解锁房屋到云数据库失败:', e)
             // 保存到本地存储
             wx.setStorageSync('user_unlocked_houses', { 
                 unlockedHouses: this.data.unlockedHouses || [] 

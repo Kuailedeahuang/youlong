@@ -49,7 +49,6 @@
   "projectname": "bigcitylife",
   "cloudfunctionRoot": "cloudfunctions/",
   "cloudfunctionTemplateRoot": "",
-  "cloudbaseRoot": "cloudbaserc.json/",
   "condition": {},
   "editorSetting": {
     "tabIndent": "insertSpaces",

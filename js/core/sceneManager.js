@@ -7,6 +7,7 @@ import SplashScene from '../scenes/splashScene.js'
 export default class SceneManager {
     constructor(game) {
         this.game = game
+        this.isReady = false
         this.scenes = {
             login: new LoginScene(game),
             splash: new SplashScene(game),
@@ -16,10 +17,12 @@ export default class SceneManager {
         }
         this.currentScene = 'login'
         this.isSwitching = false
-        
-        setTimeout(() => {
-            this.scenes.login.onEnter()
-        }, 0)
+    }
+
+    setReady() {
+        this.isReady = true
+        console.log('[SceneManager] 初始化完成，显示启动画面')
+        this.switchTo('splash')
     }
     
     switchTo(sceneName) {
@@ -57,11 +60,25 @@ export default class SceneManager {
         }
     }
     
-    handleTouch(x, y) {
+    handleTouchStart(x, y) {
         const scene = this.scenes[this.currentScene]
         if (scene && scene.handleTouchStart) {
             return scene.handleTouchStart(x, y)
         }
         return false
+    }
+    
+    handleTouchMove(x, y) {
+        const scene = this.scenes[this.currentScene]
+        if (scene && scene.handleTouchMove) {
+            scene.handleTouchMove(x, y)
+        }
+    }
+    
+    handleTouchEnd(x, y) {
+        const scene = this.scenes[this.currentScene]
+        if (scene && scene.handleTouchEnd) {
+            scene.handleTouchEnd(x, y)
+        }
     }
 }
