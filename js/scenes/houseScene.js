@@ -1,4 +1,5 @@
 import { getAllHouses, checkPurchaseEligibility } from '../data/houses.js'
+import { getEndingByHouseId } from '../data/endings.js'
 import animationManager from '../utils/animationManager.js'
 import imageManager from '../utils/imageManager.js'
 import { CLOUD_ENV_ID } from '../config.js'
@@ -559,38 +560,11 @@ export class HouseScene {
         this.endingStartTime = Date.now()
         this.endingPhase = 'fadein' // fadein -> scrolling -> fadeout -> buttons
         
+        // 获取结局内容
+        const ending = getEndingByHouseId(house.id)
+        
         // 结局文字内容
-        this.endingLines = [
-            '',
-            '',
-            '',
-            '',
-            '【 购 房 结 局 】',
-            '',
-            '',
-            `恭喜您成功购买了`,
-            `${house.name}`,
-            '',
-            '',
-            house.parentAttitude || '',
-            '',
-            '',
-            '在这个繁华的大都市，',
-            '您终于拥有了自己的栖身之所。',
-            '',
-            '虽然前路依然充满挑战，',
-            '但您已经迈出了重要的一步。',
-            '',
-            '',
-            '愿您在新的家园中，',
-            '开启人生的新篇章。',
-            '',
-            '',
-            '',
-            '— 感谢游玩 —',
-            '',
-            ''
-        ]
+        this.endingLines = ending.lines
         
         // 计算文字总高度
         this.endingTextHeight = this.endingLines.length * 35
