@@ -9,6 +9,7 @@ import AdSystem from './systems/adSystem.js'
 import HouseSystem from './systems/houseSystem.js'
 import BankruptcySystem from './systems/bankruptcySystem.js'
 import { restartGame } from './utils/resetGame.js'
+import DebugPanel from './debug/DebugPanel.js'
 
 class Game {
     constructor() {
@@ -47,6 +48,9 @@ class Game {
         this.houseSystem = new HouseSystem(this)
         this.bankruptcySystem = new BankruptcySystem(this)
 
+        // 初始化调试面板（开发模式）
+        this.debugPanel = DebugPanel.getInstance(this)
+
         this.lastTime = Date.now()
         this.deltaTime = 0
 
@@ -65,6 +69,11 @@ class Game {
             const x = touch.clientX
             const y = touch.clientY
 
+            // 调试面板优先处理（长按地图按钮）
+            if (this.debugPanel && this.debugPanel.handleMapButtonTouchStart(x, y)) {
+                return
+            }
+
             if (this.sceneManager.handleTouchStart(x, y)) {
                 return
             }
@@ -77,6 +86,11 @@ class Game {
             const x = touch.clientX
             const y = touch.clientY
 
+            // 调试面板处理长按移动
+            if (this.debugPanel && this.debugPanel.handleMapButtonTouchMove(x, y)) {
+                return
+            }
+
             this.sceneManager.handleTouchMove(x, y)
         })
 
@@ -84,6 +98,11 @@ class Game {
             const touch = e.changedTouches[0]
             const x = touch.clientX
             const y = touch.clientY
+
+            // 调试面板处理长按结束
+            if (this.debugPanel && this.debugPanel.handleMapButtonTouchEnd()) {
+                return
+            }
 
             this.sceneManager.handleTouchEnd(x, y)
         })
@@ -112,6 +131,11 @@ class Game {
         this.ctx.clearRect(0, 0, this.width, this.height)
         this.sceneManager.render(this.renderer)
         this.uiManager.render(this.renderer)
+        
+        // 调试面板渲染（在UI之上）
+        if (this.debugPanel && this.debugPanel.isVisible) {
+            this.debugPanel.render()
+        }
     }
 
     async resetGame() {

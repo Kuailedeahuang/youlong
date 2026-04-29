@@ -3,6 +3,7 @@ import HomeScene from '../scenes/homeScene.js'
 import MarketScene from '../scenes/marketScene.js'
 import HouseScene from '../scenes/houseScene.js'
 import SplashScene from '../scenes/splashScene.js'
+import SettingsScene from '../scenes/settingsScene.js'
 
 export default class SceneManager {
     constructor(game) {
@@ -13,7 +14,8 @@ export default class SceneManager {
             splash: new SplashScene(game),
             home: new HomeScene(game),
             market: new MarketScene(game),
-            house: new HouseScene(game)
+            house: new HouseScene(game),
+            settings: new SettingsScene(game)
         }
         this.currentScene = 'login'
         this.isSwitching = false
