@@ -757,6 +757,61 @@ const SVGIcons = {
         ctx.restore()
     },
 
+    /**
+     * 绘制手机图标
+     * 吉卜力风格 - 柔和色块 + 干净轮廓
+     */
+    drawPhone(ctx, x, y, size = 24, options = {}) {
+        const s = size / 64
+        ctx.save()
+        ctx.translate(x - size / 2, y - size / 2)
+        ctx.scale(s, s)
+
+        // 手机主体 - 柔和米白色
+        ctx.fillStyle = '#F5E6D3'
+        ctx.strokeStyle = '#2C2418'
+        ctx.lineWidth = 1.8
+        this.roundRect(ctx, 20, 8, 24, 48, 6, true)
+
+        // 屏幕 - 浅蓝色
+        ctx.fillStyle = '#E8F4F8'
+        ctx.lineWidth = 1.5
+        this.roundRect(ctx, 24, 14, 16, 36, 3, true)
+
+        // 听筒
+        ctx.fillStyle = '#2C2418'
+        this.roundRect(ctx, 28, 12, 8, 2, 1, false)
+
+        // Home键
+        ctx.fillStyle = '#D4A574'
+        ctx.lineWidth = 1.4
+        this.drawCircle(ctx, 32, 48, 3, true)
+
+        // 屏幕反光高光
+        ctx.fillStyle = '#FFFFFF'
+        ctx.globalAlpha = 0.5
+        ctx.beginPath()
+        ctx.moveTo(26, 16)
+        ctx.lineTo(30, 16)
+        ctx.lineTo(26, 24)
+        ctx.closePath()
+        ctx.fill()
+        ctx.globalAlpha = 1
+
+        // 信号波纹装饰（表示手机通讯）
+        ctx.strokeStyle = '#7BA3C9'
+        ctx.lineWidth = 1.5
+        ctx.lineCap = 'round'
+        ctx.beginPath()
+        ctx.arc(48, 24, 4, -Math.PI / 2, Math.PI / 6)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(48, 24, 7, -Math.PI / 2, Math.PI / 4)
+        ctx.stroke()
+
+        ctx.restore()
+    },
+
     // ============ 辅助绘制方法 ============
 
     /**

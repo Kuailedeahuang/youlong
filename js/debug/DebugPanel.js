@@ -93,6 +93,8 @@ export default class DebugPanel {
     }
     
     handleMapButtonTouchEnd() {
+        if (!this.isLongPressing) return false
+
         const wasLongPressing = this.isLongPressing
         this.cancelLongPress()
         

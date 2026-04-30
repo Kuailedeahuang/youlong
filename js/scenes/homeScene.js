@@ -5,6 +5,7 @@ import animationManager from '../utils/animationManager.js'
 import iconManager from '../components/IconManager.js'
 import InteractiveAreaManager from '../components/InteractiveAreaManager.js'
 import BackGameManager from '../managers/backgamemanger.js'
+import FloatPhoneButton from '../components/FloatPhoneButton.js'
 
 export default class HomeScene {
     constructor(game) {
@@ -18,6 +19,39 @@ export default class HomeScene {
         this.initInteractiveAreas()
         // 初始化游戏功能管理器
         this.backGameManager = new BackGameManager(game)
+        // 初始化悬浮手机按钮
+        this.initFloatPhoneButton()
+    }
+
+    /**
+     * 初始化悬浮手机按钮
+     */
+    initFloatPhoneButton() {
+        this.floatPhoneButton = new FloatPhoneButton(this.game, {
+            position: 'bottom-right',
+            offsetX: 20,
+            offsetY: 120, // 在属性面板上方
+            size: 72,
+            bgColor: '#FFE080',
+            animate: true,
+            onClick: () => this.onPhoneClick()
+        })
+    }
+
+    /**
+     * 手机按钮点击事件
+     */
+    onPhoneClick() {
+        console.log('[HomeScene] 点击手机按钮')
+        // 这里可以打开手机功能菜单或切换到手机场景
+        this.game.uiManager.addModal({
+            type: 'confirm',
+            title: '📱 手机',
+            content: '手机功能开发中...\n\n计划功能：\n• 查看消息\n• 银行APP\n• 娱乐游戏',
+            confirmText: '知道了',
+            singleButton: true,
+            onConfirm: () => {}
+        })
     }
 
     /**
@@ -142,14 +176,7 @@ export default class HomeScene {
      */
     onSettingClick() {
         console.log('[HomeScene] 点击设置')
-        this.game.uiManager.addModal({
-            type: 'confirm',
-            title: '设置',
-            content: '设置功能开发中...',
-            confirmText: '知道了',
-            singleButton: true,
-            onConfirm: () => {}
-        })
+        this.game.sceneManager.switchTo('settings')
     }
 
     getStatPositions() {
@@ -282,6 +309,11 @@ export default class HomeScene {
         }
 
         this.renderStats(renderer, h - statsPanelH, state)
+
+        // 渲染悬浮手机按钮
+        if (this.floatPhoneButton) {
+            this.floatPhoneButton.render(renderer)
+        }
 
         animationManager.updateAndRender(renderer)
     }
@@ -633,5 +665,38 @@ export default class HomeScene {
                 }
             }
         })
+    }
+
+    /**
+     * 处理触摸开始事件
+     */
+    handleTouchStart(x, y) {
+        // 优先处理悬浮手机按钮
+        if (this.floatPhoneButton && this.floatPhoneButton.processTouchStart(x, y)) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * 处理触摸移动事件
+     */
+    handleTouchMove(x, y) {
+        // 优先处理悬浮手机按钮
+        if (this.floatPhoneButton && this.floatPhoneButton.processTouchMove(x, y)) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * 处理触摸结束事件
+     */
+    handleTouchEnd(x, y) {
+        // 优先处理悬浮手机按钮
+        if (this.floatPhoneButton && this.floatPhoneButton.processTouchEnd(x, y)) {
+            return true
+        }
+        return false
     }
 }
