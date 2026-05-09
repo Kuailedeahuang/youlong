@@ -1,0 +1,9 @@
+{
+  "name": "gerenjiedai",
+  "displayName": "个人借贷",
+  "cloudPath": "images/background/gerenjiedai.png",
+  "fileID": "cloud://cloud1-1glyk3ivc2fc740d.636c-cloud1-1glyk3ivc2fc740d-1325599298/images/background/gerenjiedai.png",
+  "type": "background",
+  "scene": "privateLoan",
+  "description": "私人借贷服务，急用钱时的选择"
+}

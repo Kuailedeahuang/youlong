@@ -1,0 +1,50 @@
+[
+    {
+        "id": "homeBed",
+        "xPercent": 0.589,
+        "yPercent": 0.445,
+        "widthPercent": 0.320,
+        "heightPercent": 0.241,
+        "label": "床",
+        "icon": "",
+        "style": {
+            "bgColor": "rgba(255, 255, 255, 0.85)",
+            "borderColor": "rgba(0, 0, 0, 0.2)",
+            "textColor": "#000000",
+            "fontSize": 12,
+            "textShadow": false
+        }
+    },
+    {
+        "id": "homeComputer",
+        "xPercent": 0.358,
+        "yPercent": 0.432,
+        "widthPercent": 0.223,
+        "heightPercent": 0.159,
+        "label": "电脑",
+        "icon": "",
+        "style": {
+            "bgColor": "rgba(255, 255, 255, 0.85)",
+            "borderColor": "rgba(0, 0, 0, 0.2)",
+            "textColor": "#000000",
+            "fontSize": 12,
+            "textShadow": false
+        }
+    },
+    {
+        "id": "homeSetting",
+        "xPercent": 0.159,
+        "yPercent": 0.395,
+        "widthPercent": 0.202,
+        "heightPercent": 0.218,
+        "label": "设置",
+        "icon": "",
+        "style": {
+            "bgColor": "rgba(255, 255, 255, 0.85)",
+            "borderColor": "rgba(0, 0, 0, 0.2)",
+            "textColor": "#000000",
+            "fontSize": 12,
+            "textShadow": false
+        }
+    }
+]

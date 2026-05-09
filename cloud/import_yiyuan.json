@@ -1,0 +1,9 @@
+{
+  "name": "yiyuan",
+  "displayName": "医院",
+  "cloudPath": "images/background/yiyuan.png",
+  "fileID": "cloud://cloud1-1glyk3ivc2fc740d.636c-cloud1-1glyk3ivc2fc740d-1325599298/images/background/yiyuan.png",
+  "type": "background",
+  "scene": "hospital",
+  "description": "医院治疗，恢复健康"
+}

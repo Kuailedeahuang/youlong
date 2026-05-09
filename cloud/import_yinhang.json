@@ -1,0 +1,9 @@
+{
+  "name": "yinhang",
+  "displayName": "银行",
+  "cloudPath": "images/background/yinhang.png",
+  "fileID": "cloud://cloud1-1glyk3ivc2fc740d.636c-cloud1-1glyk3ivc2fc740d-1325599298/images/background/yinhang.png",
+  "type": "background",
+  "scene": "bank",
+  "description": "银行服务，存取贷款"
+}

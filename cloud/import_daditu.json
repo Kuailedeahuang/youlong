@@ -1,0 +1,9 @@
+{
+  "name": "daditu",
+  "displayName": "大地图",
+  "cloudPath": "images/background/daditu.png",
+  "fileID": "cloud://cloud1-1glyk3ivc2fc740d.636c-cloud1-1glyk3ivc2fc740d-1325599298/images/background/daditu.png",
+  "type": "background",
+  "scene": "map",
+  "description": "大地图背景图"
+}

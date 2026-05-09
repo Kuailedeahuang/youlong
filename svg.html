@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>吉卜力风格图标集 | 小程序图标预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f4f2ea;  /* 温暖米色基底，吉卜力手绘纸质感 */
+            font-family: 'Segoe UI', 'Quicksand', system-ui, -apple-system, 'Comic Neue', 'Noto Sans', sans-serif;
+            padding: 2rem 1.5rem;
+            color: #3b2a1f;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* 标题区 —— 绘本风格 */
+        .title-section {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .title-section h1 {
+            font-size: 2.2rem;
+            font-weight: 500;
+            letter-spacing: -0.5px;
+            background: #fef8e7;
+            display: inline-block;
+            padding: 0.4rem 1.8rem;
+            border-radius: 80px;
+            box-shadow: 0 6px 0 #d9cdb0;
+            color: #4d3b28;
+            border: 2px solid #332211;
+            font-weight: 600;
+        }
+
+        .title-section p {
+            margin-top: 0.9rem;
+            font-size: 1rem;
+            color: #6b5a45;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 图标网格 —— 宫崎骏手稿陈列室 */
+        .icons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 2rem 1.2rem;
+            justify-items: center;
+            align-items: start;
+        }
+
+        /* 每个图标卡片 */
+        .icon-card {
+            background: #fffef7;
+            border-radius: 32px;
+            padding: 1.4rem 0.8rem 1rem 0.8rem;
+            width: 100%;
+            max-width: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 14px rgba(0, 0, 0, 0.05), 0 0 0 1px #f0e5d4 inset, 0 0 0 2px white inset;
+            border: 1px solid #ece1cf;
+        }
+
+        .icon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 18px 24px -8px rgba(0, 0, 0, 0.12), 0 0 0 1px #f0e5d4 inset;
+        }
+
+        /* svg 容器 */
+        .icon-svg {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.8rem;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.02));
+        }
+
+        .icon-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: #f9f3e2;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            color: #4f3e28;
+            letter-spacing: 0.3px;
+            border: 1px solid #e8dcc8;
+            margin-top: 0.2rem;
+        }
+
+        .icon-desc {
+            font-size: 0.7rem;
+            color: #8f7b60;
+            margin-top: 0.25rem;
+            text-align: center;
+        }
+
+        /* 点缀：手绘风格角落花纹 */
+        .decor-leaf {
+            text-align: center;
+            margin-top: 3rem;
+            opacity: 0.5;
+            font-size: 1.5rem;
+            letter-spacing: 6px;
+            color: #cbbf9a;
+        }
+
+        @media (max-width: 560px) {
+            body {
+                padding: 1rem;
+            }
+            .icons-grid {
+                gap: 1rem;
+            }
+            .icon-card {
+                padding: 1rem 0.4rem;
+            }
+            .icon-svg {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="title-section">
+        <h1>🐾 吉卜力灵感 · 手绘图标集</h1>
+        <p>干净轮廓 | 柔和色块 | 圆润可爱<br>专属于你的温暖小程序</p>
+    </div>
+
+    <div class="icons-grid">
+        <!-- 1. 天数/日历 📅 -->
+        <div class="icon-card">
+            <div class="icon-svg">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 日历外框 -->
+                    <rect x="14" y="12" width="36" height="42" rx="7" fill="#FEF1DA" stroke="#2C2418" stroke-width="1.8"/>
+                    <!-- 挂环孔 -->
+                    <circle cx="23" cy="15" r="2.2" fill="#FEF1DA" stroke="#2C2418" stroke-width="1.5"/>
+                    <circle cx="32" cy="15" r="2.2" fill="#FEF1DA" stroke="#2C2418" stroke-width="1.5"/>
+                    <circle cx="41" cy="15" r="2.2" fill="#FEF1DA" stroke="#2C2418" stroke-width="1.5"/>
+                    <!-- 顶部装饰线 -->
+                    <line x1="16" y1="22" x2="48" y2="22" stroke="#2C2418" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- 日期数字 手写感 “28” 可读性强 -->
+                    <text x="32" y="48" text-anchor="middle" font-family="system-ui, 'Segoe UI', 'Quicksand', sans-serif" font-weight="700" font-size="22" fill="#2C2418" stroke="none">28</text>
+                    <!-- 可爱的装饰小点 -->
+                    <circle cx="21" cy="31" r="1.5" fill="#D28F64"/>
+                    <circle cx="43" cy="31" r="1.5" fill="#D28F64"/>
+                    <circle cx="32" cy="37" r="1.5" fill="#D28F64"/>
+                </svg>
+            </div>
+            <div class="icon-label">📅 天数 / 日历</div>
+            <div class="icon-desc">记录时光</div>
+        </div>
+
+        <!-- 2. 金币 💰 -->
+        <div class="icon-card">
+            <div class="icon-svg">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="20" fill="#FFE2A4" stroke="#2C2418" stroke-width="1.9"/>
+                    <circle cx="32" cy="32" r="14" fill="#FFD580" stroke="#2C2418" stroke-width="1.6"/>
+                    <!-- 钱币符号 ¥ -->
+                    <text x="32" y="41" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="800" font-size="22" fill="#2C2418">¥</text>
+                    <!-- 光晕小点柔和手绘 -->
+                    <circle cx="22" cy="22" r="1.8" fill="#FFFFFF" stroke="none" opacity="0.8"/>
+                    <circle cx="42" cy="24" r="1.5" fill="#FFFFFF" stroke="none" opacity="0.7"/>
+                </svg>
+            </div>
+            <div class="icon-label">💰 金币</div>
+            <div class="icon-desc">财富格言</div>
+        </div>
+
+        <!-- 3. 银行 🏦 -->
+        <div class="icon-card">
+            <div class="icon-svg">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 希腊风格柱式银行 -->
+                    <rect x="12" y="33" width="40" height="22" rx="4" fill="#DBEAD7" stroke="#2C2418" stroke-width="1.8"/>
+                    <!-- 三角形山墙 -->
+                    <polygon points="32,12 10,33 54,33" fill="#CBE0CF" stroke="#2C2418" stroke-width="1.8" stroke-linejoin="round"/>
+                    <!-- 圆柱 左中右 -->
+                    <rect x="17" y="35" width="6" height="20" rx="2" fill="#E9F3E5" stroke="#2C2418" stroke-width="1.6"/>
+                    <rect x="29" y="35" width="6" height="20" rx="2" fill="#E9F3E5" stroke="#2C2418" stroke-width="1.6"/>
+                    <rect x="41" y="35" width="6" height="20" rx="2" fill="#E9F3E5" stroke="#2C2418" stroke-width="1.6"/>
+                    <!-- 大门 -->
+                    <rect x="26" y="44" width="12" height="11" rx="3" fill="#C0D2BB" stroke="#2C2418" stroke-width="1.5"/>
+                    <circle cx="35" cy="50" r="1" fill="#2C2418"/>
+                </svg>
+            </div>
+            <div class="icon-label">🏦 银行</div>
+            <div class="icon-desc">稳健存储</div>
+        </div>
+
+        <!-- 4. 警告 ⚠️ -->
+        <div class="icon-card">
+            <div class="icon-svg">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 警示三角形 -->
+                    <polygon points="32,10 56,52 8,52" fill="#FCE2C1" stroke="#2C2418" stroke-width="1.9" stroke-linejoin="round"/>
+                    <!-- 感叹号 -->
+                    <rect x="29.5" y="27" width="5" height="14" rx="2.5" fill="#D96C3B" stroke="none"/>
+                    <circle cx="32" cy="47" r="3" fill="#D96C3B" stroke="none"/>
+                    <!-- 装饰黑色描边勾勒手绘感 -->
+                    <path d="M32 17 L32 23" stroke="#2C2418" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="32" cy="46.5" r="2.2" fill="#2C2418" stroke="none"/>
+                </svg>
+            </div>
+            <div class="icon-label">⚠️ 警告</div>
+            <div class="icon-desc">留心安全</div>
+        </div>
+
+        <!-- 5. 私人借贷警示 🚨 (两个人形中间带惊叹号+借贷提醒) -->
+        <div class="icon-card">
+            <div class="icon-svg">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 柔和警告底色圆润外框 -->
+                    <circle cx="32" cy="32" r="27" fill="#FBDCDA" stroke="#2C2418" stroke-width="1.8"/>
+                    <!-- 左侧人物 圆滚滚吉卜力风格 -->
+                    <circle cx="20" cy="33" r="6.5" fill="#FEE5CE" stroke="#2C2418" stroke-width="1.7"/>
+                    <path d="M14 44 Q20 54 26 45" fill="#EFDEC5" stroke="#2C2418" stroke-width="1.6" stroke-linecap="round"/>
+                    <!-- 右侧人物 -->
+                    <circle cx="44" cy="33" r="6.5" fill="#FEE5CE" stroke="#2C2418" stroke-width="1.7"/>
+                    <path d="M50 44 Q44 54 38 45" fill="#EFDEC5" stroke="#2C2418" stroke-width="1.6" stroke-linecap="round"/>
+                    <!-- 两人间 红色警示叹号 & 借贷货币符号 -->
+                    <g transform="translate(28, 18)">
+                        <circle cx="4" cy="4" r="11" fill="#FFF0E8" stroke="#2C2418" stroke-width="1.5"/>
+                        <text x="4" y="9" text-anchor="middle" font-weight="800" font-size="12" fill="#D9593A">!</text>
+                    </g>
+                    <!-- 小额金币夹在中间下方 传递借贷概念 -->
+                    <circle cx="32" cy="48" r="5.5" fill="#FFE6B3" stroke="#2C2418" stroke-width="1.4"/>
+                    <text x="32" y="51" text-anchor="middle" font-weight="800" font-size="7" fill="#3D2A1A">¥</text>
+                    <!-- 手绘微标波浪线 表示警示注意 -->
+                    <path d="M8 56 L16 54 L24 56 L32 54 L40 56 L48 54 L56 56" stroke="#2C2418" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="0.6"/>
+                </svg>
+            </div>
+            <div class="icon-label">🚨 私人借贷警示</div>
+            <div class="icon-desc">风险防范 · 谨慎借款</div>
+        </div>
+
+        <!-- 6. 健康 ❤️ 暖心心跳 -->
+        <div class="icon-card">
+            <div class="icon-svg">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 温柔心形 -->
+                    <path d="M32 48 C32 48 22 40 16 34 C11 29 10 22 15 17 C20 12 27 13 32 20 C37 13 44 12 49 17 C54 22 53 29 48 34 C42 40 32 48 32 48Z" fill="#FCC8D9" stroke="#2C2418" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- 心跳线简约加在左上角跃动感 -->
+                    <path d="M10 28 L16 28 L19 32 L23 24 L26 31 L30 28 L35 28" stroke="#D95B7A" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-label">❤️ 健康</div>
+            <div class="icon-desc">身心活力</div>
+        </div>
+
+        <!-- 7. 精力 ⚡ 闪电能量 吉卜力小闪电 -->
+        <div class="icon-card">
+            <div class="icon-svg">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 柔和黄色基底圆 -->
+                    <circle cx="32" cy="32" r="26" fill="#FDF2CF" stroke="#2C2418" stroke-width="1.7"/>
+                    <!-- 可爱闪电 -->
+                    <polygon points="37,12 28,30 36,30 29,54 43,32 33,32 44,16 37,12" fill="#FFE081" stroke="#2C2418" stroke-width="1.8" stroke-linejoin="round"/>
+                    <!-- 小火花粒子 -->
+                    <circle cx="45" cy="19" r="1.8" fill="#FBCA48" stroke="none"/>
+                    <circle cx="48" cy="27" r="1.5" fill="#FBCA48" stroke="none"/>
+                    <circle cx="21" cy="46" r="1.8" fill="#FBCA48" stroke="none"/>
+                </svg>
+            </div>
+            <div class="icon-label">⚡ 精力</div>
+            <div class="icon-desc">元气满格</div>
+        </div>
+
+        <!-- 8. 心情 😊 笑脸＋暖阳 -->
+        <div class="icon-card">
+            <div class="icon-svg">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="24" fill="#FFF1D6" stroke="#2C2418" stroke-width="1.9"/>
+                    <!-- 笑脸眼睛 -->
+                    <circle cx="24" cy="28" r="3.2" fill="#2C2418"/>
+                    <circle cx="40" cy="28" r="3.2" fill="#2C2418"/>
+                    <!-- 微笑弧形 -->
+                    <path d="M22 41 Q32 51 42 41" stroke="#2C2418" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                    <!-- 脸颊小红晕 -->
+                    <ellipse cx="20" cy="36" rx="3" ry="2" fill="#FFB7B2" opacity="0.9"/>
+                    <ellipse cx="44" cy="36" rx="3" ry="2" fill="#FFB7B2" opacity="0.9"/>
+                </svg>
+            </div>
+            <div class="icon-label">😊 心情</div>
+            <div class="icon-desc">明媚每日</div>
+        </div>
+
+        <!-- 9. 名誉 ⭐ 星星/奖章 -->
+        <div class="icon-card">
+            <div class="icon-svg">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 丝带底座 柔和米色 -->
+                    <path d="M28 52 L32 44 L36 52 L28 52Z" fill="#E7DAC3" stroke="#2C2418" stroke-width="1.6" stroke-linejoin="round"/>
+                    <path d="M25 56 L32 49 L39 56 L25 56Z" fill="#D9C8AC" stroke="#2C2418" stroke-width="1.5"/>
+                    <!-- 闪耀星星 六角感但经典五角吉卜力星 -->
+                    <polygon points="32,12 35,21 44,21 37,27 40,36 32,30 24,36 27,27 20,21 29,21" fill="#F9E68C" stroke="#2C2418" stroke-width="1.8" stroke-linejoin="round"/>
+                    <!-- 小光芒短线 -->
+                    <line x1="32" y1="6" x2="32" y2="3" stroke="#2C2418" stroke-width="1.4" stroke-linecap="round"/>
+                    <line x1="51" y1="20" x2="54" y2="18" stroke="#2C2418" stroke-width="1.4" stroke-linecap="round"/>
+                    <line x1="13" y1="20" x2="10" y2="18" stroke="#2C2418" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="icon-label">⭐ 名誉</div>
+            <div class="icon-desc">荣耀徽章</div>
+        </div>
+    </div>
+    <div class="decor-leaf">
+        🍃  ✿  🍂  吉卜力手帐风 · 每一笔都是温暖  ✿  🍃
+    </div>
+</div>
+
+<!-- 额外说明：图标完全使用SVG绘制 符合干净黑轮廓 + 低饱和手绘感 -->
+</body>
+</html>
