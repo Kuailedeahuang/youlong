@@ -119,6 +119,7 @@ class ImageManager {
         return null
       }
 
+<<<<<<< HEAD
       let fileID = imageData.fileID
       if (!fileID && imageData.cloudPath) {
         fileID = imageData.cloudPath
@@ -168,6 +169,26 @@ class ImageManager {
         console.error(`[ImageManager] 所有方式获取临时链接均失败`)
         return null
       }
+=======
+      console.log(`[ImageManager] 通过云函数获取临时URL, fileID: ${imageData.fileID}`)
+
+      const res = await wx.cloud.callFunction({
+        name: 'getTempFileURL',
+        data: {
+          fileList: [imageData.fileID]
+        }
+      })
+
+      console.log(`[ImageManager] 云函数返回:`, JSON.stringify(res, null, 2))
+
+      if (!res.result || !res.result.fileList || !res.result.fileList[0] || !res.result.fileList[0].tempFileURL) {
+        console.error(`[ImageManager] 云函数获取临时链接失败`)
+        return null
+      }
+
+      const tempURL = res.result.fileList[0].tempFileURL
+      console.log(`[ImageManager] 临时URL: ${tempURL}`)
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
 
       return new Promise((resolve, reject) => {
         const img = wx.createImage()

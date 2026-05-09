@@ -1,8 +1,11 @@
 import ItemData, { categories } from '../data/items.js'
 import imageManager from '../utils/imageManager.js'
 import animationManager from '../utils/animationManager.js'
+<<<<<<< HEAD
 import { GAME_CONFIG } from '../data/gameConfig.js'
 import iconManager from '../components/IconManager.js'
+=======
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
 
 const newspapers = [
     { title: '市场快报', content: '今日市场行情平稳，各商品价格小幅波动。' },
@@ -98,6 +101,31 @@ export default class MarketScene {
         
         const state = this.game.gameState.data
         
+<<<<<<< HEAD
+=======
+        if (!state.marketEnteredToday) {
+            if (state.energy >= 2) {
+                state.energy -= 2
+                state.marketEnteredToday = true
+                this.game.gameState.save()
+                
+                this.game.gameState.addDelayedAnimation('decrease', 2, 'energy', '精力', '#3498db')
+            } else {
+                this.game.uiManager.addModal({
+                    type: 'confirm',
+                    title: '精力不足',
+                    content: '需要2点精力才能进入市场',
+                    confirmText: '知道了',
+                    singleButton: true,
+                    onConfirm: () => {
+                        this.game.sceneManager.switchTo('home')
+                    }
+                })
+                return
+            }
+        }
+        
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         if (!state.newspaperShown) {
             const paper = this.generateNewspaper()
             setTimeout(() => {
@@ -152,7 +180,11 @@ export default class MarketScene {
         this.renderMarketSection(renderer, 5, contentY, leftW, contentH)
         this.renderWarehouseSection(renderer, w - rightW - 5, contentY, rightW, contentH)
         
+<<<<<<< HEAD
         this.renderStats(renderer)
+=======
+        this.renderTabBar(renderer)
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     }
     
     renderTopBar(renderer, state) {
@@ -236,6 +268,7 @@ export default class MarketScene {
         
         const state = this.game.gameState.data
         const warehouse = state.warehouse
+<<<<<<< HEAD
         let totalQuantity = 0
         Object.keys(warehouse).forEach(id => { 
             if (warehouse[id] && warehouse[id].quantity > 0) {
@@ -254,6 +287,15 @@ export default class MarketScene {
                 this.upgradeWarehouse()
             }, { bgColor: 'transparent' })
         }
+=======
+        let used = 0
+        Object.keys(warehouse).forEach(id => { 
+            if (warehouse[id] && warehouse[id].quantity > 0) used++ 
+        })
+        
+        renderer.drawText('仓库', x + 10, y + 18, '#f39c12', 13, 'left')
+        renderer.drawText(`${used}/${state.warehouseCapacity}`, x + w - 10, y + 18, '#7f8c8d', 11, 'right')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         
         const listY = y + 35
         const listH = h - 40
@@ -298,6 +340,7 @@ export default class MarketScene {
         })
     }
     
+<<<<<<< HEAD
     renderStats(renderer) {
         const state = this.game.gameState.data
         const w = renderer.width
@@ -411,11 +454,29 @@ export default class MarketScene {
         ctx.lineTo(x, y + r)
         ctx.arcTo(x, y, x + r, y, r)
         ctx.closePath()
+=======
+    renderTabBar(renderer) {
+        const w = renderer.width
+        const h = 50
+        const y = renderer.height - h
+        
+        renderer.drawRect(0, y, w, h, '#1a1a2e')
+        renderer.drawRect(0, y, w, 1, 'rgba(255,255,255,0.1)')
+        
+        const tabW = w / 2
+        renderer.drawText('出租屋', tabW / 2, y + h / 2, '#7f8c8d', 13, 'center')
+        renderer.drawText('市场', tabW + tabW / 2, y + h / 2, '#f39c12', 13, 'center')
+        
+        const ui = this.game.uiManager
+        ui.addButton(0, y, tabW, h, '', () => this.game.sceneManager.switchTo('home'), { bgColor: 'transparent' })
+        ui.addButton(tabW, y, tabW, h, '', () => {}, { bgColor: 'transparent' })
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     }
     
     showBuyModal(item, priceData) {
         const state = this.game.gameState.data
         
+<<<<<<< HEAD
         let totalQuantity = 0
         Object.keys(state.warehouse).forEach(id => {
             if (state.warehouse[id] && state.warehouse[id].quantity > 0) {
@@ -440,12 +501,26 @@ export default class MarketScene {
         const maxBuy = Math.min(
             Math.floor(state.money / priceData.current),
             remainingCapacity
+=======
+        let usedSlots = 0
+        Object.keys(state.warehouse).forEach(id => {
+            if (state.warehouse[id] && state.warehouse[id].quantity > 0) usedSlots++
+        })
+        
+        const maxBuy = Math.min(
+            Math.floor(state.money / priceData.current),
+            state.warehouseCapacity - usedSlots + (state.warehouse[item.id] ? 1 : 0)
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         )
         
         this.game.uiManager.addModal({
             type: 'trade',
             title: '购买商品',
+<<<<<<< HEAD
             content: `仓库剩余容量: ${remainingCapacity}`,
+=======
+            content: '',
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             itemName: item.name,
             price: priceData.current,
             quantity: 1,
@@ -453,6 +528,7 @@ export default class MarketScene {
             total: priceData.current,
             tradeType: 'buy',
             onConfirm: (qty, total) => {
+<<<<<<< HEAD
                 let currentTotal = 0
                 Object.keys(state.warehouse).forEach(id => {
                     if (state.warehouse[id] && state.warehouse[id].quantity > 0) {
@@ -472,6 +548,8 @@ export default class MarketScene {
                     return
                 }
                 
+=======
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 if (state.money >= total) {
                     state.money -= total
                     
@@ -530,6 +608,7 @@ export default class MarketScene {
             }
         })
     }
+<<<<<<< HEAD
     
     upgradeWarehouse() {
         const state = this.game.gameState.data
@@ -577,4 +656,6 @@ export default class MarketScene {
             onCancel: () => {}
         })
     }
+=======
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
 }

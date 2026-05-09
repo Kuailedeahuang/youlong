@@ -2,10 +2,17 @@ import ItemData, { categories } from '../data/items.js'
 import imageManager from '../utils/imageManager.js'
 import { restartGame } from '../utils/resetGame.js'
 import animationManager from '../utils/animationManager.js'
+<<<<<<< HEAD
 import { GAME_CONFIG, getJobByLevel, getNextJob } from '../data/gameConfig.js'
 import iconManager from '../components/IconManager.js'
 import InteractiveAreaManager from '../components/InteractiveAreaManager.js'
 import BackGameManager from '../managers/backgamemanger.js'
+=======
+import iconManager from '../components/IconManager.js'
+import InteractiveAreaManager from '../components/InteractiveAreaManager.js'
+import BackGameManager from '../managers/backgamemanger.js'
+import FloatPhoneButton from '../components/FloatPhoneButton.js'
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
 
 export default class HomeScene {
     constructor(game) {
@@ -19,6 +26,42 @@ export default class HomeScene {
         this.initInteractiveAreas()
         // 初始化游戏功能管理器
         this.backGameManager = new BackGameManager(game)
+<<<<<<< HEAD
+=======
+        // 初始化悬浮手机按钮
+        this.initFloatPhoneButton()
+    }
+
+    /**
+     * 初始化悬浮手机按钮
+     */
+    initFloatPhoneButton() {
+        this.floatPhoneButton = new FloatPhoneButton(this.game, {
+            position: 'bottom-right',
+            offsetX: 20,
+            offsetY: 120, // 在属性面板上方
+            size: 72,
+            bgColor: '#FFE080',
+            animate: true,
+            onClick: () => this.onPhoneClick()
+        })
+    }
+
+    /**
+     * 手机按钮点击事件
+     */
+    onPhoneClick() {
+        console.log('[HomeScene] 点击手机按钮')
+        // 这里可以打开手机功能菜单或切换到手机场景
+        this.game.uiManager.addModal({
+            type: 'confirm',
+            title: '📱 手机',
+            content: '手机功能开发中...\n\n计划功能：\n• 查看消息\n• 银行APP\n• 娱乐游戏',
+            confirmText: '知道了',
+            singleButton: true,
+            onConfirm: () => {}
+        })
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     }
 
     /**
@@ -143,6 +186,7 @@ export default class HomeScene {
      */
     onSettingClick() {
         console.log('[HomeScene] 点击设置')
+<<<<<<< HEAD
         this.game.uiManager.addModal({
             type: 'confirm',
             title: '设置',
@@ -151,6 +195,9 @@ export default class HomeScene {
             singleButton: true,
             onConfirm: () => {}
         })
+=======
+        this.game.sceneManager.switchTo('settings')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     }
 
     getStatPositions() {
@@ -284,6 +331,14 @@ export default class HomeScene {
 
         this.renderStats(renderer, h - statsPanelH, state)
 
+<<<<<<< HEAD
+=======
+        // 渲染悬浮手机按钮
+        if (this.floatPhoneButton) {
+            this.floatPhoneButton.render(renderer)
+        }
+
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         animationManager.updateAndRender(renderer)
     }
 
@@ -518,7 +573,11 @@ export default class HomeScene {
         // 添加按钮点击区域
         const ui = this.game.uiManager
         ui.addButton(x - radius, y - radius, size, size, '', () => {
+<<<<<<< HEAD
             this.game.sceneManager.switchTo('map')
+=======
+            this.endDay()
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         }, { bgColor: 'transparent' })
     }
 
@@ -528,6 +587,7 @@ export default class HomeScene {
         renderer.drawText(label, x + 10, y + 12, '#7f8c8d', 10, 'left')
         renderer.drawText(String(value), x + 10, y + 26, '#ffffff', 12, 'left')
     }
+<<<<<<< HEAD
     
     renderButtons(renderer, bottomY, state) {
         const w = renderer.width
@@ -648,10 +708,91 @@ export default class HomeScene {
         this.backGameManager.doGym()
     }
     
+=======
+
+    // ==================== 核心功能方法（保留在 HomeScene）====================
+
+    /**
+     * 进入市场
+     * 首次进入消耗2精力
+     */
+    enterMarket() {
+        this.backGameManager.enterMarket()
+    }
+
+    /**
+     * 结束今日
+     * 触发随机事件，进入下一天
+     */
+    endDay() {
+        this.backGameManager.endDay()
+    }
+
+    /**
+     * 显示工作弹窗
+     */
+    showWorkModal() {
+        this.backGameManager.showWorkModal()
+    }
+
+    /**
+     * 执行工作
+     */
+    doWork(isOvertime, salary) {
+        this.backGameManager.doWork(isOvertime, salary)
+    }
+
+    /**
+     * 娱乐
+     * 消耗1精力+50金币，心情+15~25
+     */
+    doEntertainment() {
+        this.backGameManager.doEntertainment()
+    }
+
+    // ==================== 以下方法通过 backGameManager 委托实现 ====================
+
+    /**
+     * 显示银行弹窗
+     */
+    showBankModal() {
+        this.backGameManager.showBankModal()
+    }
+
+    /**
+     * 显示私人借贷弹窗
+     */
+    showLoanModal() {
+        this.backGameManager.showLoanModal()
+    }
+
+    /**
+     * 公益活动
+     */
+    doCharity() {
+        this.backGameManager.doCharity()
+    }
+
+    /**
+     * 医院
+     */
+    doHospital() {
+        this.backGameManager.doHospital()
+    }
+
+    /**
+     * 健身房
+     */
+    doGym() {
+        this.backGameManager.doGym()
+    }
+
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     enterHouseScene() {
         console.log('[HomeScene] enterHouseScene 被调用')
         this.game.sceneManager.switchTo('house')
     }
+<<<<<<< HEAD
     
     showLoanModal() {
         const state = this.game.gameState.data
@@ -1480,6 +1621,9 @@ export default class HomeScene {
         }
     }
     
+=======
+
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     showEventsModal(events) {
         const content = events.join('\n')
         this.game.uiManager.addModal({
@@ -1504,4 +1648,40 @@ export default class HomeScene {
             }
         })
     }
+<<<<<<< HEAD
+=======
+
+    /**
+     * 处理触摸开始事件
+     */
+    handleTouchStart(x, y) {
+        // 优先处理悬浮手机按钮
+        if (this.floatPhoneButton && this.floatPhoneButton.processTouchStart(x, y)) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * 处理触摸移动事件
+     */
+    handleTouchMove(x, y) {
+        // 优先处理悬浮手机按钮
+        if (this.floatPhoneButton && this.floatPhoneButton.processTouchMove(x, y)) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * 处理触摸结束事件
+     */
+    handleTouchEnd(x, y) {
+        // 优先处理悬浮手机按钮
+        if (this.floatPhoneButton && this.floatPhoneButton.processTouchEnd(x, y)) {
+            return true
+        }
+        return false
+    }
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
 }

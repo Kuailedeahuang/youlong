@@ -452,7 +452,11 @@ export default class SettingsScene {
 
         // 添加点击区域
         this.game.uiManager.addButton(x, y, w, h, '', () => {
+<<<<<<< HEAD
             this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+            this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         }, {
             bgColor: 'transparent'
         })
@@ -674,7 +678,11 @@ export default class SettingsScene {
 
                 // 返回主页
                 setTimeout(() => {
+<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                    this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }, 1500)
             }
         })

@@ -1,14 +1,21 @@
 // 广告系统
 import animationManager from '../utils/animationManager.js'
+<<<<<<< HEAD
 import { GAME_CONFIG } from '../data/gameConfig.js'
+=======
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
 
 export default class AdSystem {
     constructor(game) {
         this.game = game
         this.rewardedVideoAd = null
         this.adWatchedCount = 0
+<<<<<<< HEAD
         this.maxWatchCount = GAME_CONFIG.ad.maxWatchCount
         this.rewardAmount = GAME_CONFIG.ad.rewardAmount
+=======
+        this.maxWatchCount = 3
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         this.initAd()
     }
     
@@ -55,10 +62,15 @@ export default class AdSystem {
     
     async showAd() {
         const state = this.game.gameState.data
+<<<<<<< HEAD
         console.log('[showAd] 当前观看次数:', state.adWatchedCount, ', 最大次数:', this.maxWatchCount)
         
         if (state.adWatchedCount >= this.maxWatchCount) {
             console.log('[showAd] 次数已用完，显示弹窗')
+=======
+        
+        if (state.adWatchedCount >= this.maxWatchCount) {
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             this.game.uiManager.addModal({
                 type: 'confirm',
                 title: '本局次数已用完',
@@ -90,6 +102,7 @@ export default class AdSystem {
     }
     
     showMockAd() {
+<<<<<<< HEAD
         console.log('[showMockAd] canWatchAd:', this.canWatchAd())
         // 再次检查次数限制
         if (!this.canWatchAd()) {
@@ -109,6 +122,12 @@ export default class AdSystem {
             type: 'confirm',
             title: '观看广告',
             content: `观看广告可获得${this.rewardAmount}金币\n（开发模式：直接获得奖励）`,
+=======
+        this.game.uiManager.addModal({
+            type: 'confirm',
+            title: '观看广告',
+            content: '观看广告可获得5000金币\n（开发模式：直接获得奖励）',
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             confirmText: '获得奖励',
             onConfirm: () => {
                 this.giveReward()
@@ -119,6 +138,7 @@ export default class AdSystem {
     
     giveReward() {
         const state = this.game.gameState.data
+<<<<<<< HEAD
         console.log('[giveReward] 当前观看次数:', state.adWatchedCount, ', 最大次数:', this.maxWatchCount)
         
         // 再次检查次数限制，防止重复调用
@@ -141,15 +161,32 @@ export default class AdSystem {
         this.game.gameState.save()
         
         this.game.gameState.addDelayedAnimation('increase', this.rewardAmount, 'money', '金币', '#f39c12')
+=======
+        const rewardAmount = 5000
+        
+        state.money += rewardAmount
+        state.adWatchedCount++
+        this.game.gameState.save()
+        
+        this.game.gameState.addDelayedAnimation('increase', rewardAmount, 'money', '金币', '#f39c12')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         
         this.game.uiManager.addModal({
             type: 'confirm',
             title: '奖励已发放',
+<<<<<<< HEAD
             content: `获得 ${this.rewardAmount} 金币！\n本局剩余次数: ${this.getRemainingCount()}/${this.maxWatchCount}`,
             confirmText: '知道了',
             singleButton: true,
             onConfirm: () => {
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+            content: `获得 ${rewardAmount} 金币！\n本局剩余次数: ${this.getRemainingCount()}/3`,
+            confirmText: '知道了',
+            singleButton: true,
+            onConfirm: () => {
+                this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -162,6 +199,10 @@ export default class AdSystem {
     
     getAdButtonText() {
         const remaining = this.getRemainingCount()
+<<<<<<< HEAD
         return `看广告 +${this.rewardAmount}金币 (${remaining}/${this.maxWatchCount})`
+=======
+        return `看广告 +5000金币 (${remaining}/3)`
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     }
 }

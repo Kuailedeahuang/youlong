@@ -52,7 +52,11 @@ export default class BackGameManager {
 
                 this.game.dailyCheck()
 
+<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -298,7 +302,11 @@ export default class BackGameManager {
             confirmText: '知道了',
             singleButton: true,
             onConfirm: () => {
+<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -370,7 +378,11 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('increase', qty, 'bankDeposit', '银行存款', '#27ae60')
 
+<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                    this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -401,7 +413,11 @@ export default class BackGameManager {
                 this.game.gameState.addDelayedAnimation('loan', qty, 'bankLoan', '银行贷款', '#3498db')
                 this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
 
+<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -434,7 +450,11 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'bankLoan', '银行贷款', '#3498db')
 
+<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                    this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -496,7 +516,11 @@ export default class BackGameManager {
                 this.game.gameState.addDelayedAnimation('loan', qty, 'privateLoan', '私人贷款', '#e74c3c')
                 this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
 
+<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -551,7 +575,11 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'privateLoan', '私人贷款', '#e74c3c')
 
+<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                    this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -625,7 +653,11 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('increase', reputationGain, 'reputation', '名誉', '#9b59b6')
                     this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
 
+<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                    this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -667,7 +699,11 @@ export default class BackGameManager {
             confirmText: '知道了',
             singleButton: true,
             onConfirm: () => {
+<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -706,7 +742,11 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('decrease', 100, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('increase', 30, 'health', '健康', '#27ae60')
 
+<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                    this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -750,7 +790,11 @@ export default class BackGameManager {
                 this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
                 this.game.gameState.addDelayedAnimation('increase', healthGain, 'health', '健康', '#27ae60')
 
+<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -791,7 +835,11 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('decrease', 50, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
 
+<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+                    this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })

@@ -66,12 +66,21 @@ export default class UIManager {
     handleModalTouch(modal, x, y) {
         if (modal.type === 'confirm') {
             if (modal.confirmBtn && this.hitTest(x, y, modal.confirmBtn)) {
+<<<<<<< HEAD
                 this.closeModal()
                 if (modal.onConfirm) modal.onConfirm()
             }
             if (modal.cancelBtn && this.hitTest(x, y, modal.cancelBtn)) {
                 this.closeModal()
                 if (modal.onCancel) modal.onCancel()
+=======
+                if (modal.onConfirm) modal.onConfirm()
+                this.closeModal()
+            }
+            if (modal.cancelBtn && this.hitTest(x, y, modal.cancelBtn)) {
+                if (modal.onCancel) modal.onCancel()
+                this.closeModal()
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         } else if (modal.type === 'action') {
             if (modal.cancelBtn && this.hitTest(x, y, modal.cancelBtn)) {

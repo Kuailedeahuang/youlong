@@ -1,8 +1,15 @@
 import { getAllHouses, checkPurchaseEligibility } from '../data/houses.js'
+<<<<<<< HEAD
 import animationManager from '../utils/animationManager.js'
 import imageManager from '../utils/imageManager.js'
 import { CLOUD_ENV_ID } from '../config.js'
 import iconManager from '../components/IconManager.js'
+=======
+import { getEndingByHouseId } from '../data/endings.js'
+import animationManager from '../utils/animationManager.js'
+import imageManager from '../utils/imageManager.js'
+import { CLOUD_ENV_ID } from '../config.js'
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
 
 export class HouseScene {
     constructor(game) {
@@ -251,6 +258,10 @@ export class HouseScene {
         
         this.game.uiManager.clear()
         
+<<<<<<< HEAD
+=======
+        // 如果正在播放结局动画
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         if (this.isEndingPlaying) {
             this.renderEnding(renderer)
             return
@@ -269,6 +280,7 @@ export class HouseScene {
         if (this.selectedHouse) {
             this.renderHouseDetail(renderer, state)
         }
+<<<<<<< HEAD
         
         this.renderStats(renderer)
     }
@@ -386,6 +398,8 @@ export class HouseScene {
         ctx.lineTo(x, y + r)
         ctx.arcTo(x, y, x + r, y, r)
         ctx.closePath()
+=======
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     }
     
     renderTopBar(renderer, state) {
@@ -407,7 +421,11 @@ export class HouseScene {
         
         const ui = this.game.uiManager
         ui.addButton(10, 5, 40, 30, '', () => {
+<<<<<<< HEAD
             this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+            this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         }, { bgColor: 'transparent' })
         
         renderer.drawText(`精力: ${state.energy}/${state.maxEnergy}`, w - 15, 25, '#8b6914', 12, 'right')
@@ -676,6 +694,7 @@ export class HouseScene {
         this.endingStartTime = Date.now()
         this.endingPhase = 'fadein' // fadein -> scrolling -> fadeout -> buttons
         
+<<<<<<< HEAD
         // 使用房屋数据中的结局内容
         if (house.endingContent && house.endingContent.lines) {
             this.endingLines = house.endingContent.lines
@@ -710,6 +729,13 @@ export class HouseScene {
                 ''
             ]
         }
+=======
+        // 获取结局内容
+        const ending = getEndingByHouseId(house.id)
+        
+        // 结局文字内容
+        this.endingLines = ending.lines
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         
         // 计算文字总高度
         this.endingTextHeight = this.endingLines.length * 35
@@ -778,7 +804,11 @@ export class HouseScene {
             }
         } else if (this.endingPhase === 'scrolling') {
             // 滚动效果
+<<<<<<< HEAD
             const scrollDuration = 20000 // 20秒滚动完成，让用户有足够时间阅读
+=======
+            const scrollDuration = 8000 // 8秒滚动完成
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             const scrollProgress = Math.min(elapsed / scrollDuration, 1)
             const totalScroll = this.endingTextHeight + h
             this.endingScrollY = h - totalScroll * scrollProgress
@@ -870,25 +900,36 @@ export class HouseScene {
     async restartGameWithUnlockedHouses() {
         console.log('[restartGameWithUnlockedHouses] 开始重新开始游戏...')
         
+<<<<<<< HEAD
         // 先保存当前解锁房屋到本地，防止云端查询失败时丢失
         const currentUnlockedHouses = this.game.gameState.data.unlockedHouses || []
         console.log('[restartGameWithUnlockedHouses] 当前解锁房屋:', currentUnlockedHouses)
         
+=======
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         // 从云数据库获取用户的解锁房屋列表（永久保留）
         let unlockedHouses = []
         
         try {
             if (wx.cloud) {
                 const db = wx.cloud.database({})
+<<<<<<< HEAD
                 const res = await db.collection('user_unlocked_houses')
                     .limit(1)
                     .get()
+=======
+                const _ = db.command
+                const res = await db.collection('user_unlocked_houses').where({
+                    _openid: _.exists(true)
+                }).orderBy('updateTime', 'desc').limit(1).get()
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 
                 console.log('[restartGameWithUnlockedHouses] 查询结果:', JSON.stringify(res.data))
                 
                 if (res.data && res.data.length > 0) {
                     unlockedHouses = res.data[0].unlockedHouses || []
                     console.log('[restartGameWithUnlockedHouses] 从云端获取解锁房屋:', unlockedHouses)
+<<<<<<< HEAD
                 } else {
                     console.log('[restartGameWithUnlockedHouses] 云端无记录，使用当前解锁房屋')
                     unlockedHouses = currentUnlockedHouses
@@ -908,6 +949,16 @@ export class HouseScene {
             console.log('[restartGameWithUnlockedHouses] 使用备份的解锁房屋:', unlockedHouses)
         }
         
+=======
+                }
+            }
+        } catch (e) {
+            console.warn('[restartGameWithUnlockedHouses] 从云端获取解锁房屋失败:', e)
+            unlockedHouses = this.game.gameState.data.unlockedHouses || []
+            console.log('[restartGameWithUnlockedHouses] 使用当前解锁房屋:', unlockedHouses)
+        }
+        
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         // 清除本地存储
         wx.clearStorageSync()
         
@@ -929,7 +980,11 @@ export class HouseScene {
             warehouseCapacity: 20,
             warehouse: {},
             purchasedHouse: null,
+<<<<<<< HEAD
             unlockedHouses: unlockedHouses,
+=======
+            unlockedHouses: unlockedHouses, // 保留解锁的房屋
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             gameEnded: false,
             jobLevel: 1,
             jobTitle: '外卖/快递员',
@@ -947,8 +1002,11 @@ export class HouseScene {
             marketEnteredToday: false
         }
         
+<<<<<<< HEAD
         console.log('[restartGameWithUnlockedHouses] 新状态中的解锁房屋:', defaultState.unlockedHouses)
         
+=======
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         // 保存新状态
         wx.setStorageSync('bigcitylife_save', defaultState)
         
@@ -956,15 +1014,20 @@ export class HouseScene {
         this.game.gameState.data = defaultState
         
         // 先保存解锁房屋到云端，确保不会丢失
+<<<<<<< HEAD
         console.log('[restartGameWithUnlockedHouses] 保存解锁房屋到云端...')
         await this.game.gameState.saveUserUnlockedHouses()
         console.log('[restartGameWithUnlockedHouses] 解锁房屋已保存到云端')
+=======
+        await this.game.gameState.saveUserUnlockedHouses()
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         
         // 再保存游戏状态
         await this.game.gameState.save()
         
         // 重新从云端加载解锁房屋，确保数据一致
         await this.game.gameState.loadUserUnlockedHouses()
+<<<<<<< HEAD
         console.log('[restartGameWithUnlockedHouses] 重新加载后的解锁房屋:', this.game.gameState.data.unlockedHouses)
         
         // 结束结局动画
@@ -972,6 +1035,11 @@ export class HouseScene {
         
         // 切换到首页场景
         this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+=======
+        
+        // 切换到首页场景
+        this.game.sceneManager.switchTo('home')
+>>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         
         wx.showToast({
             title: '重新开始游戏',
