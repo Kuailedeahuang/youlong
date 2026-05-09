@@ -102,16 +102,9 @@ export async function restartGame(gameInstance = null) {
     try {
       if (wx.cloud) {
         const db = wx.cloud.database({})
-<<<<<<< HEAD
         const res = await db.collection('user_unlocked_houses')
           .limit(1)
           .get()
-=======
-        const _ = db.command
-        const res = await db.collection('user_unlocked_houses').where({
-          _openid: _.exists(true)
-        }).orderBy('updateTime', 'desc').limit(1).get()
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         
         if (res.data && res.data.length > 0) {
           unlockedHouses = res.data[0].unlockedHouses || []
@@ -186,11 +179,7 @@ export async function restartGame(gameInstance = null) {
         showCancel: false,
         success: () => {
           // 切换到首页场景，不进入启动页
-<<<<<<< HEAD
           gameInstance.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-          gameInstance.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         }
       })
       return true

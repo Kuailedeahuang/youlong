@@ -1,9 +1,4 @@
 {
-<<<<<<< HEAD
   "read": "doc._openid == auth.openid",
   "write": "doc._openid == auth.openid"
-=======
-  "read": true,
-  "write": true
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
 }

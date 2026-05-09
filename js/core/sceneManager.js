@@ -3,13 +3,9 @@ import HomeScene from '../scenes/homeScene.js'
 import MarketScene from '../scenes/marketScene.js'
 import HouseScene from '../scenes/houseScene.js'
 import SplashScene from '../scenes/splashScene.js'
-<<<<<<< HEAD
 import SceneWithBackground from '../scenes/sceneWithBackground.js'
 import SettingsScene from '../scenes/settingsScene.js'
 import MapScene from '../scenes/mapScene.js'
-=======
-import SettingsScene from '../scenes/settingsScene.js'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
 
 export default class SceneManager {
     constructor(game) {
@@ -21,13 +17,9 @@ export default class SceneManager {
             home: new HomeScene(game),
             market: new MarketScene(game),
             house: new HouseScene(game),
-<<<<<<< HEAD
             sceneWithBackground: new SceneWithBackground(game),
             settings: new SettingsScene(game),
             map: new MapScene(game)
-=======
-            settings: new SettingsScene(game)
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         }
         this.currentScene = 'login'
         this.isSwitching = false
@@ -60,7 +52,6 @@ export default class SceneManager {
         }
     }
     
-<<<<<<< HEAD
     switchToWithParams(sceneName, params) {
         console.log(`[SceneManager] switchToWithParams 被调用: ${sceneName}, params:`, params)
         if (this.scenes[sceneName] && !this.isSwitching) {
@@ -85,8 +76,6 @@ export default class SceneManager {
         return this.scenes[sceneName]
     }
     
-=======
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     update(deltaTime) {
         const scene = this.scenes[this.currentScene]
         if (scene) {
@@ -103,10 +92,7 @@ export default class SceneManager {
     
     handleTouchStart(x, y) {
         const scene = this.scenes[this.currentScene]
-<<<<<<< HEAD
         console.log('[SceneManager] handleTouchStart, 当前场景:', this.currentScene)
-=======
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         if (scene && scene.handleTouchStart) {
             return scene.handleTouchStart(x, y)
         }
@@ -122,10 +108,7 @@ export default class SceneManager {
     
     handleTouchEnd(x, y) {
         const scene = this.scenes[this.currentScene]
-<<<<<<< HEAD
         console.log('[SceneManager] handleTouchEnd, 当前场景:', this.currentScene)
-=======
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         if (scene && scene.handleTouchEnd) {
             scene.handleTouchEnd(x, y)
         }

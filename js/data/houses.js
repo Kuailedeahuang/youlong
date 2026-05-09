@@ -8,7 +8,6 @@ export const HOUSES_DATA = [
         location: '城中村',
         area: '20㎡',
         facilities: ['公共卫生间', '简易厨房'],
-<<<<<<< HEAD
         imageName: 'chengzhongcunpengwu',
         endingContent: {
             title: '【 城中村棚屋 · 起点 】',
@@ -54,9 +53,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'chengzhongcunpengwu'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     },
     {
         id: 2,
@@ -67,7 +63,6 @@ export const HOUSES_DATA = [
         location: '老城区',
         area: '35㎡',
         facilities: ['独立卫生间', '小厨房'],
-<<<<<<< HEAD
         imageName: 'laojiuminfang',
         endingContent: {
             title: '【 老旧民房 · 安身 】',
@@ -118,9 +113,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'laojiuminfang'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     },
     {
         id: 3,
@@ -131,7 +123,6 @@ export const HOUSES_DATA = [
         location: '市区',
         area: '45㎡',
         facilities: ['独立卫生间', '小厨房', '阳台'],
-<<<<<<< HEAD
         imageName: 'biaozhunyijushi',
         endingContent: {
             title: '【 标准一居室 · 稳定 】',
@@ -183,9 +174,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'biaozhunyijushi'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     },
     {
         id: 4,
@@ -196,7 +184,6 @@ export const HOUSES_DATA = [
         location: '市区',
         area: '75㎡',
         facilities: ['双卫生间', '大厨房', '阳台', '客厅'],
-<<<<<<< HEAD
         imageName: 'shushierjushi',
         endingContent: {
             title: '【 舒适两居室 · 温馨 】',
@@ -249,9 +236,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'shushierjushi'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     },
     {
         id: 5,
@@ -262,7 +246,6 @@ export const HOUSES_DATA = [
         location: '高档小区',
         area: '120㎡',
         facilities: ['双卫生间', '开放式厨房', '大阳台', '客厅', '书房'],
-<<<<<<< HEAD
         imageName: 'haohuasanjushi',
         endingContent: {
             title: '【 豪华三居室 · 成功 】',
@@ -315,9 +298,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'haohuasanjushi'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     },
     {
         id: 6,
@@ -328,7 +308,6 @@ export const HOUSES_DATA = [
         location: '江边豪宅区',
         area: '250㎡',
         facilities: ['多卫生间', '豪华厨房', '花园', '车库', '健身房', '娱乐室', '江景阳台'],
-<<<<<<< HEAD
         imageName: 'jiangjingbieshu',
         endingContent: {
             title: '【 江景别墅 · 尊贵 】',
@@ -383,9 +362,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'jiangjingbieshu'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     },
     {
         id: 7,
@@ -396,7 +372,6 @@ export const HOUSES_DATA = [
         location: '郊区',
         area: '150㎡',
         facilities: ['双卫生间', '大厨房', '花园', '阳台', '客厅', '书房'],
-<<<<<<< HEAD
         imageName: 'huayuanyangfang',
         endingContent: {
             title: '【 花园洋房 · 惬意 】',
@@ -450,9 +425,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'huayuanyangfang'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     },
     {
         id: 8,
@@ -463,7 +435,6 @@ export const HOUSES_DATA = [
         location: '市中心',
         area: '65㎡',
         facilities: ['独立卫生间', '开放式厨房', '阳台', '客厅'],
-<<<<<<< HEAD
         imageName: 'shizhongxingongyu',
         endingContent: {
             title: '【 市中心公寓 · 便捷 】',
@@ -517,9 +488,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'shizhongxingongyu'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     },
     {
         id: 9,
@@ -530,7 +498,6 @@ export const HOUSES_DATA = [
         location: '郊区',
         area: '180㎡',
         facilities: ['双卫生间', '大厨房', '小花园', '车库', '客厅', '书房'],
-<<<<<<< HEAD
         imageName: 'lianpaibieshu',
         endingContent: {
             title: '【 联排别墅 · 体面 】',
@@ -584,9 +551,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'lianpaibieshu'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     },
     {
         id: 10,
@@ -597,7 +561,6 @@ export const HOUSES_DATA = [
         location: '海边',
         area: '300㎡',
         facilities: ['多卫生间', '豪华厨房', '花园', '车库', '健身房', '娱乐室', '海景阳台', '私人泳池'],
-<<<<<<< HEAD
         imageName: 'haijingbieshu',
         endingContent: {
             title: '【 海景别墅 · 传奇 】',
@@ -655,9 +618,6 @@ export const HOUSES_DATA = [
                 '— 感谢游玩 —'
             ]
         }
-=======
-        imageName: 'haijingbieshu'
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     }
 ]
 

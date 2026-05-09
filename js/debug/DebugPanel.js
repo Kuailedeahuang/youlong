@@ -81,11 +81,7 @@ export default class DebugPanel {
             }
         }, this.LONG_PRESS_DURATION)
         
-<<<<<<< HEAD
         return false
-=======
-        return true
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
     }
     
     handleMapButtonTouchMove(x, y) {
@@ -97,11 +93,6 @@ export default class DebugPanel {
     }
     
     handleMapButtonTouchEnd() {
-<<<<<<< HEAD
-=======
-        if (!this.isLongPressing) return false
-
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
         const wasLongPressing = this.isLongPressing
         this.cancelLongPress()
         
@@ -109,11 +100,7 @@ export default class DebugPanel {
             return true
         }
         
-<<<<<<< HEAD
         if (wasLongPressing && Date.now() - this.longPressStartTime >= this.LONG_PRESS_DURATION) {
-=======
-        if (!wasLongPressing && Date.now() - this.longPressStartTime >= this.LONG_PRESS_DURATION) {
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             return true
         }
         
