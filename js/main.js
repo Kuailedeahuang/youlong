@@ -74,6 +74,13 @@ class Game {
                 return
             }
 
+            // 当有模态框打开时，优先将触摸事件交给 UIManager 处理
+            // 防止模态框按钮被场景的 InteractiveAreaManager 拦截
+            if (this.uiManager.modals.length > 0) {
+                this.uiManager.handleTouch(x, y)
+                return
+            }
+
             if (this.sceneManager.handleTouchStart(x, y)) {
                 return
             }
@@ -101,6 +108,11 @@ class Game {
 
             // 调试面板处理长按结束
             if (this.debugPanel && this.debugPanel.handleMapButtonTouchEnd()) {
+                return
+            }
+
+            // 模态框打开时跳过场景触摸结束事件
+            if (this.uiManager.modals.length > 0) {
                 return
             }
 

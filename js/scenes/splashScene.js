@@ -100,16 +100,8 @@ export default class SplashScene {
     }
     
     onEnter() {
-        // 等待Logo加载完成后再开始计时
-        if (this.logoLoadPromise) {
-            this.logoLoadPromise.then(() => {
-                this.startTime = Date.now()
-                this.loadingProgress = 0
-            })
-        } else {
-            this.startTime = Date.now()
-            this.loadingProgress = 0
-        }
+        this.startTime = Date.now()
+        this.loadingProgress = 0
     }
     
     update(deltaTime) {

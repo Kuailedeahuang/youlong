@@ -49,11 +49,12 @@ export default class BankruptcySystem {
         const warehouse = state.warehouse || {}
         const marketScene = this.game.sceneManager.scenes.market
         
-        for (const [itemId, quantity] of Object.entries(warehouse)) {
+        for (const [itemId, itemData] of Object.entries(warehouse)) {
             let price = 0
             if (marketScene && marketScene.itemPrices[itemId]) {
                 price = marketScene.itemPrices[itemId].current
             }
+            const quantity = itemData && itemData.quantity ? itemData.quantity : 0
             assets += price * quantity
         }
         

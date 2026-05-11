@@ -52,20 +52,22 @@ class AnimationManager {
 
     // 更新和渲染所有动画
     updateAndRender(renderer) {
+        if (this.animations.length === 0) return
+
         const now = Date.now()
         const ctx = renderer.ctx
 
-        this.animations = this.animations.filter(anim => {
+        for (let i = this.animations.length - 1; i >= 0; i--) {
+            const anim = this.animations[i]
             const elapsed = now - anim.startTime
             const progress = Math.min(1, elapsed / anim.duration)
 
             if (progress >= 1) {
-                return false // 动画结束
+                this.animations.splice(i, 1)
+            } else {
+                this.renderAnimation(ctx, anim, progress)
             }
-
-            this.renderAnimation(ctx, anim, progress)
-            return true
-        })
+        }
     }
 
     renderAnimation(ctx, anim, progress) {

@@ -812,6 +812,74 @@ const SVGIcons = {
         ctx.restore()
     },
 
+    /**
+     * 绘制月亮图标
+     * 吉卜力风格 - 新月牙，柔光晕
+     */
+    drawMoon(ctx, x, y, size = 24, options = {}) {
+        const s = size / 64
+        ctx.save()
+        ctx.translate(x - size / 2, y - size / 2)
+        ctx.scale(s, s)
+
+        ctx.fillStyle = '#FFF5E6'
+        ctx.strokeStyle = '#2C2418'
+        ctx.lineWidth = 1.8
+        ctx.lineCap = 'round'
+
+        ctx.beginPath()
+        ctx.arc(32, 32, 20, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.stroke()
+
+        ctx.fillStyle = '#1B2A3A'
+        ctx.beginPath()
+        ctx.arc(40, 26, 16, 0, Math.PI * 2)
+        ctx.fill()
+
+        ctx.restore()
+    },
+
+    /**
+     * 绘制太阳图标
+     * 吉卜力风格 - 暖黄圆形 + 放射光芒线
+     */
+    drawSun(ctx, x, y, size = 24, options = {}) {
+        const s = size / 64
+        ctx.save()
+        ctx.translate(x - size / 2, y - size / 2)
+        ctx.scale(s, s)
+
+        ctx.strokeStyle = '#2C2418'
+        ctx.lineWidth = 1.6
+        ctx.lineCap = 'round'
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2
+            const innerR = 18
+            const outerR = 26
+            ctx.beginPath()
+            ctx.moveTo(32 + Math.cos(angle) * innerR, 32 + Math.sin(angle) * innerR)
+            ctx.lineTo(32 + Math.cos(angle) * outerR, 32 + Math.sin(angle) * outerR)
+            ctx.stroke()
+        }
+
+        ctx.fillStyle = '#FFE2A4'
+        ctx.lineWidth = 1.8
+        ctx.beginPath()
+        ctx.arc(32, 32, 15, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.stroke()
+
+        ctx.fillStyle = '#FFFFFF'
+        ctx.globalAlpha = 0.5
+        ctx.beginPath()
+        ctx.arc(27, 26, 3, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 1
+
+        ctx.restore()
+    },
+
     // ============ 辅助绘制方法 ============
 
     /**

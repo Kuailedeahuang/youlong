@@ -29,7 +29,7 @@ export default class MapScene {
                 yPercent: 0.30,
                 widthPercent: 0.28,
                 heightPercent: 0.18,
-                action: () => this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'bank' })
+                action: () => this.game.sceneManager.goToLocation('bank')
             },
             {
                 id: 'hospital',
@@ -38,7 +38,7 @@ export default class MapScene {
                 yPercent: 0.30,
                 widthPercent: 0.28,
                 heightPercent: 0.18,
-                action: () => this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'hospital' })
+                action: () => this.game.sceneManager.goToLocation('hospital')
             },
             {
                 id: 'house',
@@ -47,7 +47,7 @@ export default class MapScene {
                 yPercent: 0.30,
                 widthPercent: 0.28,
                 heightPercent: 0.18,
-                action: () => this.game.sceneManager.switchTo('house')
+                action: () => this.game.sceneManager.goToLocation('house')
             },
             {
                 id: 'work',
@@ -56,7 +56,7 @@ export default class MapScene {
                 yPercent: 0.53,
                 widthPercent: 0.28,
                 heightPercent: 0.18,
-                action: () => this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'work' })
+                action: () => this.game.sceneManager.goToLocation('work')
             },
             {
                 id: 'market',
@@ -74,7 +74,7 @@ export default class MapScene {
                 yPercent: 0.53,
                 widthPercent: 0.28,
                 heightPercent: 0.18,
-                action: () => this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'gym' })
+                action: () => this.game.sceneManager.goToLocation('gym')
             },
             {
                 id: 'home',
@@ -83,7 +83,7 @@ export default class MapScene {
                 yPercent: 0.80,
                 widthPercent: 0.28,
                 heightPercent: 0.18,
-                action: () => this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+                action: () => this.game.sceneManager.goToLocation('home')
             },
             {
                 id: 'privateLoan',
@@ -92,7 +92,7 @@ export default class MapScene {
                 yPercent: 0.80,
                 widthPercent: 0.28,
                 heightPercent: 0.18,
-                action: () => this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'privateLoan' })
+                action: () => this.game.sceneManager.goToLocation('privateLoan')
             }
         ]
     }
@@ -110,7 +110,7 @@ export default class MapScene {
         
         try {
             console.log('[MapScene] 开始加载大地图背景图...')
-            const cloudImage = await imageManager.loadImageFromCloud('daditu')
+            const cloudImage = await imageManager.loadImageFromCloud('daditu.png')
             console.log('[MapScene] loadImageFromCloud 返回:', cloudImage)
             
             if (cloudImage && cloudImage.image) {
@@ -223,7 +223,7 @@ export default class MapScene {
         }
         
         this.renderTopBar(renderer)
-        this.renderStats(renderer)
+        renderer.renderStatsPanel(this.game, this.game.gameState.data)
     }
     
     renderBuildings(renderer, w, h, scale) {
@@ -304,8 +304,7 @@ export default class MapScene {
 
         ctx.strokeStyle = '#2D3436'
         ctx.lineWidth = 1.5
-        ctx.beginPath()
-        this.roundRectPath(ctx, padding, 8, w - padding * 2, barH, 12)
+        renderer.beginRoundRectPath(padding, 8, w - padding * 2, barH, 12)
         ctx.stroke()
 
         iconManager.draw(ctx, 'calendar', padding + 22, 24, { size: 20 })
@@ -315,119 +314,6 @@ export default class MapScene {
         const moneyText = state.money.toLocaleString()
         iconManager.draw(ctx, 'coin', rightX - 85, 24, { size: 18 })
         renderer.drawText(moneyText, rightX, 28, '#D4A574', 15, 'right')
-    }
-    
-    renderStats(renderer) {
-        const state = this.game.gameState.data
-        const w = renderer.width
-        const h = renderer.height
-        const padding = 12
-        const panelH = 100
-        const panelY = h - panelH - padding
-        const centerBtnSize = 56
-        const ctx = renderer.ctx
-
-        renderer.drawRect(padding, panelY, w - padding * 2, panelH, '#E0F0FF', 16)
-
-        ctx.strokeStyle = '#2D3436'
-        ctx.lineWidth = 1.5
-        ctx.beginPath()
-        this.roundRectPath(ctx, padding, panelY, w - padding * 2, panelH, 16)
-        ctx.stroke()
-
-        ctx.beginPath()
-        ctx.moveTo(padding + 25, panelY + 3)
-        ctx.lineTo(w - padding - 25, panelY + 3)
-        ctx.strokeStyle = 'rgba(135, 160, 180, 0.3)'
-        ctx.lineWidth = 2
-        ctx.stroke()
-
-        const centerX = w / 2
-        const leftSectionX = padding + 35
-        const rightSectionX = w - padding - 35
-        const topRowY = panelY + 30
-        const bottomRowY = panelY + panelH - 30
-
-        this.renderStatItem(renderer, leftSectionX, topRowY, 'health', state.health, 100, '#7CB87C')
-        this.renderStatItem(renderer, rightSectionX, topRowY, 'energy', state.energy, state.maxEnergy, '#7BA3C9', true)
-        this.renderStatItem(renderer, leftSectionX, bottomRowY, 'mood', state.mood, 100, '#D49BA3')
-        this.renderStatItem(renderer, rightSectionX, bottomRowY, 'reputation', state.reputation, 100, '#B8A3C9', true)
-
-        this.renderCenterButton(renderer, centerX, panelY + panelH / 2, centerBtnSize)
-    }
-
-    renderStatItem(renderer, x, y, statType, value, max, color, isRight = false) {
-        const progress = value / max
-        let valueColor = color
-        if (progress < 0.3) valueColor = '#C17B6B'
-        else if (progress < 0.5) valueColor = '#D4A574'
-
-        const ctx = renderer.ctx
-        const labelColor = '#5A6B7A'
-
-        const labelMap = {
-            health: '健康',
-            energy: '精力',
-            mood: '心情',
-            reputation: '名誉'
-        }
-        const label = labelMap[statType] || statType
-
-        if (isRight) {
-            iconManager.draw(ctx, statType, x - 75, y, { size: 22 })
-            renderer.drawText(label, x - 45, y - 6, labelColor, 12, 'left')
-            renderer.drawText(`${value}/${max}`, x - 45, y + 10, valueColor, 13, 'left')
-        } else {
-            iconManager.draw(ctx, statType, x + 12, y, { size: 22 })
-            renderer.drawText(label, x + 38, y - 1, labelColor, 12, 'left')
-            renderer.drawText(`${value}/${max}`, x + 38, y + 14, valueColor, 13, 'left')
-        }
-    }
-
-    renderCenterButton(renderer, x, y, size) {
-        const ctx = renderer.ctx
-        const radius = size / 2
-
-        ctx.beginPath()
-        ctx.arc(x, y + 3, radius, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(139, 115, 85, 0.15)'
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.fillStyle = '#FFE080'
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.strokeStyle = '#2D3436'
-        ctx.lineWidth = 1.5
-        ctx.stroke()
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius - 5, 0, Math.PI * 2)
-        ctx.strokeStyle = 'rgba(212, 165, 116, 0.4)'
-        ctx.lineWidth = 1
-        ctx.stroke()
-
-        iconManager.draw(ctx, 'map', x, y, { size: 32 })
-
-        const ui = this.game.uiManager
-        ui.addButton(x - radius, y - radius, size, size, '', () => {}, { bgColor: 'transparent' })
-    }
-
-    roundRectPath(ctx, x, y, w, h, r) {
-        ctx.beginPath()
-        ctx.moveTo(x + r, y)
-        ctx.lineTo(x + w - r, y)
-        ctx.arcTo(x + w, y, x + w, y + r, r)
-        ctx.lineTo(x + w, y + h - r)
-        ctx.arcTo(x + w, y + h, x + w - r, y + h, r)
-        ctx.lineTo(x + r, y + h)
-        ctx.arcTo(x, y + h, x, y + h - r, r)
-        ctx.lineTo(x, y + r)
-        ctx.arcTo(x, y, x + r, y, r)
-        ctx.closePath()
     }
     
     handleTouchStart(x, y) {

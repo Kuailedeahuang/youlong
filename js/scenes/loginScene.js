@@ -124,7 +124,7 @@ export default class LoginScene {
             console.log('用户已登录，自动进入游戏')
             this.loginStatus = 'success'
             setTimeout(() => {
-                this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+                this.game.sceneManager.goToLocation('home')
             }, 800)
         }
     }
@@ -183,7 +183,7 @@ export default class LoginScene {
                     })
 
                     setTimeout(() => {
-                        this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+                        this.game.sceneManager.goToLocation('home')
                     }, 1000)
                 } else {
                     const errMsg = openidResult && openidResult.error ? openidResult.error : '未获取到openid'

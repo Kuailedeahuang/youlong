@@ -2,7 +2,7 @@ import { getAllHouses, checkPurchaseEligibility } from '../data/houses.js'
 import animationManager from '../utils/animationManager.js'
 import imageManager from '../utils/imageManager.js'
 import { CLOUD_ENV_ID } from '../config.js'
-import iconManager from '../components/IconManager.js'
+import { GAME_CONFIG } from '../data/gameConfig.js'
 
 export class HouseScene {
     constructor(game) {
@@ -10,24 +10,22 @@ export class HouseScene {
         this.name = 'house'
         this.houses = getAllHouses()
         this.selectedHouse = null
-        
+
         this.scrollY = 0
         this.maxScrollY = 0
         this.isDragging = false
         this.lastTouchY = 0
         this.contentHeight = 0
-        
+
         this.cardPadding = 10
         this.cardHeight = 180
         this.topBarHeight = 60
         this.titleHeight = 40
         this.listStartY = this.topBarHeight + this.titleHeight
-        
-        // 存储加载的房屋图片
+
         this.houseImages = {}
         this.imagesLoaded = false
-        
-        // 结局动画状态
+
         this.isEndingPlaying = false
         this.endingHouse = null
         this.endingScrollY = 0
@@ -35,122 +33,70 @@ export class HouseScene {
         this.endingPhase = ''
         this.endingLines = []
         this.endingTextHeight = 0
-        
-        this.initTouchEvents()
-    }
-    
-    // 从云存储加载房屋图片（使用 imageManager，与其他场景保持一致）
-    async loadHouseImages() {
-        try {
-            console.log('开始加载房屋图片...')
-            
-            for (const house of this.houses) {
-                if (house.imageName) {
-                    const imageName = `${house.imageName}.png`
-                    
-                    try {
-                        // 使用 imageManager 加载图片（与其他场景相同）
-                        const cloudImage = await imageManager.loadImageFromCloud(imageName)
-                        
-                        if (cloudImage && cloudImage.image) {
-                            this.houseImages[house.id] = cloudImage.image
-                            console.log(`加载房屋图片成功: ${house.name}`)
-                        } else {
-                            console.warn(`加载房屋图片失败: ${house.name}, 未找到图片`)
-                        }
-                    } catch (e) {
-                        console.warn(`处理图片失败: ${house.name}`, e)
-                    }
-                }
-            }
-            
-            console.log('房屋图片加载完成，已加载:', Object.keys(this.houseImages).length, '张')
-        } catch (e) {
-            console.warn('加载房屋图片失败:', e)
-        }
-    }
-    
-    initTouchEvents() {
+
         this.touchStartX = 0
         this.touchStartY = 0
         this.touchStartTime = 0
         this.isDragging = false
         this.hasMoved = false
-        this.touchHandlers = null
-        
-        // 保存事件处理函数的引用，以便后续移除
-        this.touchHandlers = {
-            onTouchStart: (e) => {
-                // 检查当前场景是否是 house
-                if (this.game.sceneManager.currentScene !== 'house') return
-                if (this.selectedHouse) return
-                
-                const touch = e.touches[0]
-                this.touchStartX = touch.clientX
-                this.touchStartY = touch.clientY
-                this.touchStartTime = Date.now()
-                this.isDragging = true
-                this.hasMoved = false
-                this.lastTouchY = touch.clientY
-            },
-            
-            onTouchMove: (e) => {
-                if (this.game.sceneManager.currentScene !== 'house') return
-                if (!this.isDragging || this.selectedHouse) return
-                
-                const touch = e.touches[0]
-                const deltaY = touch.clientY - this.lastTouchY
-                const deltaX = touch.clientX - this.touchStartX
-                const totalDeltaY = touch.clientY - this.touchStartY
-                
-                if (Math.abs(totalDeltaY) > 5 || Math.abs(deltaX) > 5) {
-                    this.hasMoved = true
-                }
-                
-                this.lastTouchY = touch.clientY
-                this.scrollY += deltaY
-                this.scrollY = Math.max(-this.maxScrollY, Math.min(0, this.scrollY))
-            },
-            
-            onTouchEnd: (e) => {
-                if (this.game.sceneManager.currentScene !== 'house') return
-                if (!this.isDragging) return
-                
-                const touch = e.changedTouches[0]
-                const deltaX = touch.clientX - this.touchStartX
-                const deltaY = touch.clientY - this.touchStartY
-                const duration = Date.now() - this.touchStartTime
-                
-                const isClick = !this.hasMoved && 
-                               Math.abs(deltaX) < 10 && 
-                               Math.abs(deltaY) < 10 && 
-                               duration < 300
-                
-                if (isClick) {
-                    // 结局动画播放时不处理卡片点击
-                    if (!this.isEndingPlaying && !this.selectedHouse) {
-                        this.handleCardClick(touch.clientX, touch.clientY)
-                    }
-                }
-                
-                this.isDragging = false
-                this.hasMoved = false
-            },
-            
-            onTouchCancel: () => {
-                if (this.game.sceneManager.currentScene !== 'house') return
-                this.isDragging = false
-                this.hasMoved = false
-            }
+    }
+
+    handleTouchStart(x, y) {
+        if (this.selectedHouse || this.isEndingPlaying) return false
+
+        const statsBarY = this.game.renderer.height - 124
+        if (y >= statsBarY) {
+            return false
         }
-        
-        wx.onTouchStart(this.touchHandlers.onTouchStart)
-        wx.onTouchMove(this.touchHandlers.onTouchMove)
-        wx.onTouchEnd(this.touchHandlers.onTouchEnd)
-        wx.onTouchCancel(this.touchHandlers.onTouchCancel)
+
+        this.touchStartX = x
+        this.touchStartY = y
+        this.touchStartTime = Date.now()
+        this.isDragging = true
+        this.hasMoved = false
+        this.lastTouchY = y
+        return true
+    }
+
+    handleTouchMove(x, y) {
+        if (!this.isDragging || this.selectedHouse || this.isEndingPlaying) return
+        const deltaY = y - this.lastTouchY
+        const deltaX = x - this.touchStartX
+        const totalDeltaY = y - this.touchStartY
+
+        if (Math.abs(totalDeltaY) > 5 || Math.abs(deltaX) > 5) {
+            this.hasMoved = true
+        }
+
+        this.lastTouchY = y
+        this.scrollY += deltaY
+        this.scrollY = Math.max(-this.maxScrollY, Math.min(0, this.scrollY))
+    }
+
+    handleTouchEnd(x, y) {
+        if (!this.isDragging) return
+        const deltaX = x - this.touchStartX
+        const deltaY = y - this.touchStartY
+        const duration = Date.now() - this.touchStartTime
+
+        const isClick = !this.hasMoved &&
+                       Math.abs(deltaX) < 10 &&
+                       Math.abs(deltaY) < 10 &&
+                       duration < 300
+
+        if (isClick && !this.isEndingPlaying && !this.selectedHouse) {
+            this.handleCardClick(x, y)
+        }
+
+        this.isDragging = false
+        this.hasMoved = false
+    }
+
+    handleTouchCancel() {
+        this.isDragging = false
+        this.hasMoved = false
     }
     
-    // 处理卡片点击
     handleCardClick(x, y) {
         const w = this.game.renderer.width
         const cardW = (w - 30) / 2
@@ -159,7 +105,7 @@ export class HouseScene {
         const startY = this.listStartY + this.scrollY
         
         // 检查是否点击在列表区域内
-        if (y < this.listStartY || y > this.game.renderer.height - 20) {
+        if (y < this.listStartY || y > this.game.renderer.height - 112) {
             return
         }
         
@@ -184,19 +130,37 @@ export class HouseScene {
         console.log('========== HouseScene onEnter 开始 ==========')
         this.selectedHouse = null
         this.scrollY = 0
-        
-        // 从 splashScene 获取预加载的房屋图片
-        const splashScene = this.game.sceneManager.scenes.splash
-        if (splashScene && splashScene.houseImages) {
-            this.houseImages = splashScene.houseImages
-            console.log('从 splashScene 获取预加载图片:', Object.keys(this.houseImages).length, '张')
+        this.isEndingPlaying = false
+        this.houses = getAllHouses()
+
+        if (!this.imagesLoaded || Object.keys(this.houseImages).length === 0) {
+            await this.loadHouseImages()
         }
-        
+
         console.log('========== HouseScene onEnter 结束 ==========')
     }
-    
+
+    async loadHouseImages() {
+        console.log('[HouseScene] 开始加载房屋图片...')
+        const loadPromises = this.houses.map(async (house) => {
+            try {
+                const result = await imageManager.loadImageFromCloud(house.imageName + '.png')
+                if (result && result.image) {
+                    this.houseImages[house.id] = result.image
+                }
+            } catch (e) {
+                console.warn(`[HouseScene] 图片加载失败: ${house.imageName}`, e)
+            }
+        })
+
+        await Promise.all(loadPromises)
+        this.imagesLoaded = true
+        console.log(`[HouseScene] 房屋图片加载完成: ${Object.keys(this.houseImages).length}/${this.houses.length}`)
+    }
+
     onExit() {
         this.selectedHouse = null
+        this.isEndingPlaying = false
     }
     
     update(deltaTime) {
@@ -270,145 +234,13 @@ export class HouseScene {
             this.renderHouseDetail(renderer, state)
         }
         
-        this.renderStats(renderer)
-    }
-    
-    renderStats(renderer) {
-        const state = this.game.gameState.data
-        const w = renderer.width
-        const h = renderer.height
-        const padding = 12
-        const panelH = 100
-        const panelY = h - panelH - padding
-        const centerBtnSize = 56
-        const ctx = renderer.ctx
-
-        renderer.drawRect(padding, panelY, w - padding * 2, panelH, '#E0F0FF', 16)
-
-        ctx.strokeStyle = '#2D3436'
-        ctx.lineWidth = 1.5
-        ctx.beginPath()
-        this.roundRectPath(ctx, padding, panelY, w - padding * 2, panelH, 16)
-        ctx.stroke()
-
-        ctx.beginPath()
-        ctx.moveTo(padding + 25, panelY + 3)
-        ctx.lineTo(w - padding - 25, panelY + 3)
-        ctx.strokeStyle = 'rgba(135, 160, 180, 0.3)'
-        ctx.lineWidth = 2
-        ctx.stroke()
-
-        const centerX = w / 2
-        const leftSectionX = padding + 35
-        const rightSectionX = w - padding - 35
-        const topRowY = panelY + 30
-        const bottomRowY = panelY + panelH - 30
-
-        this.renderStatItem(renderer, leftSectionX, topRowY, 'health', state.health, 100, '#7CB87C')
-        this.renderStatItem(renderer, rightSectionX, topRowY, 'energy', state.energy, state.maxEnergy, '#7BA3C9', true)
-        this.renderStatItem(renderer, leftSectionX, bottomRowY, 'mood', state.mood, 100, '#D49BA3')
-        this.renderStatItem(renderer, rightSectionX, bottomRowY, 'reputation', state.reputation, 100, '#B8A3C9', true)
-
-        this.renderCenterButton(renderer, centerX, panelY + panelH / 2, centerBtnSize)
-    }
-
-    renderStatItem(renderer, x, y, statType, value, max, color, isRight = false) {
-        const progress = value / max
-        let valueColor = color
-        if (progress < 0.3) valueColor = '#C17B6B'
-        else if (progress < 0.5) valueColor = '#D4A574'
-
-        const ctx = renderer.ctx
-        const labelColor = '#5A6B7A'
-
-        const labelMap = {
-            health: '健康',
-            energy: '精力',
-            mood: '心情',
-            reputation: '名誉'
-        }
-        const label = labelMap[statType] || statType
-
-        if (isRight) {
-            iconManager.draw(ctx, statType, x - 75, y, { size: 22 })
-            renderer.drawText(label, x - 45, y - 6, labelColor, 12, 'left')
-            renderer.drawText(`${value}/${max}`, x - 45, y + 10, valueColor, 13, 'left')
-        } else {
-            iconManager.draw(ctx, statType, x + 12, y, { size: 22 })
-            renderer.drawText(label, x + 38, y - 1, labelColor, 12, 'left')
-            renderer.drawText(`${value}/${max}`, x + 38, y + 14, valueColor, 13, 'left')
-        }
-    }
-
-    renderCenterButton(renderer, x, y, size) {
-        const ctx = renderer.ctx
-        const radius = size / 2
-
-        ctx.beginPath()
-        ctx.arc(x, y + 3, radius, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(139, 115, 85, 0.15)'
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.fillStyle = '#FFE080'
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.strokeStyle = '#2D3436'
-        ctx.lineWidth = 1.5
-        ctx.stroke()
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius - 5, 0, Math.PI * 2)
-        ctx.strokeStyle = 'rgba(212, 165, 116, 0.4)'
-        ctx.lineWidth = 1
-        ctx.stroke()
-
-        iconManager.draw(ctx, 'map', x, y, { size: 32 })
-
-        const ui = this.game.uiManager
-        ui.addButton(x - radius, y - radius, size, size, '', () => {
-            this.game.sceneManager.switchTo('map')
-        }, { bgColor: 'transparent' })
-    }
-
-    roundRectPath(ctx, x, y, w, h, r) {
-        ctx.beginPath()
-        ctx.moveTo(x + r, y)
-        ctx.lineTo(x + w - r, y)
-        ctx.arcTo(x + w, y, x + w, y + r, r)
-        ctx.lineTo(x + w, y + h - r)
-        ctx.arcTo(x + w, y + h, x + w - r, y + h, r)
-        ctx.lineTo(x + r, y + h)
-        ctx.arcTo(x, y + h, x, y + h - r, r)
-        ctx.lineTo(x, y + r)
-        ctx.arcTo(x, y, x + r, y, r)
-        ctx.closePath()
+        renderer.renderStatsPanel(this.game, state)
     }
     
     renderTopBar(renderer, state) {
         const w = renderer.width
         
         renderer.drawRect(0, 0, w, 40, '#e8dcc8')
-        
-        const ctx = renderer.ctx
-        ctx.strokeStyle = '#8b6914'
-        ctx.lineWidth = 3
-        ctx.beginPath()
-        ctx.moveTo(25, 20)
-        ctx.lineTo(35, 12)
-        ctx.moveTo(25, 20)
-        ctx.lineTo(35, 28)
-        ctx.moveTo(25, 20)
-        ctx.lineTo(40, 20)
-        ctx.stroke()
-        
-        const ui = this.game.uiManager
-        ui.addButton(10, 5, 40, 30, '', () => {
-            this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-        }, { bgColor: 'transparent' })
         
         renderer.drawText(`精力: ${state.energy}/${state.maxEnergy}`, w - 15, 25, '#8b6914', 12, 'right')
     }
@@ -419,7 +251,7 @@ export class HouseScene {
         const totalRows = Math.ceil(this.houses.length / cardsPerRow)
         
         this.contentHeight = totalRows * (this.cardHeight + this.cardPadding) + this.cardPadding
-        const visibleHeight = h - this.listStartY
+        const visibleHeight = h - this.listStartY - 112
         
         this.maxScrollY = Math.max(0, this.contentHeight - visibleHeight)
         
@@ -438,7 +270,7 @@ export class HouseScene {
             const x = this.cardPadding + col * (cardW + this.cardPadding)
             const y = this.listStartY + this.scrollY + this.cardPadding + row * (this.cardHeight + this.cardPadding)
             
-            if (y + this.cardHeight < this.listStartY || y > h) {
+            if (y + this.cardHeight < this.listStartY || y > h - 112) {
                 return
             }
             
@@ -477,8 +309,14 @@ export class HouseScene {
             // 绘制卡片背景
             renderer.drawRect(x, y, cardW, this.cardHeight, cardBgColor, 8)
             
+            // 裁剪区域，防止文字溢出卡片
+            ctx.save()
+            ctx.beginPath()
+            ctx.rect(x, y, cardW, this.cardHeight)
+            ctx.clip()
+
             // 绘制图片区域
-            const imgH = 100
+            const imgH = 80
             const imgX = x + 5
             const imgY = y + 5
             const imgW = cardW - 10
@@ -526,16 +364,18 @@ export class HouseScene {
             }
             
             // 绘制房屋名称
-            renderer.drawText(house.name, x + cardW / 2, y + imgH + 20, nameColor, 13, 'center')
+            renderer.drawText(house.name, x + cardW / 2, y + imgH + 18, nameColor, 13, 'center')
             
             // 绘制价格
-            renderer.drawText(`${house.price}金币`, x + cardW / 2, y + imgH + 38, priceColor, 11, 'center')
+            renderer.drawText(`${house.price}金币`, x + cardW / 2, y + imgH + 34, priceColor, 11, 'center')
             
             // 绘制简介（多行文本，自动换行）
             const descX = x + 8
-            const descY = y + imgH + 50
+            const descY = y + imgH + 46
             const descMaxWidth = cardW - 16
             this.drawMultiLineText(renderer, house.description, descX, descY, descMaxWidth, 12, descColor, 9, 'left')
+
+            ctx.restore()
         })
         
         ctx.restore()
@@ -561,7 +401,7 @@ export class HouseScene {
         const w = renderer.width
         const h = renderer.height
         const modalW = w * 0.85
-        const modalH = 360
+        const modalH = 420
         const modalX = (w - modalW) / 2
         const modalY = (h - modalH) / 2
         
@@ -573,13 +413,13 @@ export class HouseScene {
         
         renderer.drawRect(modalX, modalY, modalW, modalH, '#ffffff', 12)
         
-        renderer.drawText(house.name, modalX + modalW / 2, modalY + 25, '#8b6914', 16, 'center')
+        renderer.drawText(house.name, modalX + modalW / 2, modalY + 30, '#8b6914', 16, 'center')
         
         // 绘制房屋图片（大图）
         const imgW = modalW - 30
-        const imgH = 180
+        const imgH = 140
         const imgX = modalX + 15
-        const imgY = modalY + 45
+        const imgY = modalY + 52
         
         // 绘制图片背景
         renderer.drawRect(imgX, imgY, imgW, imgH, '#e8e8e8', 6)
@@ -615,6 +455,33 @@ export class HouseScene {
             } catch (e) {
                 console.warn('绘制弹窗房屋图片失败:', e)
             }
+        }
+        
+        // 文字信息区域
+        const textX = modalX + 15
+        let textY = modalY + 202
+        
+        // 绘制描述
+        const descHeight = this.drawMultiLineText(renderer, house.description, textX, textY,
+            modalW - 30, 14, '#555555', 10, 'left')
+        textY += descHeight + 6
+        
+        // 绘制价格
+        const formattedPrice = house.price.toLocaleString()
+        renderer.drawText(`💰 价格：${formattedPrice} 金币`, textX, textY, '#8b6914', 14, 'left')
+        textY += 22
+        
+        // 绘制面积和位置
+        renderer.drawText(`📍 ${house.location}  |  📐 ${house.area}`, textX, textY, '#777777', 11, 'left')
+        textY += 20
+        
+        // 绘制购买资格状态
+        if (eligibility.eligible) {
+            renderer.drawText(`✅ 当前金币 ${state.money.toLocaleString()}，可以购买`,
+                textX, textY, '#27ae60', 12, 'left')
+        } else {
+            renderer.drawText(`❌ ${eligibility.reason}`,
+                textX, textY, '#e74c3c', 12, 'left')
         }
         
         const btnY = modalY + modalH - 55
@@ -913,26 +780,26 @@ export class HouseScene {
         
         // 创建新的默认状态，保留解锁的房屋
         const defaultState = {
-            money: 5000,
-            health: 100,
-            energy: 5,
-            maxEnergy: 5,
-            mood: 100,
-            reputation: 100,
+            money: GAME_CONFIG.initial.money,
+            health: GAME_CONFIG.initial.health,
+            energy: GAME_CONFIG.initial.energy,
+            maxEnergy: GAME_CONFIG.initial.maxEnergy,
+            mood: GAME_CONFIG.initial.mood,
+            reputation: GAME_CONFIG.initial.reputation,
             day: 1,
-            totalDays: 180,
+            totalDays: GAME_CONFIG.initial.totalDays,
             consecutiveGymDays: 0,
             bankLoan: 0,
             bankDeposit: 0,
             privateLoan: 0,
             overdueDays: 0,
-            warehouseCapacity: 20,
+            warehouseCapacity: GAME_CONFIG.warehouse.initialCapacity,
             warehouse: {},
             purchasedHouse: null,
             unlockedHouses: unlockedHouses,
             gameEnded: false,
             jobLevel: 1,
-            jobTitle: '外卖/快递员',
+            jobTitle: GAME_CONFIG.jobs[0].title,
             salaryDeduction: false,
             salaryDeductionDays: 0,
             unemployed: false,
@@ -944,7 +811,10 @@ export class HouseScene {
             todayEvents: [],
             newspaperShown: false,
             yesterdayExpense: 0,
-            marketEnteredToday: false
+            marketEnteredToday: false,
+            newspaperEvents: [],
+            pendingEvents: [],
+            todayNewspaper: null
         }
         
         console.log('[restartGameWithUnlockedHouses] 新状态中的解锁房屋:', defaultState.unlockedHouses)
@@ -967,11 +837,9 @@ export class HouseScene {
         await this.game.gameState.loadUserUnlockedHouses()
         console.log('[restartGameWithUnlockedHouses] 重新加载后的解锁房屋:', this.game.gameState.data.unlockedHouses)
         
-        // 结束结局动画
         this.isEndingPlaying = false
         
-        // 切换到首页场景
-        this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
+        this.game.sceneManager.goToLocation('home')
         
         wx.showToast({
             title: '重新开始游戏',

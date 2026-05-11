@@ -49,7 +49,9 @@ class IconManager {
             version: { drawer: SVGIcons.drawVersion.bind(SVGIcons), label: '版本', color: '#D4A574' },
             back: { drawer: SVGIcons.drawBack.bind(SVGIcons), label: '返回', color: '#7BA3C9' },
             reset: { drawer: SVGIcons.drawReset.bind(SVGIcons), label: '重置', color: '#C17B6B' },
-            arrowRight: { drawer: SVGIcons.drawArrowRight.bind(SVGIcons), label: '右箭头', color: '#8B7355' }
+            arrowRight: { drawer: SVGIcons.drawArrowRight.bind(SVGIcons), label: '右箭头', color: '#8B7355' },
+            moon: { drawer: SVGIcons.drawMoon.bind(SVGIcons), label: '月亮', color: '#FFF5E6' },
+            sun: { drawer: SVGIcons.drawSun.bind(SVGIcons), label: '太阳', color: '#FFE2A4' }
         }
     }
     
@@ -271,12 +273,10 @@ class IconManager {
      * @private
      */
     drawShadow(ctx, x, y, size) {
-        ctx.save()
         ctx.fillStyle = `rgba(139, 115, 85, ${this.theme.shadowOpacity})`
         ctx.beginPath()
         ctx.arc(x, y + size * 0.1, size * 0.4, 0, Math.PI * 2)
         ctx.fill()
-        ctx.restore()
     }
 }
 

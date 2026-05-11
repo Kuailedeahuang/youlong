@@ -1,4 +1,18 @@
 import animationManager from '../utils/animationManager.js'
+import { GAME_CONFIG } from '../data/gameConfig.js'
+
+const RANDOM_EVENTS = [
+    { text: '路边捡到钱包，获得50金币', stat: 'money', delta: 50, clampMin: 0, clampMax: Infinity, animType: 'increase', animLabel: '金币', animColor: '#f39c12' },
+    { text: '不小心丢了钱包，损失30金币', stat: 'money', delta: -30, clampMin: 0, clampMax: Infinity, animType: 'decrease', animLabel: '金币', animColor: '#f39c12' },
+    { text: '遇到好心人，心情+10', stat: 'mood', delta: 10, clampMin: 0, clampMax: 100, animType: 'increase', animLabel: '心情', animColor: '#e91e63' },
+    { text: '被小偷偷了，损失20金币', stat: 'money', delta: -20, clampMin: 0, clampMax: Infinity, animType: 'decrease', animLabel: '金币', animColor: '#f39c12' },
+    { text: '身体不适，健康-5', stat: 'health', delta: -5, clampMin: 0, clampMax: 100, animType: 'decrease', animLabel: '健康', animColor: '#27ae60' },
+    { text: '收到红包，获得100金币', stat: 'money', delta: 100, clampMin: 0, clampMax: Infinity, animType: 'increase', animLabel: '金币', animColor: '#f39c12' },
+    { text: '帮助老人，名誉+5', stat: 'reputation', delta: 5, clampMin: -100, clampMax: 100, animType: 'increase', animLabel: '名誉', animColor: '#9b59b6' },
+    { text: '被误解，名誉-5', stat: 'reputation', delta: -5, clampMin: -100, clampMax: 100, animType: 'decrease', animLabel: '名誉', animColor: '#9b59b6' },
+    { text: '睡了个好觉，心情+5', stat: 'mood', delta: 5, clampMin: 0, clampMax: 100, animType: 'increase', animLabel: '心情', animColor: '#e91e63' },
+    { text: '做了噩梦，心情-5', stat: 'mood', delta: -5, clampMin: 0, clampMax: 100, animType: 'decrease', animLabel: '心情', animColor: '#e91e63' }
+]
 
 export default class BackGameManager {
     constructor(game) {
@@ -52,11 +66,7 @@ export default class BackGameManager {
 
                 this.game.dailyCheck()
 
-<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -69,62 +79,10 @@ export default class BackGameManager {
         const eventChance = Math.random()
 
         if (eventChance < 0.15) {
-            const events = [
-                {
-                    text: '路边捡到钱包，获得50金币',
-                    effect: () => { state.money += 50 },
-                    anim: () => this.game.gameState.addDelayedAnimation('increase', 50, 'money', '金币', '#f39c12')
-                },
-                {
-                    text: '不小心丢了钱包，损失30金币',
-                    effect: () => { state.money = Math.max(0, state.money - 30) },
-                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 30, 'money', '金币', '#f39c12')
-                },
-                {
-                    text: '遇到好心人，心情+10',
-                    effect: () => { state.mood = Math.min(100, state.mood + 10) },
-                    anim: () => this.game.gameState.addDelayedAnimation('increase', 10, 'mood', '心情', '#e91e63')
-                },
-                {
-                    text: '被小偷偷了，损失20金币',
-                    effect: () => { state.money = Math.max(0, state.money - 20) },
-                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 20, 'money', '金币', '#f39c12')
-                },
-                {
-                    text: '身体不适，健康-5',
-                    effect: () => { state.health = Math.max(0, state.health - 5) },
-                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 5, 'health', '健康', '#27ae60')
-                },
-                {
-                    text: '收到红包，获得100金币',
-                    effect: () => { state.money += 100 },
-                    anim: () => this.game.gameState.addDelayedAnimation('increase', 100, 'money', '金币', '#f39c12')
-                },
-                {
-                    text: '帮助老人，名誉+5',
-                    effect: () => { state.reputation = Math.min(100, state.reputation + 5) },
-                    anim: () => this.game.gameState.addDelayedAnimation('increase', 5, 'reputation', '名誉', '#9b59b6')
-                },
-                {
-                    text: '被误解，名誉-5',
-                    effect: () => { state.reputation = Math.max(-100, state.reputation - 5) },
-                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 5, 'reputation', '名誉', '#9b59b6')
-                },
-                {
-                    text: '睡了个好觉，心情+5',
-                    effect: () => { state.mood = Math.min(100, state.mood + 5) },
-                    anim: () => this.game.gameState.addDelayedAnimation('increase', 5, 'mood', '心情', '#e91e63')
-                },
-                {
-                    text: '做了噩梦，心情-5',
-                    effect: () => { state.mood = Math.max(0, state.mood - 5) },
-                    anim: () => this.game.gameState.addDelayedAnimation('decrease', 5, 'mood', '心情', '#e91e63')
-                }
-            ]
-
-            const event = events[Math.floor(Math.random() * events.length)]
-            event.effect()
-            event.anim()
+            const event = RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)]
+            state[event.stat] = Math.min(event.clampMax, Math.max(event.clampMin, state[event.stat] + event.delta))
+            const absVal = Math.abs(event.delta)
+            this.game.gameState.addDelayedAnimation(event.animType, absVal, event.stat, event.animLabel, event.animColor)
 
             this.game.uiManager.addModal({
                 type: 'confirm',
@@ -190,13 +148,7 @@ export default class BackGameManager {
         }
 
         // 当前岗位信息
-        const jobs = [
-            { level: 1, title: '外卖/快递员', baseSalary: 120, overtimeSalary: 180 },
-            { level: 2, title: '文员', baseSalary: 240, overtimeSalary: 360 },
-            { level: 3, title: '主管', baseSalary: 480, overtimeSalary: 720 },
-            { level: 4, title: '经理', baseSalary: 960, overtimeSalary: 1440 },
-            { level: 5, title: '总监', baseSalary: 1920, overtimeSalary: 2880 }
-        ]
+        const jobs = GAME_CONFIG.jobs
 
         const job = jobs[state.jobLevel - 1]
         let baseSalary = job.baseSalary
@@ -254,20 +206,18 @@ export default class BackGameManager {
         state.money += salary
 
         if (isOvertime) {
-            state.health = Math.max(0, state.health - 5)
+            state.health = Math.max(0, state.health - GAME_CONFIG.work.overtimeHealthCost)
         }
 
         // 工作表现影响名誉
         let reputationChange = 0
         let reputationReason = ''
 
-        if (state.health >= 80 && state.mood >= 60) {
-            // 状态好，工作出色
-            reputationChange = 2
+        if (state.health >= GAME_CONFIG.work.goodPerformanceThreshold.health && state.mood >= GAME_CONFIG.work.goodPerformanceThreshold.mood) {
+            reputationChange = GAME_CONFIG.work.goodPerformanceReputation
             reputationReason = '工作表现出色'
-        } else if (state.health < 40 || state.mood < 30) {
-            // 状态差，工作不佳
-            reputationChange = -2
+        } else if (state.health < GAME_CONFIG.work.badPerformanceThreshold.health || state.mood < GAME_CONFIG.work.badPerformanceThreshold.mood) {
+            reputationChange = GAME_CONFIG.work.badPerformanceReputation
             reputationReason = '工作状态不佳'
         }
 
@@ -302,11 +252,7 @@ export default class BackGameManager {
             confirmText: '知道了',
             singleButton: true,
             onConfirm: () => {
-<<<<<<< HEAD
-                this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
+this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
             }
         })
     }
@@ -320,11 +266,11 @@ export default class BackGameManager {
 
         // 所有岗位和借款挡位信息
         const jobLoanInfo = [
-            { level: 1, title: '外卖/快递员', loanLimit: 50000 },
-            { level: 2, title: '文员', loanLimit: 50000 },
-            { level: 3, title: '主管', loanLimit: 75000 },
-            { level: 4, title: '经理', loanLimit: 75000 },
-            { level: 5, title: '总监', loanLimit: 75000 }
+            { level: 1, title: '外卖/快递员', loanLimit: GAME_CONFIG.bank.loanLimitLevel1 },
+            { level: 2, title: '文员', loanLimit: GAME_CONFIG.bank.loanLimitLevel1 },
+            { level: 3, title: '主管', loanLimit: GAME_CONFIG.bank.loanLimitLevel3 },
+            { level: 4, title: '经理', loanLimit: GAME_CONFIG.bank.loanLimitLevel3 },
+            { level: 5, title: '总监', loanLimit: GAME_CONFIG.bank.loanLimitLevel3 }
         ]
 
         // 构建岗位和借款挡位显示内容
@@ -347,7 +293,7 @@ export default class BackGameManager {
         this.game.uiManager.addModal({
             type: 'action',
             title: '银行',
-            content: `存款利率: 每6天2%  |  贷款利率: 每6天6%\n当前欠款: ${state.bankLoan.toLocaleString()} 金币\n\n${jobContent}`,
+            content: `存款利率: 每${GAME_CONFIG.bank.depositInterestDays}天${(GAME_CONFIG.bank.depositInterestRate * 100).toFixed(0)}%  |  贷款利率: 每${GAME_CONFIG.bank.loanInterestDays}天${(GAME_CONFIG.bank.loanInterestRate * 100).toFixed(0)}%\n当前欠款: ${state.bankLoan.toLocaleString()} 金币\n\n${jobContent}`,
             actions: actions,
             height: 320
         })
@@ -378,11 +324,7 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('increase', qty, 'bankDeposit', '银行存款', '#27ae60')
 
-<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                    this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -393,7 +335,7 @@ export default class BackGameManager {
      */
     doLoan() {
         const state = this.game.gameState.data
-        const maxLoan = state.jobLevel >= 3 ? 75000 : 50000
+        const maxLoan = state.jobLevel >= 3 ? GAME_CONFIG.bank.loanLimitLevel3 : GAME_CONFIG.bank.loanLimitLevel1
         this.game.uiManager.addModal({
             type: 'trade',
             title: '银行贷款',
@@ -413,11 +355,7 @@ export default class BackGameManager {
                 this.game.gameState.addDelayedAnimation('loan', qty, 'bankLoan', '银行贷款', '#3498db')
                 this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
 
-<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -450,11 +388,7 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'bankLoan', '银行贷款', '#3498db')
 
-<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                    this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -516,11 +450,7 @@ export default class BackGameManager {
                 this.game.gameState.addDelayedAnimation('loan', qty, 'privateLoan', '私人贷款', '#e74c3c')
                 this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
 
-<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -575,11 +505,7 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('decrease', qty, 'privateLoan', '私人贷款', '#e74c3c')
 
-<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                    this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -653,11 +579,7 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('increase', reputationGain, 'reputation', '名誉', '#9b59b6')
                     this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
 
-<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                    this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -699,11 +621,7 @@ export default class BackGameManager {
             confirmText: '知道了',
             singleButton: true,
             onConfirm: () => {
-<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -714,6 +632,7 @@ export default class BackGameManager {
      */
     doHospital() {
         const state = this.game.gameState.data
+        const config = GAME_CONFIG.hospital
 
         if (state.energy < 1) {
             this.game.uiManager.addModal({
@@ -726,27 +645,37 @@ export default class BackGameManager {
             return
         }
 
+        const maxHeal = Math.min(config.maxHeal, 100 - state.health)
+        const cost = maxHeal * config.costPerHealth
+
+        if (maxHeal <= 0) {
+            this.game.uiManager.addModal({
+                type: 'confirm',
+                title: '健康已满',
+                content: '无需治疗',
+                confirmText: '知道了',
+                onConfirm: () => {}
+            })
+            return
+        }
+
         this.game.uiManager.addModal({
             type: 'confirm',
             title: '医院',
-            content: '消耗1精力\n花费100金币\n恢复健康+30',
+            content: `消耗1精力\n花费${cost}金币\n恢复健康+${maxHeal}`,
             confirmText: '治疗',
             onConfirm: () => {
-                if (state.money >= 100) {
+                if (state.money >= cost) {
                     state.energy -= 1
-                    state.money -= 100
-                    state.health = Math.min(100, state.health + 30)
+                    state.money -= cost
+                    state.health = Math.min(100, state.health + maxHeal)
                     this.game.gameState.save()
 
                     this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
-                    this.game.gameState.addDelayedAnimation('decrease', 100, 'money', '金币', '#f39c12')
-                    this.game.gameState.addDelayedAnimation('increase', 30, 'health', '健康', '#27ae60')
+                    this.game.gameState.addDelayedAnimation('decrease', cost, 'money', '金币', '#f39c12')
+                    this.game.gameState.addDelayedAnimation('increase', maxHeal, 'health', '健康', '#27ae60')
 
-<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                    this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })
@@ -790,11 +719,7 @@ export default class BackGameManager {
                 this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
                 this.game.gameState.addDelayedAnimation('increase', healthGain, 'health', '健康', '#27ae60')
 
-<<<<<<< HEAD
                 this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
             }
         })
     }
@@ -835,11 +760,7 @@ export default class BackGameManager {
                     this.game.gameState.addDelayedAnimation('decrease', 50, 'money', '金币', '#f39c12')
                     this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#e91e63')
 
-<<<<<<< HEAD
                     this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                    this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
                 }
             }
         })

@@ -1,4 +1,5 @@
 import { CLOUD_ENV_ID } from '../config.js'
+import { GAME_CONFIG } from '../data/gameConfig.js'
 
 export function resetGameProgress() {
   try {
@@ -22,15 +23,17 @@ export async function resetGameProgressWithCloud() {
       })
       
       try {
-        const res = await db.collection('gameProgress').where({
-          _openid: '{openid}'
-        }).get()
+        const res = await db.collection('gameProgress')
+          .limit(10)
+          .get()
         
         if (res.data && res.data.length > 0) {
           for (const record of res.data) {
             await db.collection('gameProgress').doc(record._id).remove()
           }
           console.log('云数据库游戏进度已清除')
+        } else {
+          console.log('云数据库中无游戏进度记录')
         }
       } catch (e) {
         console.warn('清除云数据库失败:', e)
@@ -123,26 +126,26 @@ export async function restartGame(gameInstance = null) {
     
     // 创建新的默认状态
     const defaultState = {
-      money: 5000,
-      health: 100,
-      energy: 5,
-      maxEnergy: 5,
-      mood: 100,
-      reputation: 100,
+      money: GAME_CONFIG.initial.money,
+      health: GAME_CONFIG.initial.health,
+      energy: GAME_CONFIG.initial.energy,
+      maxEnergy: GAME_CONFIG.initial.maxEnergy,
+      mood: GAME_CONFIG.initial.mood,
+      reputation: GAME_CONFIG.initial.reputation,
       day: 1,
-      totalDays: 180,
+      totalDays: GAME_CONFIG.initial.totalDays,
       consecutiveGymDays: 0,
       bankLoan: 0,
       bankDeposit: 0,
       privateLoan: 0,
       overdueDays: 0,
-      warehouseCapacity: 20,
+      warehouseCapacity: GAME_CONFIG.warehouse.initialCapacity,
       warehouse: {},
       purchasedHouse: null,
       unlockedHouses: unlockedHouses, // 保留解锁的房屋
       gameEnded: false,
       jobLevel: 1,
-      jobTitle: '外卖/快递员',
+      jobTitle: GAME_CONFIG.jobs[0].title,
       salaryDeduction: false,
       salaryDeductionDays: 0,
       unemployed: false,
@@ -154,7 +157,10 @@ export async function restartGame(gameInstance = null) {
       todayEvents: [],
       newspaperShown: false,
       yesterdayExpense: 0,
-      marketEnteredToday: false
+      marketEnteredToday: false,
+      newspaperEvents: [],
+      pendingEvents: [],
+      todayNewspaper: null
     }
     
     // 保存新状态

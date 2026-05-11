@@ -21,7 +21,8 @@ export default class SettingsScene {
         // 动画状态 - 吉卜力风格温柔动效
         this.switchAnimations = {
             sound: { progress: this.settings.soundEnabled ? 1 : 0, target: this.settings.soundEnabled ? 1 : 0 },
-            vibration: { progress: this.settings.vibrationEnabled ? 1 : 0, target: this.settings.vibrationEnabled ? 1 : 0 }
+            vibration: { progress: this.settings.vibrationEnabled ? 1 : 0, target: this.settings.vibrationEnabled ? 1 : 0 },
+            newspaper: { progress: this.settings.alwaysShowNewspaper ? 1 : 0, target: this.settings.alwaysShowNewspaper ? 1 : 0 }
         }
 
         // 按钮按压状态 - 用于视觉反馈
@@ -35,6 +36,9 @@ export default class SettingsScene {
         // 反馈提示
         this.feedbackToast = null
         this.feedbackTimer = 0
+
+        this.clickableAreas = []
+        this._pressedArea = null
     }
 
     /**
@@ -52,7 +56,8 @@ export default class SettingsScene {
         // 默认设置
         return {
             soundEnabled: true,
-            vibrationEnabled: true
+            vibrationEnabled: true,
+            alwaysShowNewspaper: false
         }
     }
 
@@ -101,22 +106,21 @@ export default class SettingsScene {
         this.switchAnimations.sound.progress = this.settings.soundEnabled ? 1 : 0
         this.switchAnimations.vibration.target = this.settings.vibrationEnabled ? 1 : 0
         this.switchAnimations.vibration.progress = this.settings.vibrationEnabled ? 1 : 0
+        this.switchAnimations.newspaper.target = this.settings.alwaysShowNewspaper ? 1 : 0
+        this.switchAnimations.newspaper.progress = this.settings.alwaysShowNewspaper ? 1 : 0
     }
 
     update(deltaTime) {
-        // 吉卜力风格温柔动效 - 使用缓动函数
-        const animateSpeed = 6 * deltaTime // 温柔的速度
+        const animateSpeed = 6 * deltaTime
         for (let key in this.switchAnimations) {
             const state = this.switchAnimations[key]
             const diff = state.target - state.progress
             state.progress += diff * Math.min(animateSpeed, 1)
-            // 接近目标时直接设置，避免无限逼近
             if (Math.abs(diff) < 0.01) {
                 state.progress = state.target
             }
         }
 
-        // 反馈提示倒计时
         if (this.feedbackToast && this.feedbackTimer > 0) {
             this.feedbackTimer -= deltaTime
             this.feedbackToast.opacity = Math.max(0, this.feedbackTimer / 0.5)
@@ -126,11 +130,35 @@ export default class SettingsScene {
         }
     }
 
+    handleTouchStart(x, y) {
+        for (const area of this.clickableAreas) {
+            if (x >= area.x && x <= area.x + area.w &&
+                y >= area.y && y <= area.y + area.h) {
+                this._pressedArea = area
+                return true
+            }
+        }
+        return false
+    }
+
+    handleTouchEnd(x, y) {
+        const area = this._pressedArea
+        this._pressedArea = null
+        if (!area) return false
+        if (x >= area.x && x <= area.x + area.w &&
+            y >= area.y && y <= area.y + area.h) {
+            if (area.action) area.action()
+            return true
+        }
+        return false
+    }
+
     render(renderer) {
         const w = renderer.width
         const h = renderer.height
 
         this.game.uiManager.clear()
+        this.clickableAreas = []
 
         // 绘制背景
         this.renderBackground(renderer, w, h)
@@ -213,6 +241,12 @@ export default class SettingsScene {
         this.renderToggleItem(renderer, panelX + 20, currentY, panelW - 40, itemHeight,
             'vibration', '震动反馈', this.switchAnimations.vibration.progress,
             () => this.toggleVibration())
+        currentY += itemHeight + itemSpacing
+
+        // 报纸显示开关
+        this.renderToggleItem(renderer, panelX + 20, currentY, panelW - 40, itemHeight,
+            'stats', '每次进入市场显示报纸', this.switchAnimations.newspaper.progress,
+            () => this.toggleNewspaper())
         currentY += itemHeight + itemSpacing + 16
 
         // 分隔线
@@ -351,6 +385,11 @@ export default class SettingsScene {
             onToggle,
             { bgColor: 'transparent' }
         )
+        this.clickableAreas.push({
+            x: switchX - 10, y: switchY - hitAreaPadding,
+            w: switchW + 20, h: 56,
+            action: onToggle
+        })
     }
 
     /**
@@ -377,6 +416,7 @@ export default class SettingsScene {
         this.game.uiManager.addButton(x, y, w, h, '', onClick, {
             bgColor: 'transparent'
         })
+        this.clickableAreas.push({ x, y, w, h, action: onClick })
     }
 
     /**
@@ -452,13 +492,13 @@ export default class SettingsScene {
 
         // 添加点击区域
         this.game.uiManager.addButton(x, y, w, h, '', () => {
-<<<<<<< HEAD
-            this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-            this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
+            this.game.sceneManager.goToLocation('home')
         }, {
             bgColor: 'transparent'
+        })
+        this.clickableAreas.push({
+            x, y, w, h,
+            action: () => { this.game.sceneManager.goToLocation('home') }
         })
     }
 
@@ -504,6 +544,10 @@ export default class SettingsScene {
             this.confirmRestart()
         }, {
             bgColor: 'transparent'
+        })
+        this.clickableAreas.push({
+            x, y, w, h,
+            action: () => { this.confirmRestart() }
         })
     }
 
@@ -574,15 +618,27 @@ export default class SettingsScene {
         this.switchAnimations.vibration.target = this.settings.vibrationEnabled ? 1 : 0
         this.saveSettings()
 
-        // 视觉反馈
         this.showFeedbackToast(this.settings.vibrationEnabled ? '震动反馈已开启' : '震动反馈已关闭')
 
-        // 立即反馈
         if (this.settings.vibrationEnabled) {
             wx.vibrateShort({ type: 'light' })
         }
 
         console.log('[SettingsScene] 震动:', this.settings.vibrationEnabled ? '开启' : '关闭')
+    }
+
+    toggleNewspaper() {
+        this.settings.alwaysShowNewspaper = !this.settings.alwaysShowNewspaper
+        this.switchAnimations.newspaper.target = this.settings.alwaysShowNewspaper ? 1 : 0
+        this.saveSettings()
+
+        this.showFeedbackToast(this.settings.alwaysShowNewspaper ? '每次进入市场显示报纸' : '每天仅显示一次报纸')
+
+        if (this.settings.vibrationEnabled) {
+            wx.vibrateShort({ type: 'light' })
+        }
+
+        console.log('[SettingsScene] 报纸显示:', this.settings.alwaysShowNewspaper ? '每次进入' : '每天一次')
     }
 
     /**
@@ -676,13 +732,8 @@ export default class SettingsScene {
 
                 this.showFeedbackToast('游戏已重置')
 
-                // 返回主页
                 setTimeout(() => {
-<<<<<<< HEAD
-                    this.game.sceneManager.switchToWithParams('sceneWithBackground', { sceneName: 'home' })
-=======
-                    this.game.sceneManager.switchTo('home')
->>>>>>> 9ee67bfa37532d9ba32be0503a8550afbb81b6fb
+                    this.game.sceneManager.goToLocation('home')
                 }, 1500)
             }
         })

@@ -2,20 +2,6 @@ import ItemData, { categories } from '../data/items.js'
 import imageManager from '../utils/imageManager.js'
 import animationManager from '../utils/animationManager.js'
 import { GAME_CONFIG } from '../data/gameConfig.js'
-import iconManager from '../components/IconManager.js'
-
-const newspapers = [
-    { title: '市场快报', content: '今日市场行情平稳，各商品价格小幅波动。' },
-    { title: '农业新闻', content: '近期农产品丰收，农副产品价格可能下跌。' },
-    { title: '工业周刊', content: '建筑行业需求旺盛，建材类商品看涨。' },
-    { title: '财经日报', content: '贵金属市场波动加剧，投资需谨慎。' },
-    { title: '能源观察', content: '能源化工产品受政策影响，价格波动明显。' },
-    { title: '科技前沿', content: '数码产品更新换代快，价格波动剧烈。' },
-    { title: '出行资讯', content: '出行工具市场火热，二手交易活跃。' },
-    { title: '特别报道', content: '据内部消息，部分商品即将迎来大涨。' },
-    { title: '市场预警', content: '有分析师预测，近期部分商品可能大跌。' },
-    { title: '综合新闻', content: '市场整体稳定，建议理性投资。' }
-]
 
 export default class MarketScene {
     constructor(game) {
@@ -24,11 +10,12 @@ export default class MarketScene {
         this.itemPrices = {}
         this.bgImage = null
         this.imageLoaded = false
-        this.todayNewspaper = null
         this.newspaperBgImage = null
         this.newspaperBgLoaded = false
         this.useCloudBgImage = false
         this.useCloudNewspaperImage = false
+        this.clickableAreas = []
+        this._pressedArea = null
         this.loadBackground()
         this.loadNewspaperBackground()
         this.initPrices()
@@ -78,18 +65,30 @@ export default class MarketScene {
     
     initPrices() {
         ItemData.forEach(item => {
-            const fluctuation = item.naturalFluctuation.min + Math.random() * (item.naturalFluctuation.max - item.naturalFluctuation.min)
-            this.itemPrices[item.id] = {
-                current: Math.round(item.basePrice * (1 + fluctuation)),
-                change: Math.round(fluctuation * 100)
+            const priceData = this.game.gameState.data.itemPrices[item.id]
+            if (priceData) {
+                this.itemPrices[item.id] = priceData
+            } else {
+                const fluctuation = item.naturalFluctuation.min + Math.random() * (item.naturalFluctuation.max - item.naturalFluctuation.min)
+                this.itemPrices[item.id] = {
+                    current: Math.round(item.basePrice * (1 + fluctuation)),
+                    change: Math.round(fluctuation * 100)
+                }
             }
         })
     }
     
-    generateNewspaper() {
-        const randomIndex = Math.floor(Math.random() * newspapers.length)
-        this.todayNewspaper = newspapers[randomIndex]
-        return this.todayNewspaper
+    getAlwaysShowNewspaperSetting() {
+        try {
+            const saved = wx.getStorageSync('game_settings')
+            if (saved) {
+                const settings = JSON.parse(saved)
+                return settings.alwaysShowNewspaper || false
+            }
+        } catch (e) {
+            console.warn('[MarketScene] 读取报纸设置失败:', e)
+        }
+        return false
     }
     
     onEnter() {
@@ -97,39 +96,93 @@ export default class MarketScene {
         this.selectedCategory = null
         
         const state = this.game.gameState.data
+        const alwaysShow = this.getAlwaysShowNewspaperSetting()
         
-        if (!state.newspaperShown) {
-            const paper = this.generateNewspaper()
-            setTimeout(() => {
-                this.game.uiManager.addModal({
-                    type: 'confirm',
-                    title: `第${state.day}天 ${paper.title}`,
-                    content: paper.content,
-                    confirmText: '知道了',
-                    singleButton: true,
-                    backgroundImage: this.newspaperBgImage,
-                    backgroundImageLoaded: this.newspaperBgLoaded,
-                    height: 320,
-                    isNewspaper: true,
-                    onConfirm: () => {
-                        this.game.gameState.set('newspaperShown', true)
-                    }
-                })
-            }, 100)
+        if (alwaysShow || !state.newspaperShown) {
+            const newspaperData = state.todayNewspaper || []
+            
+            if (newspaperData.length > 0) {
+                const newspaperContent = newspaperData.map(news => `【${news.title}】\n${news.content}`).join('\n\n')
+                
+                setTimeout(() => {
+                    const rawLines = newspaperContent.split('\n')
+                    const estimatedCharsPerLine = 16
+                    let totalWrappedLines = 0
+                    let emptyCount = 0
+                    let headingCount = 0
+                    rawLines.forEach(line => {
+                        if (line === '') {
+                            emptyCount++
+                        } else {
+                            const wrapped = Math.max(1, Math.ceil(line.length / estimatedCharsPerLine))
+                            totalWrappedLines += wrapped
+                            if (/^【.+】$/.test(line)) {
+                                headingCount++
+                            }
+                        }
+                    })
+                    const contentHeight = 70 + totalWrappedLines * 22 + emptyCount * 14 + headingCount * 6 + 55
+                    const modalHeight = Math.max(360, Math.min(700, contentHeight))
+                    this.game.uiManager.addModal({
+                        type: 'confirm',
+                        title: `第${state.day}天 市场报纸`,
+                        content: newspaperContent,
+                        confirmText: '知道了',
+                        singleButton: true,
+                        backgroundImage: this.newspaperBgImage,
+                        backgroundImageLoaded: this.newspaperBgLoaded,
+                        height: modalHeight,
+                        isNewspaper: true,
+                        onConfirm: () => {
+                            if (!alwaysShow) {
+                                this.game.gameState.set('newspaperShown', true)
+                            }
+                        }
+                    })
+                }, 100)
+            } else {
+                if (!alwaysShow) {
+                    this.game.gameState.set('newspaperShown', true)
+                }
+            }
         }
     }
     
     update(deltaTime) {
         
     }
-    
+
+    handleTouchStart(x, y) {
+        for (const area of this.clickableAreas) {
+            if (x >= area.x && x <= area.x + area.w &&
+                y >= area.y && y <= area.y + area.h) {
+                this._pressedArea = area
+                return true
+            }
+        }
+        return false
+    }
+
+    handleTouchEnd(x, y) {
+        const area = this._pressedArea
+        this._pressedArea = null
+        if (!area) return false
+        if (x >= area.x && x <= area.x + area.w &&
+            y >= area.y && y <= area.y + area.h) {
+            if (area.action) area.action()
+            return true
+        }
+        return false
+    }
+
     render(renderer) {
         const w = renderer.width
         const h = renderer.height
         const state = this.game.gameState.data
         
         this.game.uiManager.clear()
-        
+        this.clickableAreas = []
+
         if (this.imageLoaded && this.bgImage && this.bgImage.width > 0) {
             try {
                 const ctx = renderer.ctx
@@ -152,7 +205,7 @@ export default class MarketScene {
         this.renderMarketSection(renderer, 5, contentY, leftW, contentH)
         this.renderWarehouseSection(renderer, w - rightW - 5, contentY, rightW, contentH)
         
-        this.renderStats(renderer)
+        renderer.renderStatsPanel(this.game, this.game.gameState.data)
     }
     
     renderTopBar(renderer, state) {
@@ -174,6 +227,7 @@ export default class MarketScene {
             ui.addButton(backX, y + 5, 40, 25, '返回', () => {
                 this.selectedCategory = null
             }, { fontSize: 10, bgColor: '#3498db' })
+            this.clickableAreas.push({ x: backX, y: y + 5, w: 40, h: 25, action: () => { this.selectedCategory = null } })
         }
         
         const listY = y + 35
@@ -203,6 +257,7 @@ export default class MarketScene {
             ui.addButton(x, itemY, w, itemH, '', () => {
                 this.selectedCategory = cat.id
             }, { bgColor: 'transparent' })
+            this.clickableAreas.push({ x, y: itemY, w, h: itemH, action: () => { this.selectedCategory = cat.id } })
         })
     }
     
@@ -217,17 +272,26 @@ export default class MarketScene {
             if (itemY + itemH > y + h) return
             
             const priceData = this.itemPrices[item.id]
-            const changeColor = priceData.change >= 0 ? '#27ae60' : '#e74c3c'
-            const changeText = priceData.change >= 0 ? `+${priceData.change}%` : `${priceData.change}%`
+            const changeValue = priceData.totalChange !== undefined ? priceData.totalChange : priceData.change
+            const changeColor = changeValue >= 0 ? '#27ae60' : '#e74c3c'
+            const changeText = changeValue >= 0 ? `+${changeValue}%` : `${changeValue}%`
             
             renderer.drawRect(x, itemY, w, itemH, 'rgba(0, 0, 0, 0.5)', 6)
             renderer.drawText(item.name, x + 8, itemY + 20, '#ffffff', 13, 'left')
             renderer.drawText(`现价: ${priceData.current}`, x + 8, itemY + 40, '#f39c12', 12, 'left')
             renderer.drawText(changeText, x + w - 8, itemY + 20, changeColor, 11, 'right')
             
+            const newsEffect = priceData.newsFluctuation || 0
+            if (newsEffect !== 0) {
+                const newsColor = newsEffect > 0 ? '#e74c3c' : '#3498db'
+                const newsText = newsEffect > 0 ? `报+${newsEffect}%` : `报${newsEffect}%`
+                renderer.drawText(newsText, x + w - 8, itemY + 38, newsColor, 9, 'right')
+            }
+            
             ui.addButton(x, itemY, w, itemH, '', () => {
                 this.showBuyModal(item, priceData)
             }, { bgColor: 'transparent' })
+            this.clickableAreas.push({ x, y: itemY, w, h: itemH, action: () => { this.showBuyModal(item, priceData) } })
         })
     }
     
@@ -253,6 +317,7 @@ export default class MarketScene {
             ui.addButton(x + w / 2 - 40, y + 5, 80, 20, '', () => {
                 this.upgradeWarehouse()
             }, { bgColor: 'transparent' })
+            this.clickableAreas.push({ x: x + w / 2 - 40, y: y + 5, w: 80, h: 20, action: () => { this.upgradeWarehouse() } })
         }
         
         const listY = y + 35
@@ -295,122 +360,8 @@ export default class MarketScene {
             ui.addButton(x, itemY, w, itemH, '', () => {
                 this.showSellModal(item, priceData, quantity)
             }, { bgColor: 'transparent' })
+            this.clickableAreas.push({ x, y: itemY, w, h: itemH, action: () => { this.showSellModal(item, priceData, quantity) } })
         })
-    }
-    
-    renderStats(renderer) {
-        const state = this.game.gameState.data
-        const w = renderer.width
-        const h = renderer.height
-        const padding = 12
-        const panelH = 100
-        const panelY = h - panelH - padding
-        const centerBtnSize = 56
-        const ctx = renderer.ctx
-
-        renderer.drawRect(padding, panelY, w - padding * 2, panelH, '#E0F0FF', 16)
-
-        ctx.strokeStyle = '#2D3436'
-        ctx.lineWidth = 1.5
-        ctx.beginPath()
-        this.roundRectPath(ctx, padding, panelY, w - padding * 2, panelH, 16)
-        ctx.stroke()
-
-        ctx.beginPath()
-        ctx.moveTo(padding + 25, panelY + 3)
-        ctx.lineTo(w - padding - 25, panelY + 3)
-        ctx.strokeStyle = 'rgba(135, 160, 180, 0.3)'
-        ctx.lineWidth = 2
-        ctx.stroke()
-
-        const centerX = w / 2
-        const leftSectionX = padding + 35
-        const rightSectionX = w - padding - 35
-        const topRowY = panelY + 30
-        const bottomRowY = panelY + panelH - 30
-
-        this.renderStatItem(renderer, leftSectionX, topRowY, 'health', state.health, 100, '#7CB87C')
-        this.renderStatItem(renderer, rightSectionX, topRowY, 'energy', state.energy, state.maxEnergy, '#7BA3C9', true)
-        this.renderStatItem(renderer, leftSectionX, bottomRowY, 'mood', state.mood, 100, '#D49BA3')
-        this.renderStatItem(renderer, rightSectionX, bottomRowY, 'reputation', state.reputation, 100, '#B8A3C9', true)
-
-        this.renderCenterButton(renderer, centerX, panelY + panelH / 2, centerBtnSize)
-    }
-
-    renderStatItem(renderer, x, y, statType, value, max, color, isRight = false) {
-        const progress = value / max
-        let valueColor = color
-        if (progress < 0.3) valueColor = '#C17B6B'
-        else if (progress < 0.5) valueColor = '#D4A574'
-
-        const ctx = renderer.ctx
-        const labelColor = '#5A6B7A'
-
-        const labelMap = {
-            health: '健康',
-            energy: '精力',
-            mood: '心情',
-            reputation: '名誉'
-        }
-        const label = labelMap[statType] || statType
-
-        if (isRight) {
-            iconManager.draw(ctx, statType, x - 75, y, { size: 22 })
-            renderer.drawText(label, x - 45, y - 6, labelColor, 12, 'left')
-            renderer.drawText(`${value}/${max}`, x - 45, y + 10, valueColor, 13, 'left')
-        } else {
-            iconManager.draw(ctx, statType, x + 12, y, { size: 22 })
-            renderer.drawText(label, x + 38, y - 1, labelColor, 12, 'left')
-            renderer.drawText(`${value}/${max}`, x + 38, y + 14, valueColor, 13, 'left')
-        }
-    }
-
-    renderCenterButton(renderer, x, y, size) {
-        const ctx = renderer.ctx
-        const radius = size / 2
-
-        ctx.beginPath()
-        ctx.arc(x, y + 3, radius, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(139, 115, 85, 0.15)'
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.fillStyle = '#FFE080'
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.strokeStyle = '#2D3436'
-        ctx.lineWidth = 1.5
-        ctx.stroke()
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius - 5, 0, Math.PI * 2)
-        ctx.strokeStyle = 'rgba(212, 165, 116, 0.4)'
-        ctx.lineWidth = 1
-        ctx.stroke()
-
-        iconManager.draw(ctx, 'map', x, y, { size: 32 })
-
-        const ui = this.game.uiManager
-        ui.addButton(x - radius, y - radius, size, size, '', () => {
-            this.game.sceneManager.switchTo('map')
-        }, { bgColor: 'transparent' })
-    }
-
-    roundRectPath(ctx, x, y, w, h, r) {
-        ctx.beginPath()
-        ctx.moveTo(x + r, y)
-        ctx.lineTo(x + w - r, y)
-        ctx.arcTo(x + w, y, x + w, y + r, r)
-        ctx.lineTo(x + w, y + h - r)
-        ctx.arcTo(x + w, y + h, x + w - r, y + h, r)
-        ctx.lineTo(x + r, y + h)
-        ctx.arcTo(x, y + h, x, y + h - r, r)
-        ctx.lineTo(x, y + r)
-        ctx.arcTo(x, y, x + r, y, r)
-        ctx.closePath()
     }
     
     showBuyModal(item, priceData) {

@@ -4,6 +4,7 @@ class ImageManager {
   constructor() {
     this.imageCache = new Map()
     this._db = null
+    this._loadIdCounter = 0
   }
 
   get db() {
@@ -12,10 +13,6 @@ class ImageManager {
         console.error('云开发未初始化，请先调用 wx.cloud.init()')
         return null
       }
-      wx.cloud.init({
-        env: CLOUD_ENV_ID,
-        traceUser: true
-      })
       this._db = wx.cloud.database({
         env: CLOUD_ENV_ID
       })
@@ -104,88 +101,114 @@ class ImageManager {
     }
   }
 
-  async loadImageFromCloud(name) {
+  async loadImageFromCloud(name, timeout = 10000) {
+    const loadId = ++this._loadIdCounter
+    const startTime = Date.now()
+    const log = (...args) => console.log(`[ImageManager #${loadId}]`, ...args)
+    const warn = (...args) => console.warn(`[ImageManager #${loadId}]`, ...args)
+    const error = (...args) => console.error(`[ImageManager #${loadId}]`, ...args)
+
     try {
-      console.log(`[ImageManager] 开始加载云端图片: ${name}`)
+      log(`开始加载云端图片: ${name}`)
 
       const imageData = await this.getImage(name)
       if (!imageData) {
-        console.warn(`[ImageManager] 云存储中未找到图片: ${name}`)
+        warn(`云存储中未找到图片: ${name}`)
         return null
       }
 
       if (!wx.cloud) {
-        console.error('[ImageManager] 云开发未初始化')
+        error('云开发未初始化')
         return null
       }
 
       let fileID = imageData.fileID
       if (!fileID && imageData.cloudPath) {
         fileID = imageData.cloudPath
-        console.log(`[ImageManager] fileID不存在，使用cloudPath: ${fileID}`)
+        log(`fileID不存在，使用cloudPath: ${fileID}`)
       }
 
+      log(`最终使用的fileID: ${fileID}`)
+
       if (!fileID) {
-        console.error(`[ImageManager] 图片记录缺少fileID和cloudPath: ${name}`)
+        error(`图片记录缺少fileID和cloudPath: ${name}`)
         return null
       }
 
       let tempURL = null
 
-      try {
-        console.log(`[ImageManager] 通过客户端API获取临时URL: ${fileID}`)
-        const clientRes = await wx.cloud.getTempFileURL({
-          fileList: [fileID]
-        })
-        if (clientRes.fileList && clientRes.fileList[0] && clientRes.fileList[0].tempFileURL) {
-          tempURL = clientRes.fileList[0].tempFileURL
-          console.log(`[ImageManager] 客户端获取临时URL成功: ${tempURL}`)
-        }
-      } catch (clientErr) {
-        console.warn(`[ImageManager] 客户端获取临时URL失败，尝试云函数:`, clientErr)
-      }
+      const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve(null), timeout)
+      })
 
-      if (!tempURL) {
+      const fetchTempURL = async () => {
         try {
-          console.log(`[ImageManager] 通过云函数获取临时URL: ${fileID}`)
+          log(`通过客户端API获取临时URL: ${fileID}`)
+          const clientRes = await wx.cloud.getTempFileURL({
+            fileList: [fileID]
+          })
+          log(`客户端API响应:`, JSON.stringify(clientRes))
+          if (clientRes.fileList && clientRes.fileList[0] && clientRes.fileList[0].tempFileURL) {
+            return clientRes.fileList[0].tempFileURL
+          }
+          warn(`客户端API返回无效tempFileURL:`, JSON.stringify(clientRes.fileList && clientRes.fileList[0]))
+        } catch (clientErr) {
+          warn(`客户端获取临时URL异常，尝试云函数:`, clientErr)
+        }
+
+        try {
+          log(`通过云函数获取临时URL: ${fileID}`)
           const res = await wx.cloud.callFunction({
             name: 'getTempFileURL',
             data: {
               fileList: [fileID]
             }
           })
-
+          log(`云函数响应:`, JSON.stringify(res))
           if (res.result && res.result.fileList && res.result.fileList[0] && res.result.fileList[0].tempFileURL) {
-            tempURL = res.result.fileList[0].tempFileURL
-            console.log(`[ImageManager] 云函数获取临时URL成功: ${tempURL}`)
+            return res.result.fileList[0].tempFileURL
           }
+          warn(`云函数返回无效tempFileURL:`, JSON.stringify(res.result))
         } catch (funcErr) {
-          console.warn(`[ImageManager] 云函数获取临时URL失败:`, funcErr)
+          warn(`云函数获取临时URL异常:`, funcErr)
         }
-      }
 
-      if (!tempURL) {
-        console.error(`[ImageManager] 所有方式获取临时链接均失败`)
         return null
       }
 
-      return new Promise((resolve, reject) => {
+      tempURL = await Promise.race([fetchTempURL(), timeoutPromise])
+
+      if (!tempURL) {
+        error(`获取临时链接失败或超时 (已耗时${Date.now() - startTime}ms)`)
+        return null
+      }
+
+      log(`获取临时URL成功 (已耗时${Date.now() - startTime}ms): ${tempURL}`)
+
+      return await new Promise((resolve) => {
         const img = wx.createImage()
+        const imgTimeout = setTimeout(() => {
+          warn(`图片加载超时: ${name} (已耗时${Date.now() - startTime}ms)`)
+          resolve(null)
+        }, timeout)
+
         img.onload = () => {
-          console.log(`[ImageManager] 图片加载成功: ${name}`)
+          clearTimeout(imgTimeout)
+          log(`图片加载成功: ${name} (总耗时${Date.now() - startTime}ms)`)
           resolve({
             image: img,
             data: imageData
           })
         }
         img.onerror = (err) => {
-          console.error(`[ImageManager] 图片加载失败: ${name}`, err)
-          reject(err)
+          clearTimeout(imgTimeout)
+          error(`图片加载失败: ${name} (已耗时${Date.now() - startTime}ms)`, err)
+          resolve(null)
         }
         img.src = tempURL
       })
     } catch (e) {
-      console.error('[ImageManager] 从云端加载图片失败:', e)
+      error('从云端加载图片失败:', e)
       return null
     }
   }

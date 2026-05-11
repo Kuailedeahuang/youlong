@@ -134,9 +134,9 @@ export default class EndingSystem {
         
         // 计算仓库商品价值
         const warehouse = state.warehouse || {}
-        for (const [itemId, quantity] of Object.entries(warehouse)) {
-            // 获取当前市场价格
+        for (const [itemId, itemData] of Object.entries(warehouse)) {
             const price = this.getItemCurrentPrice(parseInt(itemId))
+            const quantity = itemData && itemData.quantity ? itemData.quantity : 0
             assets += price * quantity
         }
         
@@ -198,25 +198,5 @@ export default class EndingSystem {
             return true
         }
         return false
-    }
-    
-    // 获取结局统计
-    getEndingStats() {
-        const endings = wx.getStorageSync('game_endings') || {}
-        return endings
-    }
-    
-    // 记录结局
-    recordEnding(endingId) {
-        const endings = this.getEndingStats()
-        if (!endings[endingId]) {
-            endings[endingId] = {
-                count: 0,
-                firstTime: new Date().toISOString()
-            }
-        }
-        endings[endingId].count++
-        endings[endingId].lastTime = new Date().toISOString()
-        wx.setStorageSync('game_endings', endings)
     }
 }

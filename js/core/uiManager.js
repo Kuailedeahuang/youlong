@@ -154,15 +154,43 @@ export default class UIManager {
     }
     
     render(renderer) {
-        for (const btn of this.pendingButtons) {
+        this.commitButtons()
+
+        for (const btn of this.buttons) {
             renderer.drawButton(btn.x, btn.y, btn.w, btn.h, btn.text, btn.bgColor, btn.textColor, btn.fontSize)
         }
         
         for (const modal of this.modals) {
             this.renderModal(renderer, modal)
         }
-        
-        this.commitButtons()
+    }
+    
+    wrapText(ctx, text, maxWidth) {
+        const lines = []
+        const paragraphs = text.split('\n')
+        for (const paragraph of paragraphs) {
+            if (paragraph === '') {
+                lines.push({ text: '', type: 'empty' })
+                continue
+            }
+            const isHeading = /^【.+】$/.test(paragraph)
+            const type = isHeading ? 'heading' : 'body'
+            let currentLine = ''
+            for (let i = 0; i < paragraph.length; i++) {
+                const testLine = currentLine + paragraph[i]
+                const metrics = ctx.measureText(testLine)
+                if (metrics.width > maxWidth && currentLine !== '') {
+                    lines.push({ text: currentLine, type })
+                    currentLine = paragraph[i]
+                } else {
+                    currentLine = testLine
+                }
+            }
+            if (currentLine) {
+                lines.push({ text: currentLine, type })
+            }
+        }
+        return lines
     }
     
     renderModal(renderer, modal) {
@@ -170,7 +198,7 @@ export default class UIManager {
         const w = renderer.width
         const h = renderer.height
         
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
+        ctx.fillStyle = 'rgba(180, 195, 210, 0.45)'
         ctx.fillRect(0, 0, w, h)
         
         const modalW = w * 0.85
@@ -178,152 +206,257 @@ export default class UIManager {
         const modalX = (w - modalW) / 2
         const modalY = (h - modalH) / 2
         
-        if (modal.backgroundImageLoaded && modal.backgroundImage) {
+        const radius = modal.isNewspaper ? 16 : Math.max(modalH * 0.15, 15)
+        
+        ctx.save()
+        ctx.fillStyle = modal.isNewspaper ? '#FFF8F0' : '#FFF5E6'
+        ctx.strokeStyle = '#2D2D2D'
+        ctx.lineWidth = 2
+        
+        this.drawRoundRect(ctx, modalX, modalY, modalW, modalH, radius)
+        ctx.fill()
+        ctx.stroke()
+        
+        if (modal.isNewspaper && modal.backgroundImageLoaded && modal.backgroundImage) {
             ctx.save()
-            this.drawRoundRect(ctx, modalX, modalY, modalW, modalH, 12)
+            this.drawRoundRect(ctx, modalX, modalY, modalW, modalH, radius)
             ctx.clip()
-            
+            ctx.globalAlpha = 0.15
             const img = modal.backgroundImage
             const imgRatio = img.width / img.height
             const modalRatio = modalW / modalH
-            
             let drawW, drawH, drawX, drawY
-            
             if (imgRatio > modalRatio) {
                 drawH = modalH
-                drawW = drawH * imgRatio
+                drawW = modalH * imgRatio
                 drawX = modalX - (drawW - modalW) / 2
                 drawY = modalY
             } else {
                 drawW = modalW
-                drawH = drawW / imgRatio
+                drawH = modalW / imgRatio
                 drawX = modalX
                 drawY = modalY - (drawH - modalH) / 2
             }
-            
-            const scale = Math.max(modalW / drawW, modalH / drawH)
-            if (scale > 1) {
-                drawW *= scale
-                drawH *= scale
-                drawX = modalX - (drawW - modalW) / 2
-                drawY = modalY - (drawH - modalH) / 2
-            }
-            
-            try {
-                ctx.drawImage(img, drawX, drawY, drawW, drawH)
-            } catch (e) {
-                console.warn('绘制弹窗背景图失败:', e)
-            }
+            ctx.drawImage(img, drawX, drawY, drawW, drawH)
             ctx.restore()
-            
-            if (!modal.isNewspaper) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'
-                this.drawRoundRect(ctx, modalX, modalY, modalW, modalH, 12)
-                ctx.fill()
-            }
-        } else {
-            ctx.fillStyle = '#1a1a2e'
-            this.drawRoundRect(ctx, modalX, modalY, modalW, modalH, 12)
-            ctx.fill()
         }
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
-        ctx.lineWidth = 1
+        
+        ctx.shadowColor = 'rgba(93, 64, 55, 0.15)'
+        ctx.shadowBlur = 12
+        ctx.shadowOffsetY = 4
+        ctx.fill()
+        ctx.restore()
+        
+        ctx.strokeStyle = '#2D2D2D'
+        ctx.lineWidth = 1.5
+        this.drawRoundRect(ctx, modalX, modalY, modalW, modalH, radius)
         ctx.stroke()
         
-        const titleColor = modal.isNewspaper ? '#1a1a2e' : '#f39c12'
-        const contentColor = modal.isNewspaper ? '#2d3748' : '#bdc3c7'
-        const titleY = modal.isNewspaper ? modalY + 90 : modalY + 25
-        const contentStartY = modal.isNewspaper ? modalY + 160 : modalY + 55
+        const titleColor = '#5D4037'
+        const contentColor = '#4A5568'
+        const titleY = modal.isNewspaper ? modalY + 35 : modalY + 30
+        const contentStartY = modal.isNewspaper ? modalY + 70 : modalY + 65
         
         if (modal.isNewspaper) {
             renderer.drawText(modal.title, modalX + modalW / 2, titleY, titleColor, 18, 'center')
+            
+            const decorLineY = titleY + 14
+            const decorLineW = modalW * 0.5
+            const decorLineX = modalX + (modalW - decorLineW) / 2
+            ctx.strokeStyle = 'rgba(93, 64, 55, 0.3)'
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(decorLineX, decorLineY)
+            ctx.lineTo(decorLineX + decorLineW, decorLineY)
+            ctx.stroke()
         } else {
-            renderer.drawText(modal.title, modalX + 15, titleY, titleColor, 16, 'left')
+            ctx.font = 'bold 16px sans-serif'
+            ctx.fillStyle = titleColor
+            ctx.textAlign = 'left'
+            ctx.textBaseline = 'middle'
+            ctx.fillText(modal.title, modalX + 20, titleY)
         }
         
-        const lines = modal.content.split('\n')
+        const contentFontSize = modal.isNewspaper ? 14 : 13
+        const contentPadding = modal.isNewspaper ? 30 : 20
+        const maxTextWidth = modalW - contentPadding * 2
+        ctx.font = `${contentFontSize}px sans-serif`
+        const wrappedLines = this.wrapText(ctx, modal.content, maxTextWidth)
+        
+        const maxContentY = modalY + modalH - 60
         let lineY = contentStartY
-        for (const line of lines) {
+        let prevType = null
+        for (const lineObj of wrappedLines) {
+            if (lineY > maxContentY) break
+            if (lineObj.type === 'empty') {
+                if (prevType === 'body') {
+                    lineY += 6
+                }
+                lineY += 8
+                prevType = 'empty'
+                continue
+            }
+            if (lineObj.type === 'heading' && prevType && prevType !== 'empty') {
+                lineY += 6
+            }
             if (modal.isNewspaper) {
-                renderer.drawText(line, modalX + modalW / 2, lineY, contentColor, 14, 'center')
+                if (lineObj.type === 'heading') {
+                    ctx.font = `bold ${contentFontSize}px sans-serif`
+                    renderer.drawText(lineObj.text, modalX + contentPadding, lineY, '#5D4037', contentFontSize, 'left')
+                    ctx.font = `${contentFontSize}px sans-serif`
+                } else {
+                    const hotMatch = lineObj.text.match(/^(.+?)([+-]\d+%)$/)
+                    if (hotMatch) {
+                        renderer.drawText(hotMatch[1], modalX + contentPadding, lineY, contentColor, contentFontSize, 'left')
+                        ctx.font = `${contentFontSize}px sans-serif`
+                        const labelWidth = ctx.measureText(hotMatch[1]).width
+                        const changeColor = hotMatch[2].startsWith('+') ? '#C0392B' : '#2980B9'
+                        renderer.drawText(hotMatch[2], modalX + contentPadding + labelWidth, lineY, changeColor, contentFontSize, 'left')
+                    } else {
+                        renderer.drawText(lineObj.text, modalX + contentPadding, lineY, contentColor, contentFontSize, 'left')
+                    }
+                }
             } else {
-                renderer.drawText(line, modalX + 15, lineY, contentColor, 12, 'left')
+                renderer.drawText(lineObj.text, modalX + contentPadding, lineY, contentColor, contentFontSize, 'left')
             }
             lineY += 22
+            prevType = lineObj.type
         }
         
         if (modal.type === 'confirm') {
-            const btnY = modalY + modalH - 45
+            const btnY = modalY + modalH - 55
+            const btnH = 38
+            const btnRadius = btnH * 0.2
             
             if (modal.singleButton) {
                 const btnW = 100
-                modal.confirmBtn = { x: modalX + (modalW - btnW) / 2, y: btnY, w: btnW, h: 32 }
-                renderer.drawButton(modal.confirmBtn.x, modal.confirmBtn.y, modal.confirmBtn.w, modal.confirmBtn.h, modal.confirmText || '确定', '#f39c12')
+                modal.confirmBtn = { x: modalX + (modalW - btnW) / 2, y: btnY, w: btnW, h: btnH }
+                this.drawGhibliButton(ctx, modal.confirmBtn.x, modal.confirmBtn.y, modal.confirmBtn.w, modal.confirmBtn.h, modal.confirmText || '确定', '#FFE080', '#5D4037', btnRadius)
             } else {
-                const btnW = (modalW - 30) / 2
+                const btnW = (modalW - 40) / 2
                 
-                modal.cancelBtn = { x: modalX + 10, y: btnY, w: btnW, h: 40 }
-                modal.confirmBtn = { x: modalX + btnW + 20, y: btnY, w: btnW, h: 40 }
+                modal.cancelBtn = { x: modalX + 15, y: btnY, w: btnW, h: btnH }
+                modal.confirmBtn = { x: modalX + modalW - btnW - 15, y: btnY, w: btnW, h: btnH }
                 
-                renderer.drawButton(modal.cancelBtn.x, modal.cancelBtn.y, modal.cancelBtn.w, modal.cancelBtn.h, '取消', '#7f8c8d')
-                renderer.drawButton(modal.confirmBtn.x, modal.confirmBtn.y, modal.confirmBtn.w, modal.confirmBtn.h, modal.confirmText || '确定', '#f39c12')
+                this.drawGhibliButton(ctx, modal.cancelBtn.x, modal.cancelBtn.y, modal.cancelBtn.w, modal.cancelBtn.h, '取消', '#D4C4B0', '#5D4037', btnRadius)
+                this.drawGhibliButton(ctx, modal.confirmBtn.x, modal.confirmBtn.y, modal.confirmBtn.w, modal.confirmBtn.h, modal.confirmText || '确定', '#FFE080', '#5D4037', btnRadius)
             }
         } else if (modal.type === 'action') {
-            const btnY = modalY + modalH - 50
+            const btnY = modalY + modalH - 55
+            const btnH = 38
+            const btnRadius = btnH * 0.2
             const hasCancel = modal.showCancel !== false
             const actionCount = modal.actions.length + (hasCancel ? 1 : 0)
-            const btnW = (modalW - 20) / actionCount - 5
+            const btnW = (modalW - 30) / actionCount - 8
+            const startX = modalX + 15
             
             modal.actions.forEach((action, i) => {
-                action.x = modalX + 10 + i * (btnW + 5)
+                action.x = startX + i * (btnW + 8)
                 action.y = btnY
                 action.w = btnW
-                action.h = 40
-                renderer.drawButton(action.x, action.y, action.w, action.h, action.text, action.color || '#3498db')
+                action.h = btnH
+                this.drawGhibliButton(ctx, action.x, action.y, action.w, action.h, action.text, action.color || '#FFE080', '#5D4037', btnRadius)
             })
             
             if (hasCancel) {
                 modal.cancelBtn = {
-                    x: modalX + 10 + modal.actions.length * (btnW + 5),
+                    x: startX + modal.actions.length * (btnW + 8),
                     y: btnY,
                     w: btnW,
-                    h: 40
+                    h: btnH
                 }
-                renderer.drawButton(modal.cancelBtn.x, modal.cancelBtn.y, modal.cancelBtn.w, modal.cancelBtn.h, '取消', '#7f8c8d')
+                this.drawGhibliButton(ctx, modal.cancelBtn.x, modal.cancelBtn.y, modal.cancelBtn.w, modal.cancelBtn.h, '取消', '#D4C4B0', '#5D4037', btnRadius)
             }
         } else if (modal.type === 'trade') {
             const infoY = modalY + 55
-            renderer.drawText(`${modal.itemName}`, modalX + 15, infoY, '#ffffff', 14, 'left')
-            renderer.drawText(`单价: ${modal.price}`, modalX + modalW - 15, infoY, '#f39c12', 12, 'right')
+            ctx.font = 'bold 15px sans-serif'
+            ctx.fillStyle = '#5D4037'
+            ctx.textAlign = 'left'
+            ctx.textBaseline = 'middle'
+            ctx.fillText(modal.itemName, modalX + 20, infoY)
             
-            const qtyY = infoY + 35
-            renderer.drawText('数量:', modalX + 15, qtyY, '#7f8c8d', 12, 'left')
+            ctx.font = '14px sans-serif'
+            ctx.fillStyle = '#E6C966'
+            ctx.textAlign = 'right'
+            ctx.fillText(`单价: ${modal.price}`, modalX + modalW - 20, infoY)
             
-            const btnSize = 30
-            const qtyW = 60
-            const qtyX = modalX + modalW - 15 - qtyW - btnSize * 2
+            const qtyY = infoY + 40
+            ctx.font = '13px sans-serif'
+            ctx.fillStyle = '#4A5568'
+            ctx.textAlign = 'left'
+            ctx.fillText('数量:', modalX + 20, qtyY)
             
-            modal.minusBtn = { x: qtyX, y: qtyY - 15, w: btnSize, h: btnSize }
-            modal.plusBtn = { x: qtyX + btnSize + qtyW, y: qtyY - 15, w: btnSize, h: btnSize }
-            modal.qtyInput = { x: qtyX + btnSize, y: qtyY - 15, w: qtyW, h: btnSize }
+            const btnSize = 34
+            const qtyW = 70
+            const qtyX = modalX + modalW - 20 - qtyW - btnSize * 2
             
-            renderer.drawButton(modal.minusBtn.x, modal.minusBtn.y, modal.minusBtn.w, modal.minusBtn.h, '-', '#3498db')
-            renderer.drawButton(modal.plusBtn.x, modal.plusBtn.y, modal.plusBtn.w, modal.plusBtn.h, '+', '#3498db')
+            modal.minusBtn = { x: qtyX, y: qtyY - 17, w: btnSize, h: btnSize }
+            modal.plusBtn = { x: qtyX + btnSize + qtyW, y: qtyY - 17, w: btnSize, h: btnSize }
+            modal.qtyInput = { x: qtyX + btnSize, y: qtyY - 17, w: qtyW, h: btnSize }
             
-            renderer.drawRect(modal.qtyInput.x, modal.qtyInput.y, modal.qtyInput.w, modal.qtyInput.h, 'rgba(255,255,255,0.15)', 6)
-            renderer.drawText(`${modal.quantity}`, modal.qtyInput.x + modal.qtyInput.w / 2, qtyY, '#ffffff', 14, 'center')
+            this.drawGhibliButton(ctx, modal.minusBtn.x, modal.minusBtn.y, modal.minusBtn.w, modal.minusBtn.h, '-', '#FFE080', '#5D4037', btnSize * 0.2)
+            this.drawGhibliButton(ctx, modal.plusBtn.x, modal.plusBtn.y, modal.plusBtn.w, modal.plusBtn.h, '+', '#FFE080', '#5D4037', btnSize * 0.2)
             
-            const totalY = qtyY + 35
-            renderer.drawRect(modalX + 10, totalY - 12, modalW - 20, 30, 'rgba(255,255,255,0.05)', 6)
-            renderer.drawText('总价:', modalX + 20, totalY, '#7f8c8d', 12, 'left')
-            renderer.drawText(`${modal.total}`, modalX + modalW - 20, totalY, '#f39c12', 14, 'right')
+            ctx.fillStyle = 'rgba(255, 245, 230, 0.9)'
+            ctx.strokeStyle = '#2D2D2D'
+            ctx.lineWidth = 1.5
+            this.drawRoundRect(ctx, modal.qtyInput.x, modal.qtyInput.y, modal.qtyInput.w, modal.qtyInput.h, 8)
+            ctx.fill()
+            ctx.stroke()
             
-            const btnY = modalY + modalH - 50
-            modal.closeBtn = { x: modalX + 10, y: btnY, w: 40, h: 40 }
-            modal.confirmBtn = { x: modalX + modalW - 50, y: btnY, w: 40, h: 40 }
+            ctx.font = 'bold 14px sans-serif'
+            ctx.fillStyle = '#5D4037'
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'middle'
+            ctx.fillText(`${modal.quantity}`, modal.qtyInput.x + modal.qtyInput.w / 2, modal.qtyInput.y + modal.qtyInput.h / 2)
             
-            renderer.drawButton(modal.closeBtn.x, modal.closeBtn.y, modal.closeBtn.w, modal.closeBtn.h, 'X', '#7f8c8d')
-            renderer.drawButton(modal.confirmBtn.x, modal.confirmBtn.y, modal.confirmBtn.w, modal.confirmBtn.h, 'OK', modal.tradeType === 'buy' ? '#27ae60' : '#f39c12')
+            const totalY = qtyY + 40
+            ctx.fillStyle = 'rgba(255, 224, 128, 0.3)'
+            ctx.strokeStyle = '#2D2D2D'
+            ctx.lineWidth = 1
+            this.drawRoundRect(ctx, modalX + 15, totalY - 15, modalW - 30, 34, 8)
+            ctx.fill()
+            ctx.stroke()
+            
+            ctx.font = 'bold 13px sans-serif'
+            ctx.fillStyle = '#4A5568'
+            ctx.textAlign = 'left'
+            ctx.fillText('总价:', modalX + 25, totalY)
+            
+            ctx.font = 'bold 16px sans-serif'
+            ctx.fillStyle = '#5D4037'
+            ctx.textAlign = 'right'
+            ctx.fillText(`${modal.total}`, modalX + modalW - 25, totalY)
+            
+            const btnY = modalY + modalH - 55
+            const smallBtnW = 50
+            const smallBtnH = 38
+            const smallBtnRadius = smallBtnH * 0.2
+            
+            modal.closeBtn = { x: modalX + 15, y: btnY, w: smallBtnW, h: smallBtnH }
+            modal.confirmBtn = { x: modalX + modalW - smallBtnW - 15, y: btnY, w: smallBtnW, h: smallBtnH }
+            
+            this.drawGhibliButton(ctx, modal.closeBtn.x, modal.closeBtn.y, modal.closeBtn.w, modal.closeBtn.h, '✕', '#D4C4B0', '#5D4037', smallBtnRadius)
+            this.drawGhibliButton(ctx, modal.confirmBtn.x, modal.confirmBtn.y, modal.confirmBtn.w, modal.confirmBtn.h, '✓', modal.tradeType === 'buy' ? '#81C784' : '#FFE080', '#5D4037', smallBtnRadius)
         }
+    }
+    
+    drawGhibliButton(ctx, x, y, w, h, text, bgColor, textColor, radius) {
+        ctx.save()
+        ctx.fillStyle = bgColor
+        ctx.strokeStyle = '#2D2D2D'
+        ctx.lineWidth = 1.5
+        
+        this.drawRoundRect(ctx, x, y, w, h, radius)
+        ctx.fill()
+        ctx.stroke()
+        
+        ctx.fillStyle = textColor
+        ctx.font = `bold 13px sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(text, x + w / 2, y + h / 2)
+        
+        ctx.restore()
     }
 }

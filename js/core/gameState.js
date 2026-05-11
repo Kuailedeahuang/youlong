@@ -1,5 +1,5 @@
-import { CLOUD_ENV_ID } from '../config.js'
 import { GAME_CONFIG } from '../data/gameConfig.js'
+import ItemData from '../data/items.js'
 
 const STORAGE_KEY = 'bigcitylife_save'
 const USER_INFO_KEY = 'user_info'
@@ -100,25 +100,26 @@ export default class GameState {
             housingType: 'suburban',
 
             bankruptcyCount: 0,
-            currentScene: 'home',
+            currentScene: 'login',
 
             todayEvents: [],
             newspaperShown: false,
             yesterdayExpense: 0,
             marketEnteredToday: false,
-            _id: null
+            _id: null,
+
+            itemPrices: {},
+            yesterdayPrices: {},
+            todayNewspaper: null,
+            newspaperEvents: [],
+            pendingEvents: []
         }
     }
 
     async load() {
+        let cloudLoaded = false
         try {
             if (wx.cloud) {
-                await wx.cloud.init({
-                    env: CLOUD_ENV_ID,
-                    traceUser: true
-                })
-                console.log('云开发初始化成功')
-
                 const db = wx.cloud.database({})
 
                 try {
@@ -130,6 +131,7 @@ export default class GameState {
                         const cloudData = res.data[0]
                         this.data = { ...this.getDefaultState(), ...cloudData }
                         this.isCloudReady = true
+                        cloudLoaded = true
                         console.log('从云数据库加载成功（用户独立）')
                     } else {
                         console.log('云数据库中无该用户记录，使用默认数据')
@@ -139,41 +141,34 @@ export default class GameState {
                     this.isCloudReady = false
                 }
 
-                // 在 gameprogress 加载之后，再加载用户解锁房屋（覆盖 gameprogress 中的数据）
                 await this.loadUserUnlockedHouses()
             }
         } catch (e) {
-            console.warn('云开发初始化失败，使用本地存储', e)
+            console.warn('云开发加载失败，使用本地存储', e)
         }
 
-        try {
-            const saved = wx.getStorageSync(STORAGE_KEY)
-            if (saved) {
-                this.data = { ...this.getDefaultState(), ...saved }
-                console.log('从本地存储加载成功')
-                
-                // 本地存储加载后，也尝试从云端加载解锁房屋
-                if (wx.cloud) {
-                    await this.loadUserUnlockedHouses()
+        if (!cloudLoaded) {
+            try {
+                const saved = wx.getStorageSync(STORAGE_KEY)
+                if (saved) {
+                    this.data = { ...this.getDefaultState(), ...saved }
+                    console.log('从本地存储加载成功')
+                    
+                    // 本地存储加载后，也尝试从云端加载解锁房屋
+                    if (wx.cloud) {
+                        await this.loadUserUnlockedHouses()
+                    }
                 }
+            } catch (e) {
+                console.warn('本地存储加载失败:', e)
+                this.data = this.getDefaultState()
             }
-        } catch (e) {
-            console.warn('本地存储加载失败:', e)
-            this.data = this.getDefaultState()
         }
     }
 
     async save() {
         try {
             if (wx.cloud) {
-                if (!wx.cloud.database) {
-                    await wx.cloud.init({
-                        env: CLOUD_ENV_ID,
-                        traceUser: true
-                    })
-                    console.log('云开发初始化成功')
-                }
-
                 const db = wx.cloud.database({})
                 const openid = this.userInfo?.openid
 
@@ -467,12 +462,168 @@ export default class GameState {
         return this.data.todayEvents
     }
 
+    calculateNaturalFluctuation(item) {
+        return item.naturalFluctuation.min + 
+            Math.random() * (item.naturalFluctuation.max - item.naturalFluctuation.min)
+    }
+
+    clampPrice(price, basePrice) {
+        const minPrice = Math.round(basePrice * 0.1)
+        const maxPrice = Math.round(basePrice * 3)
+        return Math.max(minPrice, Math.min(maxPrice, price))
+    }
+
+    updateItemPrices() {
+        this.data.yesterdayPrices = { ...this.data.itemPrices }
+        this.data.itemPrices = {}
+
+        const affectedItemIds = new Set()
+        this.data.newspaperEvents.forEach(event => {
+            event.itemIds.forEach(id => affectedItemIds.add(id))
+        })
+
+        ItemData.forEach(item => {
+            const fluctuation = this.calculateNaturalFluctuation(item)
+            let newsEffect = 0
+
+            this.data.newspaperEvents.forEach(event => {
+                if (event.itemIds.includes(item.id)) {
+                    newsEffect += event.fluctuation
+                }
+            })
+
+            let unreportedEffect = 0
+            if (!affectedItemIds.has(item.id)) {
+                unreportedEffect = 0.03 + Math.random() * 0.05
+                if (Math.random() < 0.5) unreportedEffect = -unreportedEffect
+            }
+
+            let newPrice = Math.round(item.basePrice * (1 + fluctuation) * (1 + newsEffect) * (1 + unreportedEffect))
+            newPrice = this.clampPrice(newPrice, item.basePrice)
+
+            const previousPrice = this.data.yesterdayPrices[item.id]?.current || item.basePrice
+            const priceChange = Math.round(((newPrice - previousPrice) / previousPrice) * 100)
+
+            this.data.itemPrices[item.id] = {
+                current: newPrice,
+                basePrice: item.basePrice,
+                naturalFluctuation: Math.round(fluctuation * 100),
+                newsFluctuation: Math.round(newsEffect * 100),
+                totalChange: priceChange
+            }
+        })
+
+        console.log('[价格更新] 生效事件:', this.data.newspaperEvents.length, '个, 未报道商品额外波动已应用')
+    }
+
+    generateNewspaperEvents() {
+        const newsTemplates = [
+            { title: '禽流感爆发', itemIds: [6, 8], fluctuation: -0.70, duration: 3, affectedItems: ['鸡肉', '鸡蛋'] },
+            { title: '猪瘟疫情', itemIds: [4], fluctuation: -0.60, duration: 4, affectedItems: ['猪肉'] },
+            { title: '全国旱灾', itemIds: [1, 2, 3], fluctuation: 0.50, duration: 5, affectedItems: ['大米', '面粉', '玉米'] },
+            { title: '寒潮来袭', itemIds: [9, 10], fluctuation: -0.40, duration: 3, affectedItems: ['蔬菜', '水果'] },
+            { title: '全国基建热潮', itemIds: [11, 12, 13], fluctuation: 0.60, duration: 6, affectedItems: ['钢材', '水泥', '砖块'] },
+            { title: '全球金融动荡', itemIds: [16, 18], fluctuation: 1.00, duration: 7, affectedItems: ['黄金', '珠宝原石'] },
+            { title: '国际能源危机', itemIds: [20, 21, 22], fluctuation: 0.80, duration: 5, affectedItems: ['煤炭', '汽油', '天然气'] },
+            { title: '环保严查', itemIds: [23, 26], fluctuation: -0.50, duration: 4, affectedItems: ['化工原料', '塑料制品'] },
+            { title: '进口限制', itemIds: [28], fluctuation: 0.90, duration: 3, affectedItems: ['进口零食'] },
+            { title: '收藏品热潮', itemIds: [19], fluctuation: 0.70, duration: 6, affectedItems: ['收藏品'] },
+            { title: '农业补贴', itemIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], fluctuation: 0.30, duration: 2, affectedItems: ['农副产品'] },
+            { title: '建材降价', itemIds: [11, 12, 13, 14, 15], fluctuation: -0.30, duration: 3, affectedItems: ['钢材', '水泥', '砖块', '玻璃', '铝材'] },
+            { title: '全球游戏浪潮', itemIds: [29, 30, 31, 32, 33], fluctuation: 1.20, duration: 6, affectedItems: ['数码产品'] },
+            { title: '酷噶手机爆炸事故', itemIds: [29], fluctuation: -0.80, duration: 4, affectedItems: ['酷噶手机'] },
+            { title: '鸭梨平板漏洞曝光', itemIds: [30], fluctuation: -0.70, duration: 3, affectedItems: ['鸭梨平板'] },
+            { title: '数码新品发布会', itemIds: [31, 33], fluctuation: 0.90, duration: 5, affectedItems: ['菠萝笔记本', '闪电耳机'] },
+            { title: '城市限行政策放宽', itemIds: [34, 35, 37, 38], fluctuation: 0.80, duration: 4, affectedItems: ['出行工具'] },
+            { title: '二手汽车补贴政策', itemIds: [36], fluctuation: 1.00, duration: 7, affectedItems: ['二手汽车'] },
+            { title: '电动出行安全检查', itemIds: [34, 37, 38], fluctuation: -0.70, duration: 3, affectedItems: ['电动自行车', '折叠电动车', '电动滑板车'] },
+            { title: '燃油价格暴涨', itemIds: [35], fluctuation: -0.60, duration: 5, affectedItems: ['轻便摩托车'] }
+        ]
+
+        const numEvents = 2 + Math.floor(Math.random() * 2)
+        const shuffled = newsTemplates.sort(() => Math.random() - 0.5)
+        const selectedEvents = shuffled.slice(0, numEvents)
+
+        this.data.pendingEvents = selectedEvents.map(event => ({
+            title: event.title,
+            itemIds: event.itemIds,
+            fluctuation: event.fluctuation,
+            duration: event.duration,
+            affectedItems: event.affectedItems,
+            remainingDays: event.duration
+        }))
+
+        this.data.todayNewspaper = []
+
+        this.data.newspaperEvents.forEach(event => {
+            this.data.todayNewspaper.push({
+                title: event.title,
+                content: this.generateNewspaperContent(event, true),
+                type: 'active',
+                remainingDays: event.remainingDays
+            })
+        })
+
+        this.data.pendingEvents.forEach(event => {
+            this.data.todayNewspaper.push({
+                title: event.title,
+                content: this.generateNewspaperContent(event, false),
+                type: 'pending'
+            })
+        })
+
+        console.log('[报纸生成] 今日行情:', this.data.newspaperEvents.length, '个, 明日预报:', this.data.pendingEvents.length, '个')
+    }
+
+    generateNewspaperContent(event, isActive) {
+        const fluctuationPercent = Math.abs(Math.round(event.fluctuation * 100))
+        const direction = event.fluctuation > 0 ? '上涨' : '下跌'
+        const items = event.affectedItems.join('、')
+
+        if (isActive) {
+            const templates = [
+                `据报道，${items}受市场影响，价格已${direction}${fluctuationPercent}%，影响仍在持续。`,
+                `市场动态：${items}当前${direction}${fluctuationPercent}%，行情仍在发展中。`,
+                `最新消息：${items}价格正${direction}${fluctuationPercent}%，市场波动持续。`
+            ]
+            return templates[Math.floor(Math.random() * templates.length)]
+        } else {
+            const templates = [
+                `据报道，${items}受市场影响，价格预计${direction}${fluctuationPercent}%，请市民做好准备。`,
+                `专家预测，${items}将迎来${direction}行情，波动幅度约${fluctuationPercent}%，建议谨慎操作。`,
+                `市场分析：${items}近期走势${direction}，预计持续数天，投资者请关注。`,
+                `最新资讯显示，${items}价格将出现${direction}，幅度约${fluctuationPercent}%，请提前做好准备。`
+            ]
+            return templates[Math.floor(Math.random() * templates.length)]
+        }
+    }
+
+    decayNewspaperEvents() {
+        if (this.data.newspaperEvents && this.data.newspaperEvents.length > 0) {
+            this.data.newspaperEvents = this.data.newspaperEvents.filter(event => {
+                event.remainingDays--
+                return event.remainingDays > 0
+            })
+            console.log('[报纸衰减] 剩余有效事件:', this.data.newspaperEvents.length)
+        }
+    }
+
     nextDay() {
         this.data.day++
         this.data.energy = this.data.maxEnergy
         this.data.newspaperShown = false
         this.data.marketEnteredToday = false
         this.data.todayEvents = []
+
+        this.decayNewspaperEvents()
+
+        const pendingEvents = this.data.pendingEvents || []
+        this.data.newspaperEvents = [...this.data.newspaperEvents, ...pendingEvents]
+        this.data.pendingEvents = []
+
+        this.generateNewspaperEvents()
+
+        this.updateItemPrices()
 
         let baseExpense = GAME_CONFIG.daily.baseExpense
         const fluctuation = Math.floor(Math.random() * (GAME_CONFIG.daily.expenseFluctuation * 2 + 1)) - GAME_CONFIG.daily.expenseFluctuation
@@ -485,11 +636,12 @@ export default class GameState {
             this.addDelayedAnimation('decrease', dailyExpense, 'money', '日常 消费', '#f39c12')
         } else {
             const deficit = dailyExpense - this.data.money
+            const expenseAmount = this.data.money
             this.data.money = 0
             this.data.privateLoan += Math.ceil(deficit * 1.05)
             this.data.overdueDays++
             this.addEvent('因资金不足，自动借入私人借贷')
-            this.addDelayedAnimation('decrease', this.data.money, 'money', '金币', '#f39c12')
+            this.addDelayedAnimation('decrease', expenseAmount, 'money', '金币', '#f39c12')
             this.addDelayedAnimation('loan', Math.ceil(deficit * 1.05), 'privateLoan', '私人贷款', '#e74c3c')
         }
 
@@ -514,9 +666,9 @@ export default class GameState {
             }
         }
 
-        if (this.data.day % 6 === 0) {
-            this.data.bankDeposit = Math.floor(this.data.bankDeposit * 1.02)
-            this.data.bankLoan = Math.floor(this.data.bankLoan * 1.06)
+        if (this.data.day % GAME_CONFIG.bank.depositInterestDays === 0) {
+            this.data.bankDeposit = Math.floor(this.data.bankDeposit * (1 + GAME_CONFIG.bank.depositInterestRate))
+            this.data.bankLoan = Math.floor(this.data.bankLoan * (1 + GAME_CONFIG.bank.loanInterestRate))
         }
 
         if (this.data.privateLoan > 0) {
@@ -535,9 +687,5 @@ export default class GameState {
         }
 
         this.save()
-    }
-
-    getDeposit() {
-        return this.data.bankDeposit - (this.data.bankLoan + this.data.privateLoan)
     }
 }

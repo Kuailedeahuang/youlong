@@ -339,9 +339,11 @@ class InteractiveAreaManager {
         ctx.fill()
         
         // labelArea 边框
-        ctx.strokeStyle = style.labelBorderColor
-        ctx.lineWidth = 1
-        ctx.stroke()
+        if (style.labelBorderColor && style.labelBorderColor !== 'transparent') {
+            ctx.strokeStyle = style.labelBorderColor
+            ctx.lineWidth = 1
+            ctx.stroke()
+        }
         
         // labelArea 文字
         ctx.fillStyle = style.textColor

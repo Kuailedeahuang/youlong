@@ -56,7 +56,12 @@
   },
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "tuer"
+      }
+    ],
     "include": []
   },
   "isGameTourist": false
