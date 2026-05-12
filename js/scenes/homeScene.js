@@ -5,8 +5,9 @@ import animationManager from '../utils/animationManager.js'
 import { GAME_CONFIG, getJobByLevel, getNextJob } from '../data/gameConfig.js'
 import iconManager from '../components/IconManager.js'
 import InteractiveAreaManager from '../components/InteractiveAreaManager.js'
-import BackGameManager from '../managers/backgamemanger.js'
+import BackGameManager from '../managers/backGameManager.js'
 import SleepTransitionManager from '../utils/sleepTransitionManager.js'
+import AnimationHelper from '../utils/AnimationHelper.js'
 
 export default class HomeScene {
     constructor(game) {
@@ -18,8 +19,8 @@ export default class HomeScene {
         this.loadBackground()
         this.initPrices()
         this.initInteractiveAreas()
-        // 初始化游戏功能管理器
         this.backGameManager = new BackGameManager(game)
+        this.animationHelper = new AnimationHelper(game)
     }
 
     /**
@@ -214,51 +215,7 @@ export default class HomeScene {
 
     onEnter() {
         this.initPrices()
-
-        this.playDelayedAnimations()
-    }
-
-    playDelayedAnimations() {
-        const anims = this.game.gameState.getAndClearDelayedAnimations()
-        console.log('[动画] 播放延迟动画，数量:', anims.length)
-        if (anims.length === 0) return
-
-        const positions = this.getStatPositions()
-
-        anims.forEach((anim, index) => {
-            console.log('[动画] 准备播放:', anim.type, anim.statType, anim.value)
-            setTimeout(() => {
-                const pos = positions[anim.statType]
-                if (pos) {
-                    const color = anim.color || this.getDefaultColor(anim.statType)
-                    console.log('[动画] 开始播放:', anim.type, '位置:', pos.x, pos.y)
-                    if (anim.type === 'increase') {
-                        animationManager.addIncreaseAnimation(pos.x, pos.y, anim.value, anim.label, color)
-                    } else if (anim.type === 'decrease') {
-                        animationManager.addDecreaseAnimation(pos.x, pos.y, anim.value, anim.label, color)
-                    } else if (anim.type === 'loan') {
-                        animationManager.addLoanAnimation(pos.x, pos.y, anim.value, anim.label, color)
-                    }
-                } else {
-                    console.warn('[动画] 未找到位置:', anim.statType)
-                }
-            }, index * 200)
-        })
-    }
-
-    getDefaultColor(statType) {
-        // 吉卜力柔和配色
-        const colorMap = {
-            money: '#D4A574',      // 暖金色
-            health: '#7CB87C',     // 柔和绿
-            energy: '#7BA3C9',     // 柔和蓝
-            mood: '#D49BA3',       // 柔和粉
-            reputation: '#B8A3C9', // 柔和紫
-            privateLoan: '#C17B6B',// 柔和红棕
-            bankLoan: '#7BA3C9',   // 柔和蓝
-            bankDeposit: '#7CB87C' // 柔和绿
-        }
-        return colorMap[statType] || '#5D4037'
+        this.animationHelper.playDelayedAnimations()
     }
 
     handleTouchStart(x, y) {
@@ -479,26 +436,7 @@ export default class HomeScene {
     }
     
     enterMarket() {
-        const state = this.game.gameState.data
-        
-        if (!state.marketEnteredToday) {
-            if (state.energy < 2) {
-                this.game.uiManager.addModal({
-                    type: 'confirm',
-                    title: '精力不足',
-                    content: '今日首次进入市场需要消耗2点精力\n当前精力不足，无法进入市场',
-                    confirmText: '知道了',
-                    onConfirm: () => {}
-                })
-                return
-            }
-            
-            state.energy -= 2
-            state.marketEnteredToday = true
-            this.game.gameState.save()
-        }
-        
-        this.game.sceneManager.switchTo('market')
+        this.backGameManager.enterMarket()
     }
     
     endDay() {
@@ -534,138 +472,19 @@ export default class HomeScene {
     }
     
     enterHouseScene() {
-        console.log('[HomeScene] enterHouseScene 被调用')
         this.game.sceneManager.goToLocation('house')
     }
     
     showLoanModal() {
-        const state = this.game.gameState.data
-        
-        const actions = []
-        
-        actions.push({
-            text: '借贷',
-            callback: () => this.doPrivateLoan(),
-            color: '#e74c3c'
-        })
-        
-        if (state.privateLoan > 0) {
-            actions.push({
-                text: '还款',
-                callback: () => this.doPrivateRepay(),
-                color: '#27ae60'
-            })
-        }
-        
-        this.game.uiManager.addModal({
-            type: 'action',
-            title: '个人借贷',
-            content: `日利率: 2.5%\n逾期惩罚严厉\n\n当前欠款: ${state.privateLoan} 金币`,
-            actions: actions,
-            height: 180
-        })
+        this.backGameManager.showLoanModal()
     }
     
     doPrivateLoan() {
-        const state = this.game.gameState.data
-        this.game.uiManager.addModal({
-            type: 'trade',
-            title: '个人借贷',
-            content: '日利率: 2.5%\n逾期惩罚严厉',
-            itemName: '借贷金额',
-            price: 1,
-            quantity: 1000,
-            maxQuantity: 120000,
-            total: 1000,
-            tradeType: 'loan',
-            height: 240,
-            onConfirm: (qty) => {
-                state.privateLoan += qty
-                state.money += qty
-                this.game.gameState.save()
-                
-                this.game.gameState.addDelayedAnimation('loan', qty, 'privateLoan', '私人贷款', '#e74c3c')
-                this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
-                
-                this.game.sceneManager.goToLocation('home')
-            }
-        })
+        this.backGameManager.doPrivateLoan()
     }
     
     doPrivateRepay() {
-        const state = this.game.gameState.data
-        if (state.privateLoan <= 0) {
-            this.game.uiManager.addModal({
-                type: 'confirm',
-                title: '无需还款',
-                content: '当前没有私人借贷欠款',
-                confirmText: '知道了',
-                singleButton: true,
-                onConfirm: () => {}
-            })
-            return
-        }
-        
-        const maxRepay = Math.min(state.money, state.privateLoan)
-        if (maxRepay <= 0) {
-            this.game.uiManager.addModal({
-                type: 'confirm',
-                title: '金币不足',
-                content: '没有足够的金币还款',
-                confirmText: '知道了',
-                singleButton: true,
-                onConfirm: () => {}
-            })
-            return
-        }
-        
-        this.game.uiManager.addModal({
-            type: 'trade',
-            title: '还款',
-            content: `当前欠款: ${state.privateLoan} 金币`,
-            itemName: '还款金额',
-            price: 1,
-            quantity: maxRepay,
-            maxQuantity: maxRepay,
-            total: maxRepay,
-            tradeType: 'repay',
-            height: 240,
-            onConfirm: (qty) => {
-                if (state.money >= qty) {
-                    state.money -= qty
-                    state.privateLoan -= qty
-                    this.game.gameState.save()
-                    
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'privateLoan', '私人贷款', '#e74c3c')
-                    
-                    this.game.sceneManager.goToLocation('home')
-                }
-            }
-        })
-    }
-    
-    promote() {
-        const state = this.game.gameState.data
-        const nextJob = GAME_CONFIG.jobs[state.jobLevel]
-
-        if (!nextJob) return
-
-        state.jobLevel = nextJob.level
-        state.jobTitle = nextJob.title
-        state.daysWorked = 0
-        this.game.gameState.save()
-
-        this.game.uiManager.addModal({
-            type: 'confirm',
-            title: '升职成功！',
-            content: `恭喜您升职为 ${nextJob.title}！\n\n新工资：\n上班: ${nextJob.baseSalary}金币\n加班费: ${nextJob.overtimeSalary}金币`,
-            confirmText: '太棒了',
-            singleButton: true,
-            onConfirm: () => {
-                this.game.sceneManager.goToLocation('home')
-            }
-        })
+        this.backGameManager.doPrivateRepay()
     }
 
     showEventsModal(events) {

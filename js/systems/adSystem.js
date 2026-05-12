@@ -140,7 +140,7 @@ export default class AdSystem {
         console.log('[giveReward] 增加观看次数后:', state.adWatchedCount)
         this.game.gameState.save()
         
-        this.game.gameState.addDelayedAnimation('increase', this.rewardAmount, 'money', '金币', '#f39c12')
+        this.game.gameState.addDelayedAnimation('increase', this.rewardAmount, 'money')
         
         this.game.uiManager.addModal({
             type: 'confirm',

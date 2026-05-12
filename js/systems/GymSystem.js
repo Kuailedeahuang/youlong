@@ -62,12 +62,12 @@ export default class GymSystem {
 
         this.game.gameState.save()
 
-        this.game.gameState.addDelayedAnimation('decrease', config.energyCost, 'energy', '精力', '#3498db')
-        this.game.gameState.addDelayedAnimation('decrease', config.cost, 'money', '金币', '#f39c12')
-        this.game.gameState.addDelayedAnimation('increase', config.healthRecovery, 'health', '健康', '#27ae60')
+        this.game.gameState.addDelayedAnimation('decrease', config.energyCost, 'energy')
+        this.game.gameState.addDelayedAnimation('decrease', config.cost, 'money')
+        this.game.gameState.addDelayedAnimation('increase', config.healthRecovery, 'health')
         
         if (config.moodBonus) {
-            this.game.gameState.addDelayedAnimation('increase', config.moodBonus, 'mood', '心情', '#e91e63')
+            this.game.gameState.addDelayedAnimation('increase', config.moodBonus, 'mood')
         }
 
         if (onComplete) onComplete()

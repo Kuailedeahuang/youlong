@@ -1,4 +1,5 @@
 import animationManager from './animationManager.js'
+import { getStatColor } from '../data/StatConfig.js'
 
 export default class AnimationHelper {
     constructor(game) {
@@ -52,16 +53,6 @@ export default class AnimationHelper {
     }
 
     getDefaultColor(statType) {
-        const colorMap = {
-            money: '#D4A574',
-            health: '#7CB87C',
-            energy: '#7BA3C9',
-            mood: '#D49BA3',
-            reputation: '#B8A3C9',
-            privateLoan: '#C17B6B',
-            bankLoan: '#7BA3C9',
-            bankDeposit: '#7CB87C'
-        }
-        return colorMap[statType] || '#5D4037'
+        return getStatColor(statType)
     }
 }

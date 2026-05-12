@@ -1,16 +1,16 @@
 import iconManager from '../components/IconManager.js'
 
-var PI = Math.PI
-var TWO_PI = PI * 2
-var sin = Math.sin
-var cos = Math.cos
-var abs = Math.abs
-var pow = Math.pow
-var sqrt = Math.sqrt
-var random = Math.random
-var min = Math.min
-var max = Math.max
-var round = Math.round
+const PI = Math.PI
+const TWO_PI = PI * 2
+const sin = Math.sin
+const cos = Math.cos
+const abs = Math.abs
+const pow = Math.pow
+const sqrt = Math.sqrt
+const random = Math.random
+const min = Math.min
+const max = Math.max
+const round = Math.round
 
 function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v }
 
@@ -25,8 +25,8 @@ function easeInOutCubic(t) {
 }
 
 function easeOutBack(t) {
-    var c1 = 1.70158
-    var c3 = c1 + 1
+    const c1 = 1.70158
+    const c3 = c1 + 1
     return 1 + c3 * pow(t - 1, 3) + c1 * pow(t - 1, 2)
 }
 

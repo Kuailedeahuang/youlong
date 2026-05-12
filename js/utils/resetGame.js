@@ -1,5 +1,6 @@
 import { CLOUD_ENV_ID } from '../config.js'
 import { GAME_CONFIG } from '../data/gameConfig.js'
+import { createDefaultState } from '../data/DefaultState.js'
 
 export function resetGameProgress() {
   try {
@@ -125,43 +126,7 @@ export async function restartGame(gameInstance = null) {
     wx.clearStorageSync()
     
     // 创建新的默认状态
-    const defaultState = {
-      money: GAME_CONFIG.initial.money,
-      health: GAME_CONFIG.initial.health,
-      energy: GAME_CONFIG.initial.energy,
-      maxEnergy: GAME_CONFIG.initial.maxEnergy,
-      mood: GAME_CONFIG.initial.mood,
-      reputation: GAME_CONFIG.initial.reputation,
-      day: 1,
-      totalDays: GAME_CONFIG.initial.totalDays,
-      consecutiveGymDays: 0,
-      bankLoan: 0,
-      bankDeposit: 0,
-      privateLoan: 0,
-      overdueDays: 0,
-      warehouseCapacity: GAME_CONFIG.warehouse.initialCapacity,
-      warehouse: {},
-      purchasedHouse: null,
-      unlockedHouses: unlockedHouses, // 保留解锁的房屋
-      gameEnded: false,
-      jobLevel: 1,
-      jobTitle: GAME_CONFIG.jobs[0].title,
-      salaryDeduction: false,
-      salaryDeductionDays: 0,
-      unemployed: false,
-      unemployedDays: 0,
-      adWatchedCount: 0,
-      housingType: 'suburban',
-      bankruptcyCount: 0,
-      currentScene: 'home',
-      todayEvents: [],
-      newspaperShown: false,
-      yesterdayExpense: 0,
-      marketEnteredToday: false,
-      newspaperEvents: [],
-      pendingEvents: [],
-      todayNewspaper: null
-    }
+    const defaultState = createDefaultState(unlockedHouses)
     
     // 保存新状态
     wx.setStorageSync('bigcitylife_save', defaultState)

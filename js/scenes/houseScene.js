@@ -3,6 +3,7 @@ import animationManager from '../utils/animationManager.js'
 import imageManager from '../utils/imageManager.js'
 import { CLOUD_ENV_ID } from '../config.js'
 import { GAME_CONFIG } from '../data/gameConfig.js'
+import { createDefaultState } from '../data/DefaultState.js'
 
 export class HouseScene {
     constructor(game) {
@@ -527,7 +528,7 @@ export class HouseScene {
         // 再保存游戏状态
         await this.game.gameState.save()
         
-        this.game.gameState.addDelayedAnimation('decrease', house.price, 'money', '金币', '#f39c12')
+        this.game.gameState.addDelayedAnimation('decrease', house.price, 'money')
         
         this.selectedHouse = null
         
@@ -779,43 +780,7 @@ export class HouseScene {
         wx.clearStorageSync()
         
         // 创建新的默认状态，保留解锁的房屋
-        const defaultState = {
-            money: GAME_CONFIG.initial.money,
-            health: GAME_CONFIG.initial.health,
-            energy: GAME_CONFIG.initial.energy,
-            maxEnergy: GAME_CONFIG.initial.maxEnergy,
-            mood: GAME_CONFIG.initial.mood,
-            reputation: GAME_CONFIG.initial.reputation,
-            day: 1,
-            totalDays: GAME_CONFIG.initial.totalDays,
-            consecutiveGymDays: 0,
-            bankLoan: 0,
-            bankDeposit: 0,
-            privateLoan: 0,
-            overdueDays: 0,
-            warehouseCapacity: GAME_CONFIG.warehouse.initialCapacity,
-            warehouse: {},
-            purchasedHouse: null,
-            unlockedHouses: unlockedHouses,
-            gameEnded: false,
-            jobLevel: 1,
-            jobTitle: GAME_CONFIG.jobs[0].title,
-            salaryDeduction: false,
-            salaryDeductionDays: 0,
-            unemployed: false,
-            unemployedDays: 0,
-            adWatchedCount: 0,
-            housingType: 'suburban',
-            bankruptcyCount: 0,
-            currentScene: 'home',
-            todayEvents: [],
-            newspaperShown: false,
-            yesterdayExpense: 0,
-            marketEnteredToday: false,
-            newspaperEvents: [],
-            pendingEvents: [],
-            todayNewspaper: null
-        }
+        const defaultState = createDefaultState(unlockedHouses)
         
         console.log('[restartGameWithUnlockedHouses] 新状态中的解锁房屋:', defaultState.unlockedHouses)
         

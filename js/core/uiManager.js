@@ -33,6 +33,29 @@ export default class UIManager {
     addModal(modal) {
         this.modals.push(modal)
     }
+
+    showInfoModal(title, content, onConfirm = () => {}) {
+        this.addModal({
+            type: 'confirm',
+            title,
+            content,
+            confirmText: '知道了',
+            singleButton: true,
+            onConfirm
+        })
+    }
+
+    showConfirmModal(title, content, onConfirm, onCancel = () => {}, { confirmText = '确定', cancelText = '取消' } = {}) {
+        this.addModal({
+            type: 'confirm',
+            title,
+            content,
+            confirmText,
+            cancelText,
+            onConfirm,
+            onCancel
+        })
+    }
     
     closeModal() {
         this.modals.pop()

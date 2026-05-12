@@ -49,8 +49,8 @@ export default class LoanSystem {
                 state.money += qty
                 this.game.gameState.save()
 
-                this.game.gameState.addDelayedAnimation('loan', qty, 'privateLoan', '私人贷款', '#e74c3c')
-                this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
+                this.game.gameState.addDelayedAnimation('loan', qty, 'privateLoan')
+                this.game.gameState.addDelayedAnimation('increase', qty, 'money')
 
                 if (onComplete) onComplete()
             }
@@ -89,8 +89,8 @@ export default class LoanSystem {
                     state.privateLoan -= qty
                     this.game.gameState.save()
 
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'privateLoan', '私人贷款', '#27ae60')
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money')
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'privateLoan')
 
                     if (onComplete) onComplete()
                 }

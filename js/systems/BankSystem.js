@@ -58,8 +58,8 @@ export default class BankSystem {
                     state.bankDeposit += qty
                     this.game.gameState.save()
 
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
-                    this.game.gameState.addDelayedAnimation('increase', qty, 'bankDeposit', '银行存款', '#27ae60')
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money')
+                    this.game.gameState.addDelayedAnimation('increase', qty, 'bankDeposit')
 
                     if (onComplete) onComplete()
                 }
@@ -86,8 +86,8 @@ export default class BankSystem {
                 state.money += qty
                 this.game.gameState.save()
 
-                this.game.gameState.addDelayedAnimation('loan', qty, 'bankLoan', '银行贷款', '#e74c3c')
-                this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#f39c12')
+                this.game.gameState.addDelayedAnimation('loan', qty, 'bankLoan')
+                this.game.gameState.addDelayedAnimation('increase', qty, 'money')
 
                 if (onComplete) onComplete()
             }
@@ -126,8 +126,8 @@ export default class BankSystem {
                     state.bankLoan -= qty
                     this.game.gameState.save()
 
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#f39c12')
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'bankLoan', '银行贷款', '#27ae60')
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money')
+                    this.game.gameState.addDelayedAnimation('decrease', qty, 'bankLoan')
 
                     if (onComplete) onComplete()
                 }

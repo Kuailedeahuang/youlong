@@ -1,6 +1,7 @@
 import imageManager from '../utils/imageManager.js'
 import iconManager from '../components/IconManager.js'
 import { restartGame } from '../utils/resetGame.js'
+import { roundRect } from '../utils/CanvasUtils.js'
 
 /**
  * 设置场景
@@ -212,7 +213,7 @@ export default class SettingsScene {
         ctx.strokeStyle = '#2D3436'
         ctx.lineWidth = 1.5
         ctx.beginPath()
-        this.roundRectPath(ctx, panelX, panelY, panelW, panelH, 16)
+        roundRect(ctx, panelX, panelY, panelW, panelH, 16)
         ctx.stroke()
 
         // 面板顶部装饰线 - 柔和水彩感
@@ -290,7 +291,7 @@ export default class SettingsScene {
         ctx.shadowOffsetX = 0
         ctx.fillStyle = 'transparent'
         ctx.beginPath()
-        this.roundRectPath(ctx, x, y, width, height, radius)
+        roundRect(ctx, x, y, width, height, radius)
         ctx.fill()
         ctx.restore()
     }
@@ -316,7 +317,7 @@ export default class SettingsScene {
         ctx.strokeStyle = '#2D3436'
         ctx.lineWidth = 1.5
         ctx.beginPath()
-        this.roundRectPath(ctx, titleX, titleY, titleW, titleH, 18)
+        roundRect(ctx, titleX, titleY, titleW, titleH, 18)
         ctx.stroke()
 
         // 标题文字 - 使用加深的主色，字号18px
@@ -371,7 +372,7 @@ export default class SettingsScene {
         ctx.strokeStyle = '#2D3436'
         ctx.lineWidth = 1
         ctx.beginPath()
-        this.roundRectPath(ctx, switchX, switchY, switchW, switchH, switchH / 2)
+        roundRect(ctx, switchX, switchY, switchW, switchH, switchH / 2)
         ctx.stroke()
 
         // 添加点击区域 - 扩展触摸目标到56px高度
@@ -481,7 +482,7 @@ export default class SettingsScene {
         ctx.strokeStyle = '#2D3436'
         ctx.lineWidth = 1.5
         ctx.beginPath()
-        this.roundRectPath(ctx, scaledX, scaledY, scaledW, scaledH, 10)
+        roundRect(ctx, scaledX, scaledY, scaledW, scaledH, 10)
         ctx.stroke()
 
         // 图标
@@ -529,7 +530,7 @@ export default class SettingsScene {
         ctx.strokeStyle = 'rgba(193, 123, 107, 0.7)'
         ctx.lineWidth = 1.5
         ctx.beginPath()
-        this.roundRectPath(ctx, scaledX, scaledY, scaledW, scaledH, 10)
+        roundRect(ctx, scaledX, scaledY, scaledW, scaledH, 10)
         ctx.stroke()
 
         // 警告图标 + 重置图标组合
@@ -741,19 +742,4 @@ export default class SettingsScene {
 
     // ==================== 工具方法 ====================
 
-    /**
-     * 绘制圆角矩形路径
-     */
-    roundRectPath(ctx, x, y, width, height, radius) {
-        ctx.moveTo(x + radius, y)
-        ctx.lineTo(x + width - radius, y)
-        ctx.quadraticCurveTo(x + width, y, x + width, y + radius)
-        ctx.lineTo(x + width, y + height - radius)
-        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
-        ctx.lineTo(x + radius, y + height)
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius)
-        ctx.lineTo(x, y + radius)
-        ctx.quadraticCurveTo(x, y, x + radius, y)
-        ctx.closePath()
-    }
 }

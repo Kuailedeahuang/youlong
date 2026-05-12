@@ -97,9 +97,9 @@ export default class WorkSystem {
             state.reputation = Math.min(100, Math.max(-100, state.reputation + reputationChange))
             this.game.gameState.addEvent(`${reputationReason}，名誉${reputationChange > 0 ? '+' : ''}${reputationChange}`)
             if (reputationChange > 0) {
-                this.game.gameState.addDelayedAnimation('increase', reputationChange, 'reputation', '名誉', '#9b59b6')
+                this.game.gameState.addDelayedAnimation('increase', reputationChange, 'reputation')
             } else {
-                this.game.gameState.addDelayedAnimation('decrease', Math.abs(reputationChange), 'reputation', '名誉', '#9b59b6')
+                this.game.gameState.addDelayedAnimation('decrease', Math.abs(reputationChange), 'reputation')
             }
         }
 
@@ -107,11 +107,11 @@ export default class WorkSystem {
 
         state.daysWorked++
 
-        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
-        this.game.gameState.addDelayedAnimation('increase', salary, 'money', '金币', '#f39c12')
+        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy')
+        this.game.gameState.addDelayedAnimation('increase', salary, 'money')
 
         if (isOvertime) {
-            this.game.gameState.addDelayedAnimation('decrease', 5, 'health', '健康', '#27ae60')
+            this.game.gameState.addDelayedAnimation('decrease', 5, 'health')
         }
 
         let workResultContent = `获得 ${salary} 金币！`

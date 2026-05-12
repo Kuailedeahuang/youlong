@@ -428,7 +428,7 @@ export default class MarketScene {
                     
                     this.game.gameState.addToWarehouse(item.id, qty, total)
                     
-                    this.game.gameState.addDelayedAnimation('decrease', total, 'money', '金币', '#f39c12')
+                    this.game.gameState.addDelayedAnimation('decrease', total, 'money')
                 }
             }
         })
@@ -463,7 +463,7 @@ export default class MarketScene {
                             if (reputationGain > 0) {
                                 state.reputation = Math.min(100, state.reputation + reputationGain)
                                 this.game.gameState.addEvent(`市场投机成功，名誉+${reputationGain}`)
-                                this.game.gameState.addDelayedAnimation('increase', reputationGain, 'reputation', '名誉', '#9b59b6')
+                                this.game.gameState.addDelayedAnimation('increase', reputationGain, 'reputation')
                             }
                         } else if (profit < 0) {
                             // 亏损减少名誉
@@ -471,12 +471,12 @@ export default class MarketScene {
                             if (reputationLoss > 0) {
                                 state.reputation = Math.max(-100, state.reputation - reputationLoss)
                                 this.game.gameState.addEvent(`市场投机失败，名誉-${reputationLoss}`)
-                                this.game.gameState.addDelayedAnimation('decrease', reputationLoss, 'reputation', '名誉', '#9b59b6')
+                                this.game.gameState.addDelayedAnimation('decrease', reputationLoss, 'reputation')
                             }
                         }
                     }
                     
-                    this.game.gameState.addDelayedAnimation('increase', total, 'money', '金币', '#f39c12')
+                    this.game.gameState.addDelayedAnimation('increase', total, 'money')
                 }
             }
         })
@@ -522,7 +522,7 @@ export default class MarketScene {
                 state.warehouseLevel = currentLevel + 1
                 this.game.gameState.save()
                 
-                this.game.gameState.addDelayedAnimation('decrease', nextLevel.cost, 'money', '金币', '#f39c12')
+                this.game.gameState.addDelayedAnimation('decrease', nextLevel.cost, 'money')
                 this.game.gameState.addEvent(`仓库升级成功，容量提升至${nextLevel.capacity}`)
             },
             onCancel: () => {}

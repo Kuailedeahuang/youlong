@@ -1,5 +1,6 @@
 import imageManager from '../utils/imageManager.js'
 import SplashScene from './splashScene.js'
+import { GHIBLI_COLORS, drawGhibliBackground, drawLogo, drawRoundRectPath, drawGhibliPanel, drawTextWithOutline } from '../utils/GhibliRenderer.js'
 
 export default class LoginScene {
     constructor(game) {
@@ -8,34 +9,12 @@ export default class LoginScene {
         this.imageLoaded = false
         this.logoFadeStartTime = null
         this.isLoginProcessing = false
-        this.loginStatus = 'waiting' // waiting | processing | success | error
+        this.loginStatus = 'waiting'
         this.loginButtonRect = null
         this.buttonPressed = false
         this.loadingAngle = 0
         this.logoLoadStarted = false
-        this.cloudTime = 0 // 用于云朵动画，避免Date.now()跳跃
-
-        // 吉卜力风格配色（优化版 - 增强对比度，与splash统一）
-        this.colors = {
-            bgStart: '#B8D4E8',
-            bgEnd: '#E8F0F8',
-            bgLight: '#F5FAFF',
-            bgMedium: '#C8E0F0',
-            bgDark: '#A8C8E0',
-            panel: '#FFF8F0',
-            primary: '#FFD54F',
-            primaryDark: '#FFB300',
-            secondary: '#5A9FD4',
-            accent: '#7ED957',
-            warm: '#E8913A',
-            textMain: '#4A3728',
-            textSub: '#5A6A7A',
-            textLight: '#8A9AAA',
-            outline: '#3D3D3D',
-            success: '#81C784',
-            warning: '#FFD54F',
-            error: '#E57373'
-        }
+        this.cloudTime = 0
     }
 
     async loadLogo() {
@@ -96,8 +75,6 @@ export default class LoginScene {
 
     onEnter() {
         console.log('[LoginScene] onEnter() 被调用')
-        console.log('[LoginScene] gameState:', this.game.gameState)
-        console.log('[LoginScene] isLoggedIn:', this.game.gameState.isLoggedIn())
 
         if (!this.logoLoadStarted) {
             this.loadLogo()
@@ -132,12 +109,7 @@ export default class LoginScene {
     onExit() {}
 
     async handleLoginClick() {
-        console.log('[LoginScene] handleLoginClick() 被调用')
-        console.log('[LoginScene] isLoginProcessing:', this.isLoginProcessing)
-        console.log('[LoginScene] loginStatus:', this.loginStatus)
-
         if (this.isLoginProcessing || this.loginStatus === 'success' || this.loginStatus === 'processing') {
-            console.log('[LoginScene] 登录处理中或已完成，直接返回')
             return
         }
 
@@ -153,9 +125,7 @@ export default class LoginScene {
                 let openidResult = null
                 try {
                     const cloudRes = await this.callFunctionWithTimeout('userLogin', { code: loginRes.code })
-                    console.log('[Login] userLogin云函数返回:', cloudRes)
                     openidResult = cloudRes.result
-                    console.log('[Login] openidResult:', openidResult)
                 } catch (e) {
                     console.error('[Login] userLogin云函数调用失败:', e)
                     throw new Error('登录服务暂时不可用，请稍后重试')
@@ -213,7 +183,6 @@ export default class LoginScene {
     }
 
     callFunctionWithTimeout(name, data, timeout = 10000) {
-        console.log(`[Login] 调用云函数: ${name}, data:`, data)
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('请求超时')), timeout)
         })
@@ -224,27 +193,18 @@ export default class LoginScene {
     }
 
     wxLogin() {
-        console.log('[Login] 调用 wx.login()')
         return new Promise((resolve, reject) => {
             wx.login({
-                success: (res) => {
-                    console.log('[Login] wx.login 成功:', res)
-                    resolve(res)
-                },
-                fail: (err) => {
-                    console.error('[Login] wx.login 失败:', err)
-                    reject(err)
-                }
+                success: (res) => resolve(res),
+                fail: (err) => reject(err)
             })
         })
     }
 
     update(deltaTime) {
-        // 使用deltaTime累积云朵动画时间
         this.cloudTime += deltaTime * 0.1
 
         if (this.loginStatus === 'processing') {
-            // 防止loadingAngle溢出
             this.loadingAngle = (this.loadingAngle + deltaTime * 0.003) % (Math.PI * 2)
         }
     }
@@ -254,13 +214,13 @@ export default class LoginScene {
         const h = renderer.height
         const ctx = renderer.ctx
 
-        this.drawGhibliBackground(ctx, w, h)
+        drawGhibliBackground(ctx, w, h, this.cloudTime)
 
         const logoSize = Math.min(w, h) * 0.28
         const logoX = (w - logoSize) / 2
         const logoY = h * 0.16
 
-        this.drawLogo(ctx, logoX, logoY, logoSize)
+        drawLogo(ctx, logoX, logoY, logoSize, this.logoImage, this.imageLoaded, this.logoFadeStartTime)
 
         this.drawTitle(ctx, w, logoY + logoSize)
 
@@ -271,179 +231,16 @@ export default class LoginScene {
         this.drawFooter(ctx, w, h)
     }
 
-    drawGhibliBackground(ctx, w, h) {
-        const gradient = ctx.createLinearGradient(0, 0, 0, h)
-        gradient.addColorStop(0, this.colors.bgStart)
-        gradient.addColorStop(0.5, this.colors.bgLight)
-        gradient.addColorStop(1, this.colors.bgEnd)
-        ctx.fillStyle = gradient
-        ctx.fillRect(0, 0, w, h)
-
-        this.drawBackgroundDetails(ctx, w, h)
-        this.drawClouds(ctx, w, h)
-    }
-
-    drawBackgroundDetails(ctx, w, h) {
-        const grassGradient = ctx.createLinearGradient(0, h * 0.7, 0, h)
-        grassGradient.addColorStop(0, 'rgba(152, 251, 152, 0.08)')
-        grassGradient.addColorStop(1, 'rgba(144, 238, 144, 0.03)')
-        ctx.fillStyle = grassGradient
-        ctx.fillRect(0, h * 0.7, w, h * 0.3)
-
-        ctx.save()
-        ctx.globalAlpha = 0.06
-        ctx.fillStyle = this.colors.secondary
-        ctx.beginPath()
-        ctx.moveTo(0, h * 0.85)
-        ctx.bezierCurveTo(w * 0.25, h * 0.78, w * 0.45, h * 0.88, w * 0.65, h * 0.82)
-        ctx.bezierCurveTo(w * 0.85, h * 0.86, w * 0.98, h * 0.8, w, h * 0.85)
-        ctx.lineTo(w, h)
-        ctx.lineTo(0, h)
-        ctx.fill()
-        ctx.restore()
-    }
-
-    drawClouds(ctx, w, h) {
-        ctx.save()
-        // 使用累积的cloudTime替代Date.now()
-        const time = this.cloudTime
-
-        const drawCloud = (x, y, size, offset, alpha) => {
-            // 增加移动幅度：从 0.3 增加到 0.8，让飘动更明显
-            const moveX = Math.sin(time * 0.5 + offset) * size * 0.8
-            ctx.globalAlpha = alpha
-            ctx.fillStyle = '#FFFFFF'
-            ctx.beginPath()
-            ctx.arc(x + moveX, y, size, 0, Math.PI * 2)
-            ctx.arc(x + moveX + size * 0.6, y - size * 0.3, size * 0.8, 0, Math.PI * 2)
-            ctx.arc(x + moveX + size * 1.2, y, size * 0.7, 0, Math.PI * 2)
-            ctx.fill()
-        }
-
-        // 远景云：更大、更慢、提高透明度使其可见
-        drawCloud(w * 0.15, h * 0.22, 35, 0, 0.35)
-        drawCloud(w * 0.75, h * 0.28, 28, 2, 0.30)
-
-        // 中景云
-        drawCloud(w * 0.05, h * 0.18, 25, 1, 0.55)
-        drawCloud(w * 0.85, h * 0.25, 22, 3, 0.50)
-
-        // 近景云：更小、更快、更明显，位置在Logo周围
-        drawCloud(w * 0.25, h * 0.35, 18, 0.5, 0.80)
-        drawCloud(w * 0.7, h * 0.32, 15, 1.5, 0.75)
-
-        ctx.restore()
-    }
-
-    drawLogo(ctx, x, y, size) {
-        let alpha = 1
-        if (this.logoFadeStartTime) {
-            const elapsed = Date.now() - this.logoFadeStartTime
-            alpha = Math.min(1, elapsed / 800)
-        }
-
-        ctx.save()
-        ctx.globalAlpha = alpha
-
-        if (this.imageLoaded && this.logoImage && this.logoImage.width > 0) {
-            try {
-                ctx.drawImage(this.logoImage, x, y, size, size)
-            } catch (e) {
-                this.drawPlaceholderLogo(ctx, x, y, size)
-            }
-        } else {
-            this.drawPlaceholderLogo(ctx, x, y, size)
-        }
-
-        ctx.restore()
-    }
-
-    drawPlaceholderLogo(ctx, x, y, size) {
-        const radius = size * 0.2
-
-        this.drawGhibliPanel(ctx, x, y, size, size, radius)
-
-        ctx.fillStyle = this.colors.primary
-        ctx.font = `bold ${size * 0.5}px sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('游', x + size / 2, y + size / 2)
-    }
-
-    drawGhibliPanel(ctx, x, y, w, h, r) {
-        ctx.fillStyle = this.colors.panel
-
-        ctx.shadowColor = 'rgba(45, 45, 45, 0.08)'
-        ctx.shadowBlur = 8
-        ctx.shadowOffsetY = 3
-        this.drawRoundRectPath(ctx, x, y, w, h, r)
-        ctx.fill()
-        ctx.shadowColor = 'transparent'
-
-        const highlight = ctx.createLinearGradient(x, y, x, y + h * 0.3)
-        highlight.addColorStop(0, 'rgba(255, 255, 255, 0.35)')
-        highlight.addColorStop(1, 'rgba(255, 255, 255, 0)')
-        ctx.fillStyle = highlight
-        ctx.save()
-        ctx.beginPath()
-        ctx.moveTo(x + r, y)
-        ctx.lineTo(x + w - r, y)
-        ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-        ctx.lineTo(x + w, y + h * 0.28)
-        ctx.bezierCurveTo(x + w * 0.75, y + h * 0.18, x + w * 0.25, y + h * 0.18, x, y + h * 0.28)
-        ctx.lineTo(x, y + r)
-        ctx.quadraticCurveTo(x, y, x + r, y)
-        ctx.fill()
-        ctx.restore()
-
-        ctx.strokeStyle = this.colors.outline
-        ctx.lineWidth = 2
-        this.drawRoundRectPath(ctx, x, y, w, h, r)
-        ctx.stroke()
-    }
-
-    // 使用quadraticCurveTo替代arcTo以提高兼容性
-    drawRoundRectPath(ctx, x, y, w, h, r) {
-        ctx.beginPath()
-        ctx.moveTo(x + r, y)
-        ctx.lineTo(x + w - r, y)
-        ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-        ctx.lineTo(x + w, y + h - r)
-        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
-        ctx.lineTo(x + r, y + h)
-        ctx.quadraticCurveTo(x, y + h, x, y + h - r)
-        ctx.lineTo(x, y + r)
-        ctx.quadraticCurveTo(x, y, x + r, y)
-        ctx.closePath()
-    }
-
     drawTitle(ctx, w, baseY) {
         ctx.save()
 
         const titleY = baseY + 45
-        this.drawTextWithOutline(ctx, '游龙市场为买房', w / 2, titleY, 26, this.colors.textMain, this.colors.outline)
+        drawTextWithOutline(ctx, '游龙市场为买房', w / 2, titleY, 26, GHIBLI_COLORS.textMain, GHIBLI_COLORS.outline)
 
         const subtitleY = titleY + 40
-        ctx.fillStyle = this.colors.textSub
+        ctx.fillStyle = GHIBLI_COLORS.textSub
         ctx.font = '16px sans-serif'
         ctx.fillText('登录游戏', w / 2, subtitleY)
-
-        ctx.restore()
-    }
-
-    drawTextWithOutline(ctx, text, x, y, fontSize, fillColor, outlineColor) {
-        ctx.save()
-        ctx.font = `bold ${fontSize}px sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-
-        ctx.strokeStyle = outlineColor
-        ctx.lineWidth = 3
-        ctx.lineJoin = 'round'
-        ctx.strokeText(text, x, y)
-
-        ctx.fillStyle = fillColor
-        ctx.fillText(text, x, y)
 
         ctx.restore()
     }
@@ -452,24 +249,24 @@ export default class LoginScene {
         const btn = this.loginButtonRect
         const radius = btn.height * 0.2
 
-        let bgColor = this.colors.primary
+        let bgColor = GHIBLI_COLORS.primary
         let buttonText = '微信一键登录'
         let scale = 1
 
         if (this.loginStatus === 'processing') {
-            bgColor = this.colors.textSub
+            bgColor = GHIBLI_COLORS.textSub
             buttonText = '登录中...'
         } else if (this.loginStatus === 'success') {
-            bgColor = this.colors.success
+            bgColor = GHIBLI_COLORS.success
             buttonText = '登录成功!'
         } else if (this.loginStatus === 'error') {
-            bgColor = this.colors.error
+            bgColor = GHIBLI_COLORS.error
             buttonText = '登录失败，点击重试'
         }
 
         if (this.buttonPressed && this.loginStatus === 'waiting') {
             scale = 0.95
-            bgColor = this.colors.primaryDark
+            bgColor = GHIBLI_COLORS.primaryDark
         }
 
         ctx.save()
@@ -489,7 +286,7 @@ export default class LoginScene {
             ctx.shadowOffsetY = 2
         }
 
-        this.drawRoundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, radius)
+        drawRoundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, radius)
         ctx.fill()
         ctx.shadowColor = 'transparent'
 
@@ -511,12 +308,12 @@ export default class LoginScene {
             ctx.restore()
         }
 
-        ctx.strokeStyle = this.colors.outline
+        ctx.strokeStyle = GHIBLI_COLORS.outline
         ctx.lineWidth = 2
-        this.drawRoundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, radius)
+        drawRoundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, radius)
         ctx.stroke()
 
-        ctx.fillStyle = this.colors.textMain
+        ctx.fillStyle = GHIBLI_COLORS.textMain
         ctx.font = 'bold 18px sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
@@ -534,7 +331,7 @@ export default class LoginScene {
         ctx.translate(x, y)
         ctx.rotate(this.loadingAngle)
 
-        ctx.strokeStyle = this.colors.textMain
+        ctx.strokeStyle = GHIBLI_COLORS.textMain
         ctx.lineWidth = 3.5
         ctx.lineCap = 'round'
 
@@ -548,7 +345,7 @@ export default class LoginScene {
     drawFooter(ctx, w, h) {
         const footerY = h * 0.86
         ctx.save()
-        ctx.fillStyle = this.colors.textSub
+        ctx.fillStyle = GHIBLI_COLORS.textSub
         ctx.font = '13px sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
@@ -572,16 +369,12 @@ export default class LoginScene {
         if (x >= btn.x - 12 && x <= btn.x + btn.width + 12 &&
             y >= btn.y - 12 && y <= btn.y + btn.height + 12) {
             this.buttonPressed = true
-            // 添加try-catch处理振动API兼容性
             try {
                 wx.vibrateShort({ type: 'light' })
             } catch (e) {
-                // 降级处理
                 try {
                     wx.vibrateShort()
-                } catch (err) {
-                    // 忽略振动失败
-                }
+                } catch (err) {}
             }
             return true
         }

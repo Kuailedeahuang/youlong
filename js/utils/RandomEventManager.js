@@ -7,22 +7,22 @@ export default class RandomEventManager {
             {
                 text: '路边捡到钱包，获得80金币',
                 effect: (state) => { state.money += 80 },
-                anim: () => this.game.gameState.addDelayedAnimation('increase', 80, 'money', '金币', '#f39c12')
+                anim: () => this.game.gameState.addDelayedAnimation('increase', 80, 'money')
             },
             {
                 text: '遇到好心人，心情+15',
                 effect: (state) => { state.mood = Math.min(100, state.mood + 15) },
-                anim: () => this.game.gameState.addDelayedAnimation('increase', 15, 'mood', '心情', '#e91e63')
+                anim: () => this.game.gameState.addDelayedAnimation('increase', 15, 'mood')
             },
             {
                 text: '收到红包，获得150金币',
                 effect: (state) => { state.money += 150 },
-                anim: () => this.game.gameState.addDelayedAnimation('increase', 150, 'money', '金币', '#f39c12')
+                anim: () => this.game.gameState.addDelayedAnimation('increase', 150, 'money')
             },
             {
                 text: '帮助老人，名誉+8',
                 effect: (state) => { state.reputation = Math.min(100, state.reputation + 8) },
-                anim: () => this.game.gameState.addDelayedAnimation('increase', 8, 'reputation', '名誉', '#9b59b6')
+                anim: () => this.game.gameState.addDelayedAnimation('increase', 8, 'reputation')
             },
             {
                 text: '睡了个好觉，心情+10，健康+5',
@@ -31,8 +31,8 @@ export default class RandomEventManager {
                     state.health = Math.min(100, state.health + 5)
                 },
                 anim: () => {
-                    this.game.gameState.addDelayedAnimation('increase', 10, 'mood', '心情', '#e91e63')
-                    this.game.gameState.addDelayedAnimation('increase', 5, 'health', '健康', '#27ae60')
+                    this.game.gameState.addDelayedAnimation('increase', 10, 'mood')
+                    this.game.gameState.addDelayedAnimation('increase', 5, 'health')
                 }
             }
         ]
@@ -41,27 +41,27 @@ export default class RandomEventManager {
             {
                 text: '不小心丢了钱包，损失40金币',
                 effect: (state) => { state.money = Math.max(0, state.money - 40) },
-                anim: () => this.game.gameState.addDelayedAnimation('decrease', 40, 'money', '金币', '#f39c12')
+                anim: () => this.game.gameState.addDelayedAnimation('decrease', 40, 'money')
             },
             {
                 text: '被小偷偷了，损失30金币',
                 effect: (state) => { state.money = Math.max(0, state.money - 30) },
-                anim: () => this.game.gameState.addDelayedAnimation('decrease', 30, 'money', '金币', '#f39c12')
+                anim: () => this.game.gameState.addDelayedAnimation('decrease', 30, 'money')
             },
             {
                 text: '身体不适，健康-8',
                 effect: (state) => { state.health = Math.max(0, state.health - 8) },
-                anim: () => this.game.gameState.addDelayedAnimation('decrease', 8, 'health', '健康', '#27ae60')
+                anim: () => this.game.gameState.addDelayedAnimation('decrease', 8, 'health')
             },
             {
                 text: '被误解，名誉-8',
                 effect: (state) => { state.reputation = Math.max(-100, state.reputation - 8) },
-                anim: () => this.game.gameState.addDelayedAnimation('decrease', 8, 'reputation', '名誉', '#9b59b6')
+                anim: () => this.game.gameState.addDelayedAnimation('decrease', 8, 'reputation')
             },
             {
                 text: '做噩梦了，心情-10',
                 effect: (state) => { state.mood = Math.max(0, state.mood - 10) },
-                anim: () => this.game.gameState.addDelayedAnimation('decrease', 10, 'mood', '心情', '#e91e63')
+                anim: () => this.game.gameState.addDelayedAnimation('decrease', 10, 'mood')
             }
         ]
     }

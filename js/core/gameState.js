@@ -1,5 +1,6 @@
 import { GAME_CONFIG } from '../data/gameConfig.js'
 import ItemData from '../data/items.js'
+import { STAT_CONFIG, getStatLabel, getStatColor } from '../data/StatConfig.js'
 
 const STORAGE_KEY = 'bigcitylife_save'
 const USER_INFO_KEY = 'user_info'
@@ -42,13 +43,13 @@ export default class GameState {
     }
 
     addDelayedAnimation(type, value, statType, label, color = null) {
-        console.log('[动画队列] 添加动画:', type, statType, value)
+        const config = STAT_CONFIG[statType] || {}
         this.delayedAnimations.push({
             type,
             value,
             statType,
-            label,
-            color,
+            label: label || config.label || statType,
+            color: color || config.color || '#5D4037',
             timestamp: Date.now()
         })
     }
@@ -633,7 +634,7 @@ export default class GameState {
 
         if (this.data.money >= dailyExpense) {
             this.data.money -= dailyExpense
-            this.addDelayedAnimation('decrease', dailyExpense, 'money', '日常 消费', '#f39c12')
+            this.addDelayedAnimation('decrease', dailyExpense, 'money')
         } else {
             const deficit = dailyExpense - this.data.money
             const expenseAmount = this.data.money
@@ -641,8 +642,8 @@ export default class GameState {
             this.data.privateLoan += Math.ceil(deficit * 1.05)
             this.data.overdueDays++
             this.addEvent('因资金不足，自动借入私人借贷')
-            this.addDelayedAnimation('decrease', expenseAmount, 'money', '金币', '#f39c12')
-            this.addDelayedAnimation('loan', Math.ceil(deficit * 1.05), 'privateLoan', '私人贷款', '#e74c3c')
+            this.addDelayedAnimation('decrease', expenseAmount, 'money')
+            this.addDelayedAnimation('loan', Math.ceil(deficit * 1.05), 'privateLoan')
         }
 
         if (this.data.mood < 40) {

@@ -1,0 +1,41 @@
+import { GAME_CONFIG } from './gameConfig.js'
+
+export function createDefaultState(unlockedHouses = []) {
+    return {
+        money: GAME_CONFIG.initial.money,
+        health: GAME_CONFIG.initial.health,
+        energy: GAME_CONFIG.initial.energy,
+        maxEnergy: GAME_CONFIG.initial.maxEnergy,
+        mood: GAME_CONFIG.initial.mood,
+        reputation: GAME_CONFIG.initial.reputation,
+        day: 1,
+        totalDays: GAME_CONFIG.initial.totalDays,
+        consecutiveGymDays: 0,
+        bankLoan: 0,
+        bankDeposit: 0,
+        privateLoan: 0,
+        overdueDays: 0,
+        warehouseCapacity: GAME_CONFIG.warehouse.initialCapacity,
+        warehouse: {},
+        purchasedHouse: null,
+        unlockedHouses: unlockedHouses,
+        gameEnded: false,
+        jobLevel: 1,
+        jobTitle: GAME_CONFIG.jobs[0].title,
+        salaryDeduction: false,
+        salaryDeductionDays: 0,
+        unemployed: false,
+        unemployedDays: 0,
+        adWatchedCount: 0,
+        housingType: 'suburban',
+        bankruptcyCount: 0,
+        currentScene: 'home',
+        todayEvents: [],
+        newspaperShown: false,
+        yesterdayExpense: 0,
+        marketEnteredToday: false,
+        newspaperEvents: [],
+        pendingEvents: [],
+        todayNewspaper: null
+    }
+}

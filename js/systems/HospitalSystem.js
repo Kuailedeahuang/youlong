@@ -54,9 +54,9 @@ export default class HospitalSystem {
             state.health = Math.min(100, state.health + healAmount)
             this.game.gameState.save()
 
-            this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#3498db')
-            this.game.gameState.addDelayedAnimation('decrease', cost, 'money', '金币', '#f39c12')
-            this.game.gameState.addDelayedAnimation('increase', healAmount, 'health', '健康', '#27ae60')
+            this.game.gameState.addDelayedAnimation('decrease', 1, 'energy')
+            this.game.gameState.addDelayedAnimation('decrease', cost, 'money')
+            this.game.gameState.addDelayedAnimation('increase', healAmount, 'health')
 
             if (onComplete) onComplete()
         }

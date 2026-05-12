@@ -2,12 +2,16 @@ import iconManager from '../components/IconManager.js'
 import animationManager from '../utils/animationManager.js'
 import ItemData from '../data/items.js'
 import { GAME_CONFIG } from '../data/gameConfig.js'
+import LoanSystem from '../systems/LoanSystem.js'
+import BankSystem from '../systems/BankSystem.js'
 
 export default class ComputerScene {
     constructor(game) {
         this.game = game
         this.name = 'computer'
         this.clickableAreas = []
+        this.loanSystem = new LoanSystem(game)
+        this.bankSystem = new BankSystem(game)
     }
 
     onEnter() {
@@ -74,7 +78,6 @@ export default class ComputerScene {
         const iconSize = 60
         const iconBgH = iconSize + 12
         const labelBgH = 20
-        const iconTotalH = iconBgH + labelBgH
         const iconAreaY = y + titleBarH + 35
 
         ctx.fillStyle = '#FFF5E6'
@@ -183,17 +186,15 @@ export default class ComputerScene {
     }
 
     onIconClick(iconId) {
-        console.log('[ComputerScene] 点击图标:', iconId)
-
         switch (iconId) {
             case 'news':
                 this.showNewsModal()
                 break
             case 'loan':
-                this.showLoanModal()
+                this.loanSystem.showLoanModal(() => {})
                 break
             case 'bank':
-                this.showBankModal()
+                this.bankSystem.showBankModal(() => {})
                 break
             case 'entertainment':
                 this.showEntertainmentModal()
@@ -265,210 +266,6 @@ export default class ComputerScene {
         return itemsWithChange.slice(0, 3)
     }
 
-    showLoanModal() {
-        const state = this.game.gameState.data
-
-        const actions = []
-
-        actions.push({
-            text: '借贷',
-            callback: () => this.doPrivateLoan(),
-            color: '#C17B6B'
-        })
-
-        if (state.privateLoan > 0) {
-            actions.push({
-                text: '还款',
-                callback: () => this.doPrivateRepay(),
-                color: '#7CB87C'
-            })
-        }
-
-        this.game.uiManager.addModal({
-            type: 'action',
-            title: '个人借贷',
-            content: `日利率: 2.5%\n逾期惩罚严厉\n\n当前欠款: ${state.privateLoan.toLocaleString()} 金币`,
-            actions: actions,
-            height: 200
-        })
-    }
-
-    doPrivateLoan() {
-        const state = this.game.gameState.data
-        this.game.uiManager.addModal({
-            type: 'trade',
-            title: '个人借贷',
-            content: '日利率: 2.5%\n逾期惩罚严厉',
-            itemName: '借贷金额',
-            price: 1,
-            quantity: 1000,
-            maxQuantity: 120000,
-            total: 1000,
-            tradeType: 'loan',
-            height: 240,
-            onConfirm: (qty) => {
-                state.privateLoan += qty
-                state.money += qty
-                this.game.gameState.save()
-
-                this.game.gameState.addDelayedAnimation('loan', qty, 'privateLoan', '私人贷款', '#C17B6B')
-                this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#D4A574')
-            }
-        })
-    }
-
-    doPrivateRepay() {
-        const state = this.game.gameState.data
-        if (state.privateLoan <= 0) {
-            this.game.uiManager.addModal({
-                type: 'confirm',
-                title: '无需还款',
-                content: '当前没有私人借贷欠款',
-                confirmText: '知道了',
-                singleButton: true,
-                onConfirm: () => {}
-            })
-            return
-        }
-
-        const maxRepay = Math.min(state.money, state.privateLoan)
-        if (maxRepay <= 0) {
-            this.game.uiManager.addModal({
-                type: 'confirm',
-                title: '金币不足',
-                content: '没有足够的金币还款',
-                confirmText: '知道了',
-                singleButton: true,
-                onConfirm: () => {}
-            })
-            return
-        }
-
-        this.game.uiManager.addModal({
-            type: 'trade',
-            title: '还款',
-            content: `当前欠款: ${state.privateLoan.toLocaleString()} 金币`,
-            itemName: '还款金额',
-            price: 1,
-            quantity: maxRepay,
-            maxQuantity: maxRepay,
-            total: maxRepay,
-            tradeType: 'repay',
-            height: 240,
-            onConfirm: (qty) => {
-                if (state.money >= qty) {
-                    state.money -= qty
-                    state.privateLoan -= qty
-                    this.game.gameState.save()
-
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#D4A574')
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'privateLoan', '私人贷款', '#C17B6B')
-                }
-            }
-        })
-    }
-
-    showBankModal() {
-        const state = this.game.gameState.data
-
-        const actions = [
-            { text: '存款', callback: () => this.doDeposit(), color: '#7CB87C' },
-            { text: '贷款', callback: () => this.doLoan(), color: '#7BA3C9' }
-        ]
-
-        if (state.bankLoan > 0) {
-            actions.push({ text: '还款', callback: () => this.doRepay(), color: '#B8A3C9' })
-        }
-
-        this.game.uiManager.addModal({
-            type: 'action',
-            title: '网上银行',
-            content: `存款利率: 每6天2%\n贷款利率: 每6天6%\n\n银行存款: ${state.bankDeposit.toLocaleString()} 金币\n银行贷款: ${state.bankLoan.toLocaleString()} 金币`,
-            actions: actions,
-            height: 240
-        })
-    }
-
-    doDeposit() {
-        const state = this.game.gameState.data
-        this.game.uiManager.addModal({
-            type: 'trade',
-            title: '存款',
-            content: '',
-            itemName: '存款金额',
-            price: 1,
-            quantity: 100,
-            maxQuantity: state.money,
-            total: 100,
-            tradeType: 'deposit',
-            height: 220,
-            onConfirm: (qty) => {
-                if (state.money >= qty) {
-                    state.money -= qty
-                    state.bankDeposit += qty
-                    this.game.gameState.save()
-
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#D4A574')
-                    this.game.gameState.addDelayedAnimation('increase', qty, 'bankDeposit', '银行存款', '#7CB87C')
-                }
-            }
-        })
-    }
-
-    doLoan() {
-        const state = this.game.gameState.data
-        const maxLoan = state.jobLevel >= 3 ? GAME_CONFIG.bank.loanLimitLevel3 : GAME_CONFIG.bank.loanLimitLevel1
-        this.game.uiManager.addModal({
-            type: 'trade',
-            title: '银行贷款',
-            content: '',
-            itemName: '贷款金额',
-            price: 1,
-            quantity: 1000,
-            maxQuantity: maxLoan - state.bankLoan,
-            total: 1000,
-            tradeType: 'loan',
-            height: 220,
-            onConfirm: (qty) => {
-                state.bankLoan += qty
-                state.money += qty
-                this.game.gameState.save()
-
-                this.game.gameState.addDelayedAnimation('loan', qty, 'bankLoan', '银行贷款', '#7BA3C9')
-                this.game.gameState.addDelayedAnimation('increase', qty, 'money', '金币', '#D4A574')
-            }
-        })
-    }
-
-    doRepay() {
-        const state = this.game.gameState.data
-        if (state.bankLoan <= 0) {
-            return
-        }
-        this.game.uiManager.addModal({
-            type: 'trade',
-            title: '还款',
-            content: `当前欠款: ${state.bankLoan.toLocaleString()} 金币`,
-            itemName: '还款金额',
-            price: 1,
-            quantity: Math.min(state.money, state.bankLoan),
-            maxQuantity: Math.min(state.money, state.bankLoan),
-            total: Math.min(state.money, state.bankLoan),
-            tradeType: 'repay',
-            height: 220,
-            onConfirm: (qty) => {
-                if (state.money >= qty) {
-                    state.money -= qty
-                    state.bankLoan -= qty
-                    this.game.gameState.save()
-
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'money', '金币', '#D4A574')
-                    this.game.gameState.addDelayedAnimation('decrease', qty, 'bankLoan', '银行贷款', '#7BA3C9')
-                }
-            }
-        })
-    }
-
     showEntertainmentModal() {
         const state = this.game.gameState.data
 
@@ -506,8 +303,8 @@ export default class ComputerScene {
         state.mood = Math.min(100, state.mood + moodGain)
         this.game.gameState.save()
 
-        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#7BA3C9')
-        this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#D49BA3')
+        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy')
+        this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood')
 
         this.game.uiManager.addModal({
             type: 'confirm',
@@ -559,7 +356,7 @@ export default class ComputerScene {
                 singleButton: true,
                 onConfirm: () => {}
             })
-            this.game.gameState.addDelayedAnimation('increase', refund, 'money', '金币', '#D4A574')
+            this.game.gameState.addDelayedAnimation('increase', refund, 'money')
         } else {
             const moodGain = 15 + Math.floor(Math.random() * 10)
             state.mood = Math.min(100, state.mood + moodGain)
@@ -571,12 +368,12 @@ export default class ComputerScene {
                 singleButton: true,
                 onConfirm: () => {}
             })
-            this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood', '心情', '#D49BA3')
+            this.game.gameState.addDelayedAnimation('increase', moodGain, 'mood')
         }
 
         this.game.gameState.save()
-        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#7BA3C9')
-        this.game.gameState.addDelayedAnimation('decrease', 20, 'money', '金币', '#D4A574')
+        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy')
+        this.game.gameState.addDelayedAnimation('decrease', 20, 'money')
     }
 
     doPlayGames() {
@@ -600,8 +397,8 @@ export default class ComputerScene {
             const moneyGain = 20 + Math.floor(Math.random() * 30)
             state.money += moneyGain
             state.mood = Math.min(100, state.mood + 10)
-            this.game.gameState.addDelayedAnimation('increase', moneyGain, 'money', '金币', '#D4A574')
-            this.game.gameState.addDelayedAnimation('increase', 10, 'mood', '心情', '#D49BA3')
+            this.game.gameState.addDelayedAnimation('increase', moneyGain, 'money')
+            this.game.gameState.addDelayedAnimation('increase', 10, 'mood')
 
             this.game.uiManager.addModal({
                 type: 'confirm',
@@ -613,7 +410,7 @@ export default class ComputerScene {
             })
         } else if (rand < 0.6) {
             state.mood = Math.min(100, state.mood + 8)
-            this.game.gameState.addDelayedAnimation('increase', 8, 'mood', '心情', '#D49BA3')
+            this.game.gameState.addDelayedAnimation('increase', 8, 'mood')
 
             this.game.uiManager.addModal({
                 type: 'confirm',
@@ -625,7 +422,7 @@ export default class ComputerScene {
             })
         } else {
             state.mood = Math.max(0, state.mood - 5)
-            this.game.gameState.addDelayedAnimation('decrease', 5, 'mood', '心情', '#D49BA3')
+            this.game.gameState.addDelayedAnimation('decrease', 5, 'mood')
 
             this.game.uiManager.addModal({
                 type: 'confirm',
@@ -638,7 +435,7 @@ export default class ComputerScene {
         }
 
         this.game.gameState.save()
-        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy', '精力', '#7BA3C9')
+        this.game.gameState.addDelayedAnimation('decrease', 1, 'energy')
     }
 
     goBack() {
