@@ -157,7 +157,6 @@ export default class SleepTransitionManager {
         ctx.globalAlpha = this.overlayAlpha
         ctx.fillStyle = '#1B2A3A'
         ctx.fillRect(0, 0, w, h)
-        ctx.globalAlpha = 1
 
         this.renderMoon(ctx, w, h)
         this.renderStars(ctx, w, h)
@@ -175,7 +174,7 @@ export default class SleepTransitionManager {
         const moonY = h * 0.12
 
         ctx.save()
-        ctx.globalAlpha = this.moonAlpha
+        ctx.globalAlpha = this.moonAlpha * ctx.globalAlpha
         iconManager.draw(ctx, 'moon', moonX, moonY, { size: 40 })
         ctx.restore()
     }
@@ -225,7 +224,7 @@ export default class SleepTransitionManager {
             const scale = 0.8 + p.progress * 0.6
 
             ctx.save()
-            ctx.globalAlpha = p.alpha
+            ctx.globalAlpha = p.alpha * ctx.globalAlpha
             ctx.translate(x, y)
             ctx.scale(scale, scale)
 
@@ -250,7 +249,7 @@ export default class SleepTransitionManager {
         const sunY = h * 0.15
 
         ctx.save()
-        ctx.globalAlpha = this.sunAlpha
+        ctx.globalAlpha = this.sunAlpha * ctx.globalAlpha
         iconManager.draw(ctx, 'sun', sunX, sunY, { size: 36 })
         ctx.restore()
     }
@@ -259,7 +258,7 @@ export default class SleepTransitionManager {
         if (this.textAlpha <= 0) return
 
         ctx.save()
-        ctx.globalAlpha = this.textAlpha
+        ctx.globalAlpha = this.textAlpha * ctx.globalAlpha
 
         ctx.fillStyle = '#5D4037'
         ctx.strokeStyle = '#FFF5E6'
