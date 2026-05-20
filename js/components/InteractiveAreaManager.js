@@ -354,18 +354,16 @@ class InteractiveAreaManager {
         
         ctx.restore()
         
-        // 3. 注册点击事件（hitArea + labelArea 都响应）
+        // 3. 注册点击事件（合并 hitArea 和 labelArea，避免双重注册）
         if (registerButton && this.game && this.game.uiManager) {
-            // 注册 hitArea 的点击
-            this.game.uiManager.addButton(
-                hitPos.x, hitPos.y, hitPos.width, hitPos.height,
-                '', () => { if (area.action) area.action() },
-                { bgColor: 'transparent' }
-            )
+            // 计算覆盖 hitArea 和 labelArea 的组合区域
+            const minX = Math.min(hitPos.x, labelPos.x)
+            const minY = Math.min(hitPos.y, labelPos.y)
+            const maxX = Math.max(hitPos.x + hitPos.width, labelPos.x + labelPos.width)
+            const maxY = Math.max(hitPos.y + hitPos.height, labelPos.y + labelPos.height)
             
-            // 注册 labelArea 的点击
             this.game.uiManager.addButton(
-                labelPos.x, labelPos.y, labelPos.width, labelPos.height,
+                minX, minY, maxX - minX, maxY - minY,
                 '', () => { if (area.action) area.action() },
                 { bgColor: 'transparent' }
             )

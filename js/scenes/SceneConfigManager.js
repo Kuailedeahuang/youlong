@@ -19,8 +19,8 @@ export default class SceneConfigManager {
                 actions: []
             },
             work: {
-                imageName: 'yinhang.png',
-                localPath: 'tuer/yinhang.png',
+                imageName: 'work.png',
+                localPath: 'tuer/work.png',
                 displayName: '工作',
                 dialogPools: [
                     { speaker: '主管', lines: ['嘿，又来上班了？今天好好干，工资少不了你的。'] },

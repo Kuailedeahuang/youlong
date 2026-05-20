@@ -10,6 +10,8 @@ import HouseSystem from './systems/houseSystem.js'
 import BankruptcySystem from './systems/bankruptcySystem.js'
 import { restartGame } from './utils/resetGame.js'
 import DebugPanel from './debug/DebugPanel.js'
+import TimeProvider from './utils/TimeProvider.js'
+import MiniGameContext from './miniGames/MiniGameContext.js'
 
 class Game {
     constructor() {
@@ -38,17 +40,18 @@ class Game {
             console.error('[Game] 云开发初始化失败:', e)
         }
 
+        this.timeProvider = new TimeProvider()
         this.gameState = new GameState()
         this.renderer = new Renderer(this.ctx, this.width, this.height)
         this.uiManager = new UIManager(this)
         this.sceneManager = new SceneManager(this)
+        this.miniGameContext = new MiniGameContext(this)
 
         this.endingSystem = new EndingSystem(this)
         this.adSystem = new AdSystem(this)
         this.houseSystem = new HouseSystem(this)
         this.bankruptcySystem = new BankruptcySystem(this)
 
-        // 初始化调试面板（开发模式）
         this.debugPanel = DebugPanel.getInstance(this)
 
         this.lastTime = Date.now()
@@ -63,19 +66,26 @@ class Game {
         console.log('[Game] 初始化完成')
     }
 
+    startMiniGame(type, config, onComplete) {
+        this.miniGameContext.enter(type, config, onComplete)
+    }
+
     initEvents() {
         wx.onTouchStart((e) => {
             const touch = e.touches[0]
             const x = touch.clientX
             const y = touch.clientY
 
-            // 调试面板优先处理（长按地图按钮）
             if (this.debugPanel && this.debugPanel.handleMapButtonTouchStart(x, y)) {
                 return
             }
 
-            // 当有模态框打开时，优先将触摸事件交给 UIManager 处理
-            // 防止模态框按钮被场景的 InteractiveAreaManager 拦截
+            if (this.miniGameContext.isActive()) {
+                if (this.miniGameContext.handleTouchStart(x, y)) {
+                    return
+                }
+            }
+
             if (this.uiManager.modals.length > 0) {
                 this.uiManager.handleTouch(x, y)
                 return
@@ -93,8 +103,12 @@ class Game {
             const x = touch.clientX
             const y = touch.clientY
 
-            // 调试面板处理长按移动
             if (this.debugPanel && this.debugPanel.handleMapButtonTouchMove(x, y)) {
+                return
+            }
+
+            if (this.miniGameContext.isActive()) {
+                this.miniGameContext.handleTouchMove(x, y)
                 return
             }
 
@@ -106,12 +120,15 @@ class Game {
             const x = touch.clientX
             const y = touch.clientY
 
-            // 调试面板处理长按结束
             if (this.debugPanel && this.debugPanel.handleMapButtonTouchEnd()) {
                 return
             }
 
-            // 模态框打开时跳过场景触摸结束事件
+            if (this.miniGameContext.isActive()) {
+                this.miniGameContext.handleTouchEnd(x, y)
+                return
+            }
+
             if (this.uiManager.modals.length > 0) {
                 return
             }
@@ -120,19 +137,24 @@ class Game {
         })
     }
 
-    loop() {
+    loop(timestamp) {
         try {
-            const now = Date.now()
-            this.deltaTime = (now - this.lastTime) / 1000
-            this.lastTime = now
+            this.timeProvider.update(timestamp || Date.now())
+            this.deltaTime = this.timeProvider.deltaTime
+            this.lastTime = Date.now()
 
             this.update()
+
+            if (this.miniGameContext.isActive()) {
+                this.miniGameContext.update()
+            }
+
             this.render()
         } catch (e) {
             console.error('渲染循环错误:', e)
         }
 
-        requestAnimationFrame(() => this.loop())
+        requestAnimationFrame((ts) => this.loop(ts))
     }
 
     update() {
@@ -141,10 +163,14 @@ class Game {
 
     render() {
         this.ctx.clearRect(0, 0, this.width, this.height)
-        this.sceneManager.render(this.renderer)
-        this.uiManager.render(this.renderer)
-        
-        // 调试面板渲染（在UI之上）
+
+        if (this.miniGameContext.isActive()) {
+            this.miniGameContext.render(this.renderer)
+        } else {
+            this.sceneManager.render(this.renderer)
+            this.uiManager.render(this.renderer)
+        }
+
         if (this.debugPanel && this.debugPanel.isVisible) {
             this.debugPanel.render()
         }

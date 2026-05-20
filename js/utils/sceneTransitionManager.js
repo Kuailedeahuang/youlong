@@ -564,7 +564,7 @@ export default class SceneTransitionManager {
         for (var i = 0; i < this.travelClouds.length; i++) {
             var c = this.travelClouds[i]
             ctx.save()
-            ctx.globalAlpha = c.opacity
+            ctx.globalAlpha = c.opacity * ctx.globalAlpha
             ctx.fillStyle = '#FFFFFF'
             for (var j = 0; j < c.bubbles.length; j++) {
                 var b = c.bubbles[j]
@@ -581,7 +581,7 @@ export default class SceneTransitionManager {
             var sy = h * 0.08 + (s * h * 0.06) % (h * 0.15)
             var sAlpha = 0.3 + sin(time * 3 + s) * 0.25
             ctx.save()
-            ctx.globalAlpha = sAlpha
+            ctx.globalAlpha = sAlpha * ctx.globalAlpha
             ctx.fillStyle = '#FFFFFF'
             ctx.beginPath()
             ctx.arc(sx, sy, 1.2, 0, TWO_PI)
@@ -676,7 +676,7 @@ export default class SceneTransitionManager {
         ctx.fill()
         ctx.stroke()
         var pulseR = 7 + sin(this.elapsed * 8) * 3
-        ctx.globalAlpha = 0.35 - sin(this.elapsed * 8) * 0.15
+        ctx.globalAlpha = (0.35 - sin(this.elapsed * 8) * 0.15) * ctx.globalAlpha
         ctx.strokeStyle = 'rgba(200,160,100,0.5)'
         ctx.beginPath()
         ctx.arc(destX, destY, pulseR, 0, TWO_PI)
@@ -687,7 +687,7 @@ export default class SceneTransitionManager {
             var mk = this.travelRoadMarkers[m]
             var mkAlpha = 0.25 + sin(this.elapsed * 4 + mk.phase) * 0.15
             ctx.save()
-            ctx.globalAlpha = mkAlpha
+            ctx.globalAlpha = mkAlpha * ctx.globalAlpha
             ctx.fillStyle = '#FFD700'
             ctx.beginPath()
             ctx.moveTo(mk.x, mk.y - mk.size * 2)
@@ -719,7 +719,7 @@ export default class SceneTransitionManager {
         for (var i = 0; i < this.travelFootprints.length; i++) {
             var fp = this.travelFootprints[i]
             ctx.save()
-            ctx.globalAlpha = fp.alpha
+            ctx.globalAlpha = fp.alpha * ctx.globalAlpha
             ctx.fillStyle = 'rgba(180,150,120,0.7)'
             ctx.beginPath()
             ctx.ellipse(fp.x, fp.y, 3, 1.2, 0, 0, TWO_PI)
@@ -759,7 +759,7 @@ export default class SceneTransitionManager {
         for (var j = 0; j < this.travelBurstParticles.length; j++) {
             var bp = this.travelBurstParticles[j]
             ctx.save()
-            ctx.globalAlpha = bp.life * 0.7
+            ctx.globalAlpha = bp.life * 0.7 * ctx.globalAlpha
             ctx.fillStyle = '#FFD700'
             ctx.beginPath()
             ctx.arc(bp.x, bp.y, bp.size, 0, TWO_PI)
@@ -786,7 +786,7 @@ export default class SceneTransitionManager {
             var alpha = clamp(charElapsed / 0.15, 0, 1)
 
             ctx.save()
-            ctx.globalAlpha = alpha
+            ctx.globalAlpha = alpha * ctx.globalAlpha
             ctx.fillStyle = '#3E3028'
             ctx.font = 'bold 14px sans-serif'
             ctx.fillText(ch.char, baseX + i * 13, baseY + bounce)
@@ -821,7 +821,7 @@ export default class SceneTransitionManager {
         ctx.fillRect(0, 0, w, h)
 
         ctx.save()
-        ctx.globalAlpha = 0.03
+        ctx.globalAlpha = 0.03 * ctx.globalAlpha
         ctx.strokeStyle = '#8B7355'
         ctx.lineWidth = 0.6
         for (var i = 0; i < 5; i++) {
@@ -910,9 +910,10 @@ export default class SceneTransitionManager {
         ctx.translate(-pb.cx, -pb.cy)
 
         var mapAlpha = clamp((fp - 0.6) / 0.4, 0, 1)
+        var parentAlpha = ctx.globalAlpha
 
         ctx.save()
-        ctx.globalAlpha = mapAlpha
+        ctx.globalAlpha = mapAlpha * parentAlpha
         ctx.strokeStyle = 'rgba(180,160,140,0.25)'
         ctx.lineWidth = 0.8
 
@@ -948,7 +949,7 @@ export default class SceneTransitionManager {
             var zh = zone.rowSpan * cellH - 4
 
             ctx.save()
-            ctx.globalAlpha = zoneAlpha * mapAlpha
+            ctx.globalAlpha = zoneAlpha * mapAlpha * parentAlpha
             ctx.fillStyle = zone.color
             var zr = 4
             ctx.beginPath()
@@ -969,7 +970,7 @@ export default class SceneTransitionManager {
         if (cp > 0.35) {
             var rc = this.expandMapRiverControl
             ctx.save()
-            ctx.globalAlpha = clamp((cp - 0.35) / 0.25, 0, 1) * mapAlpha
+            ctx.globalAlpha = clamp((cp - 0.35) / 0.25, 0, 1) * mapAlpha * parentAlpha
             ctx.strokeStyle = 'rgba(130,180,210,0.45)'
             ctx.lineWidth = 3.5
             ctx.lineCap = 'round'
@@ -1002,7 +1003,7 @@ export default class SceneTransitionManager {
             if (!icon.bounceDone && icon.scale < 0.01) continue
 
             ctx.save()
-            ctx.globalAlpha = icon.bounceDone ? 1 : clamp(icon.scale, 0, 1)
+            ctx.globalAlpha = (icon.bounceDone ? 1 : clamp(icon.scale, 0, 1)) * ctx.globalAlpha
             ctx.translate(icon.x, icon.y)
             ctx.scale(icon.scale, icon.scale)
             iconManager.draw(ctx, icon.icon, 0, 0, { size: 'xs' })
@@ -1010,7 +1011,7 @@ export default class SceneTransitionManager {
 
             if (icon.bounceDone) {
                 ctx.save()
-                ctx.globalAlpha = 0.7
+                ctx.globalAlpha = 0.7 * ctx.globalAlpha
                 ctx.fillStyle = '#5C4A3A'
                 ctx.font = '8px sans-serif'
                 ctx.textAlign = 'center'

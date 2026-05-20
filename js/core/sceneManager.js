@@ -172,6 +172,8 @@ export default class SceneManager {
         
         if (isReady && scene) {
             scene.render(renderer)
+        } else if (this.isSwitching && this.previousScene && this.scenes[this.previousScene]) {
+            this.scenes[this.previousScene].render(renderer, { registerButtons: false })
         } else if (this.previousScene && this.scenes[this.previousScene]) {
             this.scenes[this.previousScene].render(renderer)
         } else {

@@ -113,6 +113,28 @@ export const GAME_CONFIG = {
             { level: 4, capacity: 200, cost: 40000 },
             { level: 5, capacity: 500, cost: 100000 }
         ]
+    },
+
+    miniGame: {
+        work: {
+            timeLimit: 5000,
+            totalTargets: 8,
+            requiredHits: 6,
+            targetRadius: 20,
+            targetLifetime: 1500,
+            touchRadius: 32,
+            resultDisplayTime: 1500
+        },
+        gym: {
+            totalRounds: 5,
+            sweetZoneWidthRatio: 0.28,
+            sweetZoneDecrement: 0.05,
+            goodZoneExtraRatio: 0.15,
+            baseSpeed: 1.8,
+            speedIncrement: 0.6,
+            resultDisplayTime: 900,
+            summaryDisplayTime: 1500
+        }
     }
 }
 

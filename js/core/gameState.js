@@ -615,6 +615,7 @@ export default class GameState {
         this.data.newspaperShown = false
         this.data.marketEnteredToday = false
         this.data.todayEvents = []
+        this.data.consecutiveGymDays = 0
 
         this.decayNewspaperEvents()
 

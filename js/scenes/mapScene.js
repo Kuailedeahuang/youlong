@@ -176,9 +176,8 @@ export default class MapScene {
         
         if (!this.bgImage) return
         
-        const scale = 1.5
-        const drawWidth = w * scale
-        const drawHeight = h * scale
+        const drawWidth = this.bgImage.width
+        const drawHeight = this.bgImage.height
         
         const minX = Math.min(0, w - drawWidth)
         const minY = Math.min(0, h - drawHeight)
@@ -195,19 +194,20 @@ export default class MapScene {
         
         if (this.imageLoaded && this.bgImage) {
             try {
+                renderer.clear('#2c3e50')
+                
                 const ctx = renderer.ctx
                 ctx.save()
                 ctx.translate(this.offsetX, this.offsetY)
                 
-                const scale = 1.5
-                const drawWidth = w * scale
-                const drawHeight = h * scale
+                const drawWidth = this.bgImage.width
+                const drawHeight = this.bgImage.height
                 const drawX = 0
                 const drawY = 0
                 
                 ctx.drawImage(this.bgImage, drawX, drawY, drawWidth, drawHeight)
                 
-                this.renderBuildings(renderer, w, h, scale)
+                this.renderBuildings(renderer, this.bgImage.width, this.bgImage.height)
                 
                 ctx.restore()
             } catch (e) {
@@ -226,35 +226,51 @@ export default class MapScene {
         renderer.renderStatsPanel(this.game, this.game.gameState.data)
     }
     
-    renderBuildings(renderer, w, h, scale) {
+    renderBuildings(renderer, imgWidth, imgHeight) {
         const ctx = renderer.ctx
         
         for (const loc of this.locations) {
-            const locX = loc.xPercent * w * scale
-            const locY = loc.yPercent * h * scale
-            const locW = loc.widthPercent * w * scale
-            const locH = loc.heightPercent * h * scale
+            const locX = loc.xPercent * imgWidth
+            const locY = loc.yPercent * imgHeight
+            const locW = loc.widthPercent * imgWidth
+            const locH = loc.heightPercent * imgHeight
             
             const centerX = locX + locW / 2
             const centerY = locY + locH / 2
             
-            ctx.fillStyle = '#FFFFFF'
-            ctx.font = 'bold 16px sans-serif'
+            const labelHeight = 24
+            const labelPaddingX = 10
+            ctx.font = '12px Arial, sans-serif'
+            const textWidth = ctx.measureText(loc.name).width
+            const labelWidth = textWidth + labelPaddingX * 2
+            const labelX = centerX - labelWidth / 2
+            const labelY = centerY - locH * 0.35 - labelHeight / 2
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+            this.drawRoundRect(ctx, labelX, labelY, labelWidth, labelHeight, 4)
+            ctx.fill()
+            
+            ctx.fillStyle = '#000000'
+            ctx.font = '12px Arial, sans-serif'
             ctx.textAlign = 'center'
-            ctx.textBaseline = 'bottom'
-            
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
-            ctx.shadowBlur = 4
-            ctx.shadowOffsetX = 0
-            ctx.shadowOffsetY = 1
-            
-            ctx.fillText(loc.name, centerX, centerY - locH * 0.35)
-            
-            ctx.shadowColor = 'transparent'
-            ctx.shadowBlur = 0
-            ctx.shadowOffsetX = 0
-            ctx.shadowOffsetY = 0
+            ctx.textBaseline = 'middle'
+            ctx.fillText(loc.name, centerX, labelY + labelHeight / 2)
         }
+    }
+    
+    drawRoundRect(ctx, x, y, width, height, radius) {
+        const r = Math.min(radius, width / 2, height / 2)
+        ctx.beginPath()
+        ctx.moveTo(x + r, y)
+        ctx.lineTo(x + width - r, y)
+        ctx.quadraticCurveTo(x + width, y, x + width, y + r)
+        ctx.lineTo(x + width, y + height - r)
+        ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height)
+        ctx.lineTo(x + r, y + height)
+        ctx.quadraticCurveTo(x, y + height, x, y + height - r)
+        ctx.lineTo(x, y + r)
+        ctx.quadraticCurveTo(x, y, x + r, y)
+        ctx.closePath()
     }
     
     renderClickFeedback(renderer) {
@@ -375,13 +391,11 @@ export default class MapScene {
             const mapX = x - this.offsetX
             const mapY = y - this.offsetY
             
-            const scale = 1.5
-            
             for (const loc of this.locations) {
-                const locX = loc.xPercent * w * scale
-                const locY = loc.yPercent * h * scale
-                const locW = loc.widthPercent * w * scale
-                const locH = loc.heightPercent * h * scale
+                const locX = loc.xPercent * this.bgImage.width
+                const locY = loc.yPercent * this.bgImage.height
+                const locW = loc.widthPercent * this.bgImage.width
+                const locH = loc.heightPercent * this.bgImage.height
                 
                 if (mapX >= locX && mapX <= locX + locW && mapY >= locY && mapY <= locY + locH) {
                     const centerX = locX + locW / 2 + this.offsetX

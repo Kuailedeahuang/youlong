@@ -54,26 +54,39 @@ export default class WorkSystem {
             title: `工作 - ${state.jobTitle}`,
             content: `【当前岗位】\nLv.${job.level} ${job.title}\n\n上班: ${baseSalary}金币 (消耗1精力)\n加班: ${overtimeSalary}金币 (消耗1精力,健康-5)${nextLevelInfo}`,
             actions: [
-                { text: '上班', callback: () => this.doWork(false, baseSalary, onComplete) },
-                { text: '加班', callback: () => this.doWork(true, overtimeSalary, onComplete) }
+                { text: '上班', callback: () => this._startWorkWithMiniGame(false, baseSalary, onComplete) },
+                { text: '加班', callback: () => this._startWorkWithMiniGame(true, overtimeSalary, onComplete) }
             ],
             height: Math.max(350, contentHeight)
         })
     }
 
-    doWork(isOvertime, salary, onComplete) {
-        const state = this.game.gameState.data
-
-        if (isOvertime && state.health < 30) {
-            this.game.uiManager.addModal({
-                type: 'confirm',
-                title: '健康不足',
-                content: '无法加班',
-                confirmText: '知道了',
-                onConfirm: () => {}
-            })
-            return
+    _startWorkWithMiniGame(isOvertime, salary, onComplete) {
+        if (isOvertime) {
+            const state = this.game.gameState.data
+            if (state.health < 30) {
+                this.game.uiManager.addModal({
+                    type: 'confirm',
+                    title: '健康不足',
+                    content: '无法加班',
+                    confirmText: '知道了',
+                    onConfirm: () => {}
+                })
+                return
+            }
         }
+
+        this.game.startMiniGame('work', {
+            salary,
+            isOvertime
+        }, (successRate) => {
+            const adjustedSalary = Math.floor(salary * successRate)
+            this.doWork(isOvertime, adjustedSalary, successRate, onComplete)
+        })
+    }
+
+    doWork(isOvertime, salary, successRate, onComplete) {
+        const state = this.game.gameState.data
 
         state.energy = Math.max(0, state.energy - 1)
         state.money += salary
@@ -115,6 +128,19 @@ export default class WorkSystem {
         }
 
         let workResultContent = `获得 ${salary} 金币！`
+
+        if (successRate < 1.0) {
+            let ratingLabel = ''
+            if (successRate >= 0.6) {
+                ratingLabel = '表现良好'
+            } else {
+                ratingLabel = '表现不佳'
+            }
+            workResultContent += `\n专注挑战：${ratingLabel}（${Math.round(successRate * 100)}%薪资）`
+        } else if (successRate >= 1.0) {
+            workResultContent += '\n专注挑战：完美表现！'
+        }
+
         if (reputationChange !== 0) {
             workResultContent += `\n${reputationReason}，名誉${reputationChange > 0 ? '+' : ''}${reputationChange}`
         }

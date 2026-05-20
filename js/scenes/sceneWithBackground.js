@@ -27,7 +27,6 @@ export default class SceneWithBackground {
         this.loanSystem = new LoanSystem(game)
         this.randomEventManager = new RandomEventManager(game)
         this.animationHelper = new AnimationHelper(game)
-
         this.currentScene = null
         this.targetScene = null
         this.dialogLines = []
@@ -130,6 +129,7 @@ export default class SceneWithBackground {
 
     async onEnter(params) {
         console.log('[SceneWithBackground] onEnter() 开始, params:', params)
+
         this.dialogIndex = 0
         this.displayedText = ''
         this.isTyping = false
@@ -197,9 +197,10 @@ export default class SceneWithBackground {
         }
     }
 
-    render(renderer) {
+    render(renderer, options = {}) {
         const w = renderer.width
         const h = renderer.height
+        const registerButtons = options.registerButtons !== false
 
         this.game.uiManager.clear()
 
@@ -220,11 +221,11 @@ export default class SceneWithBackground {
 
         if (!isLoading) {
             if (this.currentScene === 'home' && !this.dialogVisible) {
-                this.areaManager.render(renderer)
+                this.areaManager.render(renderer, { registerButtons })
             } else {
                 const config = this.configManager.getSceneConfig(this.currentScene)
                 if (config && config.clickableAreas) {
-                    this.uiRenderer.renderClickableAreas(renderer, config.clickableAreas)
+                    this.uiRenderer.renderClickableAreas(renderer, config.clickableAreas, registerButtons)
                 }
             }
 
@@ -235,9 +236,11 @@ export default class SceneWithBackground {
                 index: this.dialogIndex
             })
 
-            const actions = this.configManager.getActions(this.currentScene)
-            if (actions.length > 0 && !this.dialogVisible) {
-                this.uiRenderer.renderActions(renderer, actions, (callback) => this.handleAction(callback))
+            if (registerButtons) {
+                const actions = this.configManager.getActions(this.currentScene)
+                if (actions.length > 0 && !this.dialogVisible) {
+                    this.uiRenderer.renderActions(renderer, actions, (callback) => this.handleAction(callback))
+                }
             }
         }
 
